@@ -53,13 +53,13 @@ type LayerList []Layer
 type Layer struct {
 	Schema         string            `json:"schema"`
 	Table          string            `json:"table"`
-	Description    string            `json:"description"`
+	Description    string            `json:"description,omitempty"`
 	GeometryColumn string            `json:"geometry_column"`
 	GeometryType   string            `json:"geometry_type"`
 	Srid           int               `json:"srid"`
-	Properties     map[string]string `json:"properties"`
+	Properties     map[string]string `json:"properties,omitempty"`
 	Id             string            `json:"id"`
-	IdColumn       string            `json:"id_column"`
+	IdColumn       string            `json:"id_column,omitempty"`
 	Resolution     int               `json:"resolution"`
 }
 
@@ -220,6 +220,7 @@ func ReadLayerList() {
 				JOIN pg_type st ON sa.atttypid = st.oid
 				WHERE sa.attrelid = c.oid
 				AND sa.attnum > 0
+				AND NOT sa.attisdropped
 				AND st.typname NOT IN ('geometry', 'geography')
 			) AS props
 		FROM pg_class c
