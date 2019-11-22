@@ -1,0 +1,34 @@
+# http://editorconfig.org
+
+# top-most EditorConfig file
+root = true
+
+# these are the defaults
+[*]
+charset = utf-8
+end_of_line = lf
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+# C files want tab indentation
+[*.go]
+indent_style = tab
+
+[Makefile]
+indent_style = tab
+
+# HTML files want narrow space
+[*.html]
+indent_style = space
+indent_size = 2
+
+# SQL files want tab indentation
+[*.sql]
+indent_style = space
+indent_size = 2
+
+# .bat files want CRLF
+[*.bat]
+end_of_line = crlf
