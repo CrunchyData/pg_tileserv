@@ -1,8 +1,6 @@
 package main
 
-import (
-	"fmt"
-)
+import ()
 
 type Tile struct {
 	Zoom int    `json:"zoom"`
@@ -24,11 +22,6 @@ const worldMercWidth float64 = 40075016.6855784
 func (tile *Tile) Width() float64 {
 	worldTileSize := int(1) << tile.Zoom
 	return worldMercWidth / float64(worldTileSize)
-}
-
-func (tile *Tile) Sql() string {
-	b := tile.Bounds()
-	return fmt.Sprintf("ST_MakeEnvelope(%g, %g, %g, %g, 3857)", b.Minx, b.Miny, b.Maxx, b.Maxy)
 }
 
 func (tile *Tile) IsValid() bool {
