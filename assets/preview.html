@@ -1,9 +1,103 @@
 <html>
   <head>
-    <title>PostgreSQL TileServ - Preview</title>
+    <meta charset='utf-8' />
+    <title>pg_tileserv: {{.Id}}</title>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+    <style type="text/css">
+      body {margin:0;padding:0;}
+      #map {position:absolute;top:0;bottom:0;left:0;right:0;}
+      #meta {z-index:2;color:white;background:rgba(255,255,255,0.2);position:absolute;top:10;left:20;padding:20 ;margin:0;}
+      #meta h1 {margin:0;}
+    </style>
   </head>
 <body>
-  <h1>PostgreSQL TileServ - Preview</h1>
-  <p>This is where we'll put a preview map</p>
+
+  <div id="meta"><h1>{{.Id}}</h1></div>
+
+  <div id="map"></div>
+
+  <script>
+
+    var map;
+    var layer = '{{.Id}}';
+
+    $.getJSON(layer + ".json", function(json) {
+      console.log(json);
+      var tilejson = json['tilejson'];
+
+      var mapConfig = {
+        'container': 'map',
+        // 'center': tilejson['center'],
+        // 'zoom':tilejson['minzoom'],
+        'bounds': tilejson['bounds'],
+        'style': {
+          'version': 8,
+          'sources': {
+            'carto-dark': {
+              'type': 'raster',
+              'tiles': [
+                "http://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+                "http://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+                "http://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+                "http://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png"
+              ]
+            },
+            'carto-light': {
+              'type': 'raster',
+              'tiles': [
+                "http://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+                "http://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+                "http://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+                "http://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png"
+              ]
+            }
+          },
+          'layers': [{
+            'id': 'carto-dark-layer',
+            'type': 'raster',
+            'source': 'carto-dark',
+            'minzoom': 0,
+            'maxzoom': 22
+          }]
+        }
+      };
+
+      var layerConfig = json['layerconfig'];
+      if (layerConfig['type'] == "circle") {
+        layerConfig['paint'] = {
+          "circle-radius": 2,
+          "circle-color": "red",
+        };
+      }
+      else if (layerConfig['type'] == "line") {
+        layerConfig['paint'] = {
+          "line-width": 1,
+          "line-color": "red"
+        };
+      }
+      else if (layerConfig['type'] == "fill") {
+        layerConfig['paint'] = {
+          "fill-color": "red",
+          "fill-opacity": 0.1,
+          "fill-outine-color": "red"
+        };
+      }
+      else {
+        layerConfig['paint'] = {};
+      }
+
+      map = new mapboxgl.Map(mapConfig);
+      map.addControl(new mapboxgl.NavigationControl());
+
+      map.on('load', function() {
+        map.addLayer(layerConfig)
+      });
+
+    });
+
+  </script>
+
 </body>
 </html>

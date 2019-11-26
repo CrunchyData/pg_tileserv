@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
 	"log"
@@ -33,6 +32,8 @@ type Layer struct {
 	IdColumn       string            `json:"id_column,omitempty"`
 	Resolution     int               `json:"resolution"`
 	Buffer         int               `json:"buffer"`
+	TileJson       TileJson          `json:"tilejson,omitempty"`
+	LayerConfig    LayerConfig       `json:"layerconfig,omitempty"`
 }
 
 func (lyr *Layer) Sql(tile *Tile) string {
@@ -91,7 +92,7 @@ func (lyr *Layer) Sql(tile *Tile) string {
 		lyr.Table,
 		lyr.GeometryColumn,
 		lyr.Srid,
-		myConfig.MaxFeaturesPerTile,
+		globalConfig.MaxFeaturesPerTile,
 		strings.Join(mvtParams, ", "))
 
 	log.Println(sql)
@@ -100,7 +101,7 @@ func (lyr *Layer) Sql(tile *Tile) string {
 
 func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 
-	db, err := sql.Open("postgres", myConfig.ConnStr)
+	db, err := DbConnect()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,18 +114,33 @@ func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 	}
 
 	var mvtTile []byte
-	rows.Next()
-	err = rows.Scan(&mvtTile)
-	if err != nil {
-		log.Println(err)
-		return nil, err
+	for rows.Next() {
+		err = rows.Scan(&mvtTile)
+		if err != nil {
+			log.Println(err)
+			rows.Close()
+			return nil, err
+		}
+		// Check for errors from iterating over rows.
 	}
-	// Check for errors from iterating over rows.
 	if err := rows.Err(); err != nil {
 		log.Println(err)
+		rows.Close()
 		return nil, err
 	}
+	rows.Close()
 	return mvtTile, nil
+}
+
+func (lyr *Layer) AddDetails() error {
+	var err error
+	if lyr.TileJson, err = lyr.GetTileJson(); err != nil {
+		return err
+	}
+	if lyr.LayerConfig, err = lyr.GetLayerConfig(lyr.TileJson); err != nil {
+		return err
+	}
+	return nil
 }
 
 // TODO, return the tile JSON information for this layer
@@ -213,9 +229,9 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 	tileJson.Name = lyr.Id
 	tileJson.Description = lyr.Description
 	tileJson.Tiles = make([]string, 1)
-	tileJson.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", myConfig.Addr, lyr.Id)
+	tileJson.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", globalConfig.Addr, lyr.Id)
 	tileJson.Id = lyr.Id
-	tileJson.Attribution = myConfig.Attribution
+	tileJson.Attribution = globalConfig.Attribution
 
 	extentSql := fmt.Sprintf(`
 		WITH ext AS (
@@ -229,7 +245,7 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 		FROM ext
 		`, lyr.Schema, lyr.Table, lyr.GeometryColumn, lyr.Srid)
 
-	db, err := sql.Open("postgres", myConfig.ConnStr)
+	db, err := DbConnect()
 	if err != nil {
 		return tileJson, err
 	}
@@ -260,37 +276,72 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 
 	// Check for errors from iterating over rows.
 	if err := rows.Err(); err != nil {
+		rows.Close()
 		return tileJson, err
 	}
+	rows.Close()
 	return tileJson, nil
 }
 
-//
-// {
-//    "public.geonames" : {
-//       "resolution" : 0,
-//       "id_column" : "id",
-//       "geometry_type" : "Point",
-//       "description" : "",
-//       "properties" : {
-//          "lon" : "float8",
-//          "type" : "text",
-//          "id" : "int4",
-//          "ts" : "tsvector",
-//          "lat" : "float8",
-//          "state" : "text",
-//          "name" : "text"
-//       },
-//       "schema" : "public",
-//       "table" : "geonames",
-//       "srid" : 4326,
-//       "id" : "public.geonames",
-//       "geometry_column" : "geom"
-//    }
-// }
-//
+// https://github.com/mapbox/tilejson-spec/tree/master/2.0.1
+type LayerConfig struct {
+	Id          string `json:"id"`
+	SourceLayer string `json:"source-layer"`
+	Source      struct {
+		Type    string   `json:"type"`
+		Tiles   []string `json:"tiles"`
+		MinZoom int      `json:"minzoom"`
+		MaxZoom int      `json:"maxzoom"`
+	} `json:"source"`
+	Type string `json:"type"`
+	// Paint map[string]interface{} `json:"paint"`
+}
 
-func ReadLayerList() {
+func (lyr *Layer) GetLayerConfig(tileJson TileJson) (LayerConfig, error) {
+
+	layerConfig := LayerConfig{
+		Id:          lyr.Id,
+		SourceLayer: lyr.Id,
+	}
+
+	// 'id': json['id'],
+	// 'source-layer': json['id'],
+	// 'source': {
+	//   'type': 'vector',
+	//   'tiles': json['tiles'],
+	//   'minzoom': json['minzoom'],
+	//   'maxzoom': json['maxzoom']
+	// },
+	// 'type': 'circle',
+	// 'paint': {
+	//   'circle-radius': 2,
+	//   'circle-color': '#007cbf'
+	// }
+
+	layerConfig.Source.Type = "vector"
+	layerConfig.Source.Tiles = tileJson.Tiles
+	layerConfig.Source.MinZoom = tileJson.MinZoom
+	layerConfig.Source.MaxZoom = tileJson.MaxZoom
+
+	var layerType string
+	switch lyr.GeometryType {
+	case "Point", "MultiPoint":
+		layerType = "circle"
+	case "LineString", "MultiLineString":
+		layerType = "line"
+	case "Polygon", "MultiPolygon":
+		layerType = "line"
+		// layerType = "fill"
+	default:
+		log.Fatal("unsupported geometry type %s", lyr.GeometryType)
+	}
+
+	layerConfig.Type = layerType
+
+	return layerConfig, nil
+}
+
+func GetLayerTableList() {
 
 	layerSql := `
 		SELECT
@@ -325,7 +376,7 @@ func ReadLayerList() {
 		AND postgis_typmod_srid(a.atttypmod) > 0
 		`
 
-	db, err := sql.Open("postgres", myConfig.ConnStr)
+	db, err := DbConnect()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -336,7 +387,7 @@ func ReadLayerList() {
 	}
 
 	// Reset array of layers
-	Layers = make(map[string]Layer)
+	globalLayers = make(map[string]Layer)
 	for rows.Next() {
 
 		var (
@@ -375,15 +426,16 @@ func ReadLayerList() {
 			GeometryType:   geometry_type,
 			IdColumn:       id_column,
 			Properties:     properties,
-			Resolution:     myConfig.DefaultResolution,
-			Buffer:         myConfig.DefaultBuffer,
+			Resolution:     globalConfig.DefaultResolution,
+			Buffer:         globalConfig.DefaultBuffer,
 		}
 
-		Layers[id] = lyr
+		globalLayers[id] = lyr
 	}
 	// Check for errors from iterating over rows.
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
+	rows.Close()
 	return
 }

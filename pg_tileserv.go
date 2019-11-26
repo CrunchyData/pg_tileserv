@@ -2,9 +2,12 @@ package main
 
 import (
 	// "bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -31,7 +34,7 @@ type Config struct {
 }
 
 // A global variable for configuration parameters and defaults
-var myConfig Config = Config{
+var globalConfig Config = Config{
 	ConnStr:            "dbname=pramsey sslmode=disable",
 	Host:               "localhost",
 	Port:               7800,
@@ -40,45 +43,92 @@ var myConfig Config = Config{
 	Version:            "0.1",
 	DefaultBuffer:      256,
 	DefaultResolution:  4094,
-	MaxFeaturesPerTile: 10000,
+	MaxFeaturesPerTile: 50000,
 }
+
+// A global array of Layer where the state is held for performance
+// Refreshed when GetLayerTableList is called
+var globalLayers map[string]Layer
+
+// A global database connection pointer
+var globalDb *sql.DB = nil
 
 // type LayerFunction struct {
 // 	namespace string
 // 	funcname string
 // }
 
-// A global array of Layer where the state is held for performance
-// Refreshed when ReadLayerList is called
-var Layers map[string]Layer
+func DbConnect() (*sql.DB, error) {
+	if globalDb == nil {
+		var err error
+		globalDb, err = sql.Open("postgres", globalConfig.ConnStr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return globalDb, err
+	}
+	err := globalDb.Ping()
+	if err != nil {
+		return nil, err
+	}
+	return globalDb, nil
+}
 
-func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
-	log.Println("HandleRequestRoot")
-	b, err := ioutil.ReadFile("assets/index.html")
+func AssetFileAsString(assetPath string) (asset string) {
+	b, err := ioutil.ReadFile(assetPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintf(w, string(b))
+	return string(b)
+}
+
+func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
+	log.Println("HandleRequestRoot")
+	// html := AssetFileAsString("assets/index.html")
+	// fmt.Fprintf(w, html)
+	GetLayerTableList()
+
+	t, err := template.ParseFiles("assets/index.html")
+	if err != nil {
+		log.Println(err)
+	}
+	t.Execute(w, globalLayers)
 }
 
 func HandleRequestIndex(w http.ResponseWriter, r *http.Request) {
 	log.Println("HandleRequestIndex")
 	// Update the local copy
-	ReadLayerList()
+	GetLayerTableList()
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(Layers)
+	json.NewEncoder(w).Encode(globalLayers)
 }
 
 func HandleRequestLayer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
-	log.Println("HandleRequestLayer: %s", lyrname)
+	log.Printf("HandleRequestLayer: %s", lyrname)
 
-	if lyr, ok := Layers[lyrname]; ok {
-		tileJson, err := lyr.GetTileJson()
-		if err == nil {
-			json.NewEncoder(w).Encode(tileJson)
+	if lyr, ok := globalLayers[lyrname]; ok {
+		err := lyr.AddDetails()
+		if err != nil {
+			log.Fatal(err)
 		}
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(lyr)
+	}
+}
+
+func HandleRequestLayerPreview(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	lyrname := vars["name"]
+	log.Printf("HandleRequestLayerPreview: %s", lyrname)
+
+	if lyr, ok := globalLayers[lyrname]; ok {
+		t, err := template.ParseFiles("assets/preview.html")
+		if err != nil {
+			log.Println(err)
+		}
+		t.Execute(w, lyr)
 	}
 }
 
@@ -86,12 +136,12 @@ func HandleRequestTile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	lyrname := vars["name"]
-	if lyr, ok := Layers[lyrname]; ok {
+	if lyr, ok := globalLayers[lyrname]; ok {
 		x, _ := strconv.Atoi(vars["x"])
 		y, _ := strconv.Atoi(vars["y"])
 		zoom, _ := strconv.Atoi(vars["zoom"])
 		ext := vars["ext"]
-		log.Println("HandleRequestTile: %d/%d/%d.%s", zoom, x, y, ext)
+		log.Printf("HandleRequestTile: %d/%d/%d.%s", zoom, x, y, ext)
 		tile := Tile{Zoom: zoom, X: x, Y: y, Ext: ext}
 		if !tile.IsValid() {
 			log.Fatal("HandleRequestTile: invalid map tile")
@@ -122,8 +172,10 @@ func HandleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	// replace http.HandleFunc with myRouter.HandleFunc
 	myRouter.HandleFunc("/", HandleRequestRoot)
+	myRouter.HandleFunc("/index.html", HandleRequestRoot)
 	myRouter.HandleFunc("/index.json", HandleRequestIndex)
 	myRouter.HandleFunc("/{name}.json", HandleRequestLayer)
+	myRouter.HandleFunc("/{name}.html", HandleRequestLayerPreview)
 	myRouter.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTile)
 
 	// more "production friendly" timeouts
@@ -131,7 +183,7 @@ func HandleRequests() {
 	s := &http.Server{
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		Addr:         fmt.Sprintf("%s:%d", myConfig.Host, myConfig.Port),
+		Addr:         fmt.Sprintf("%s:%d", globalConfig.Host, globalConfig.Port),
 		Handler:      myRouter,
 	}
 
@@ -144,11 +196,11 @@ func HandleRequests() {
 
 func main() {
 
-	log.Printf("%s: %s\n", myConfig.Program, myConfig.Version)
-	log.Printf("Listening on: %s", myConfig.Addr)
+	log.Printf("%s: %s\n", globalConfig.Program, globalConfig.Version)
+	log.Printf("Listening on: %s", globalConfig.Addr)
 
 	// Load the layer list right away
-	ReadLayerList()
+	GetLayerTableList()
 
 	HandleRequests()
 }

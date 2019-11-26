@@ -1,13 +1,22 @@
 <html>
   <head>
-    <title>PostgreSQL TileServ</title>
+    <title>pg_tileserv</title>
+    <!-- <link rel="stylesheet" type="text/css" href="pg_tileserv.css" /> -->
   </head>
 <body>
-  <h1>PostgreSQL TileServ</h1>
+  <h1>pg_tileserv</h1>
   <ul>
-    <li><a href='/index.json'><code>index.json</code></a> for layer list</li>
-    <li><code>/{layer}.json</code> for layer information</li>
-    <li><code>/{layer}/{z}/{x}/{y}.{ext}</code> for tiles</li>
+    <li><strong><a href='/index.json'>index.json</a></strong> for layer list</li>
+  {{ range $key, $value := . }}
+     <li><strong><a href='{{ $key }}.html'>{{ $key }}</a></strong>: {{ $value.Description }}
+      <ul>
+        <li><a href='{{ $key }}.json'>{{ $key }}.json</a> for layer information</li>
+        <li><strong>{{ $key }}/{z}/{x}/{y}.pbf</strong> for tiles</li>
+      </ul>
+    </li>
+  {{ end }}
+
   </ul>
+
 </body>
 </html>
