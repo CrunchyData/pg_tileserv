@@ -229,7 +229,7 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 	tileJson.Name = lyr.Id
 	tileJson.Description = lyr.Description
 	tileJson.Tiles = make([]string, 1)
-	tileJson.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", globalConfig.Addr, lyr.Id)
+	tileJson.Tiles[0] = fmt.Sprintf("http://%s:%d/%s/{z}/{x}/{y}.pbf", globalConfig.HttpHost, globalConfig.HttpPort, lyr.Id)
 	tileJson.Id = lyr.Id
 	tileJson.Attribution = globalConfig.Attribution
 

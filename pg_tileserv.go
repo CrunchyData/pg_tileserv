@@ -12,21 +12,41 @@ import (
 	"log"
 	"net/http"
 	// "os"
+	"github.com/BurntSushi/toml"
+	"os"
 	"strconv"
 	"time"
 )
+
+// Age = 198
+// Cats = [ "Cauchy", "Plato" ]
+// Pi = 3.14
+// Perfection = [ 6, 28, 496, 8128 ]
+// DOB = 1987-07-05T05:45:00Z
+
+// Then you can load it into your Go program with something like
+
+// type Config struct {
+//     Age int
+//     Cats []string
+//     Pi float64
+//     Perfection []int
+//     DOB time.Time
+// }
+
+// var conf Config
+// if _, err := toml.DecodeFile("something.toml", &conf); err != nil {
+//     // handle error
+// }
 
 // type Coordinate struct {
 // 	x, y float64
 // }
 
 type Config struct {
-	ConnStr            string `json:"connstr"`
-	Host               string `json:"host"`
-	Port               int    `json:"port"`
-	Addr               string `json:"addr"`
-	Program            string `json:"program"`
-	Version            string `json:"version"`
+	DbConnection       string `json:"db_connection"`
+	HttpHost           string `json:"http_host"`
+	HttpPort           int    `json:"http_port"`
 	DefaultResolution  int    `json:"default_resolution"`
 	DefaultBuffer      int    `json:"default_buffer"`
 	MaxFeaturesPerTile int    `json:"max_features_per_tile"`
@@ -34,17 +54,20 @@ type Config struct {
 }
 
 // A global variable for configuration parameters and defaults
+// var globalConfig Config
+
+// For un-provided values, use the defaults
 var globalConfig Config = Config{
-	ConnStr:            "dbname=pramsey sslmode=disable",
-	Host:               "localhost",
-	Port:               7800,
-	Addr:               "http://localhost:7800",
-	Program:            "pg_tileserv",
-	Version:            "0.1",
+	DbConnection:       "sslmode=disable",
+	HttpHost:           "localhost",
+	HttpPort:           7800,
 	DefaultBuffer:      256,
 	DefaultResolution:  4094,
 	MaxFeaturesPerTile: 50000,
 }
+
+const programName string = "pg_tileserv"
+const programVersion string = "0.1"
 
 // A global array of Layer where the state is held for performance
 // Refreshed when GetLayerTableList is called
@@ -58,10 +81,45 @@ var globalDb *sql.DB = nil
 // 	funcname string
 // }
 
+/******************************************************************************/
+
+func main() {
+
+	log.Printf("%s %s\n", programName, programVersion)
+
+	// Read environment configuration first
+	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
+		globalConfig.DbConnection = dbUrl
+	}
+
+	// Attempt to read and parse command line configuration
+	if len(os.Args) > 1 {
+		configFile := os.Args[1]
+		if _, err := os.Stat(configFile); err == nil {
+			log.Printf("Reading configuration file: %s\n", configFile)
+			if _, err := toml.DecodeFile(configFile, &globalConfig); err != nil {
+			    log.Fatal(err)
+			}
+		}
+	}
+
+	// Report our status
+	log.Printf("Connecting to: %s\n", globalConfig.DbConnection)
+	log.Printf("Listening on: %s\n", fmt.Sprintf("%s:%d", globalConfig.HttpHost, globalConfig.HttpPort))
+
+	// Load the global layer list right away
+	GetLayerTableList()
+
+	// Get to work
+	HandleRequests()
+}
+
+/******************************************************************************/
+
 func DbConnect() (*sql.DB, error) {
 	if globalDb == nil {
 		var err error
-		globalDb, err = sql.Open("postgres", globalConfig.ConnStr)
+		globalDb, err = sql.Open("postgres", globalConfig.DbConnection)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -183,24 +241,11 @@ func HandleRequests() {
 	s := &http.Server{
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		Addr:         fmt.Sprintf("%s:%d", globalConfig.Host, globalConfig.Port),
+		Addr:         fmt.Sprintf("%s:%d", globalConfig.HttpHost, globalConfig.HttpPort),
 		Handler:      myRouter,
 	}
 
 	// TODO figure out how to gracefully shut down on ^C
 	// and shut down all the database connections / statements
 	log.Fatal(s.ListenAndServe())
-}
-
-/******************************************************************************/
-
-func main() {
-
-	log.Printf("%s: %s\n", globalConfig.Program, globalConfig.Version)
-	log.Printf("Listening on: %s", globalConfig.Addr)
-
-	// Load the layer list right away
-	GetLayerTableList()
-
-	HandleRequests()
 }

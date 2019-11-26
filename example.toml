@@ -1,0 +1,10 @@
+
+# pg_tileserv
+
+DbConnection       "host=localhost"
+HttpHost           "localhost"
+HttpPort           7800
+DefaultResolution  4096
+DefaultBuffer      256
+MaxFeaturesPerTile 10000
+Attribution        "Copyright (c) The Universe"
