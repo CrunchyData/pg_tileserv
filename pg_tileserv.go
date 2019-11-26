@@ -47,6 +47,7 @@ type Config struct {
 	DbConnection       string `json:"db_connection"`
 	HttpHost           string `json:"http_host"`
 	HttpPort           int    `json:"http_port"`
+	UrlBase            string `json:"url_base"`
 	DefaultResolution  int    `json:"default_resolution"`
 	DefaultBuffer      int    `json:"default_buffer"`
 	MaxFeaturesPerTile int    `json:"max_features_per_tile"`
@@ -59,8 +60,9 @@ type Config struct {
 // For un-provided values, use the defaults
 var globalConfig Config = Config{
 	DbConnection:       "sslmode=disable",
-	HttpHost:           "localhost",
+	HttpHost:           "0.0.0.0",
 	HttpPort:           7800,
+	UrlBase:            "http://localhost:7800",
 	DefaultBuffer:      256,
 	DefaultResolution:  4094,
 	MaxFeaturesPerTile: 50000,
@@ -98,7 +100,7 @@ func main() {
 		if _, err := os.Stat(configFile); err == nil {
 			log.Printf("Reading configuration file: %s\n", configFile)
 			if _, err := toml.DecodeFile(configFile, &globalConfig); err != nil {
-			    log.Fatal(err)
+				log.Fatal(err)
 			}
 		}
 	}
