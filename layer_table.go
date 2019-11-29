@@ -24,10 +24,10 @@ type Layer struct {
 	Schema         string            `json:"schema"`
 	Table          string            `json:"table"`
 	Description    string            `json:"description,omitempty"`
-	GeometryColumn string            `json:"geometry_column"`
 	GeometryType   string            `json:"geometry_type"`
-	Srid           int               `json:"srid"`
 	Properties     map[string]string `json:"properties,omitempty"`
+	GeometryColumn string            `json:"geometry_column"`
+	Srid           int               `json:"srid"`
 	Id             string            `json:"id"`
 	IdColumn       string            `json:"id_column,omitempty"`
 	Resolution     int               `json:"resolution"`
