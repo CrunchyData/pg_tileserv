@@ -2,11 +2,13 @@ package main
 
 import (
 	// "bytes"
-	"database/sql"
+	// "database/sql"
+	"github.com/jackc/pgx/v4"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
+	// _ "github.com/lib/pq"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -76,7 +78,7 @@ const programVersion string = "0.1"
 var globalLayers map[string]Layer
 
 // A global database connection pointer
-var globalDb *sql.DB = nil
+var globalDb *pgx.Conn = nil
 
 // type LayerFunction struct {
 // 	namespace string
@@ -118,18 +120,14 @@ func main() {
 
 /******************************************************************************/
 
-func DbConnect() (*sql.DB, error) {
+func DbConnect() (*pgx.Conn, error) {
 	if globalDb == nil {
 		var err error
-		globalDb, err = sql.Open("postgres", globalConfig.DbConnection)
+		globalDb, err = pgx.Connect(context.Background(), globalConfig.DbConnection)
 		if err != nil {
 			log.Fatal(err)
 		}
 		return globalDb, err
-	}
-	err := globalDb.Ping()
-	if err != nil {
-		return nil, err
 	}
 	return globalDb, nil
 }

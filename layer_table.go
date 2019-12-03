@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/lib/pq"
+	// "github.com/lib/pq"
+	"context"
+	"github.com/jackc/pgtype"
 	"log"
 	"strings"
 )
@@ -107,7 +109,7 @@ func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 	}
 
 	tileSql := lyr.Sql(tile)
-	rows, err := db.Query(tileSql)
+	rows, err := db.Query(context.Background(), tileSql)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -250,36 +252,14 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 		return tileJson, err
 	}
 
-	rows, err := db.Query(extentSql)
+	var (
+		xmin, ymin, xmax, ymax float64
+	)
+
+	err = db.QueryRow(context.Background(), extentSql).Scan(&xmin, &ymin, &xmax, &ymax)
 	if err != nil {
 		return tileJson, err
 	}
-
-	// Reset array of layers
-	for rows.Next() {
-
-		var (
-			xmin, ymin, xmax, ymax float64
-		)
-		err := rows.Scan(&xmin, &ymin, &xmax, &ymax)
-		if err == nil {
-			tileJson.Bounds = make([]float64, 4)
-			tileJson.Bounds[0] = xmin
-			tileJson.Bounds[1] = ymin
-			tileJson.Bounds[2] = xmax
-			tileJson.Bounds[3] = ymax
-			tileJson.Center = make([]float64, 2)
-			tileJson.Center[0] = (xmax + xmin) / 2.0
-			tileJson.Center[1] = (ymax + ymin) / 2.0
-		}
-	}
-
-	// Check for errors from iterating over rows.
-	if err := rows.Err(); err != nil {
-		rows.Close()
-		return tileJson, err
-	}
-	rows.Close()
 	return tileJson, nil
 }
 
@@ -340,6 +320,7 @@ func (lyr *Layer) GetLayerConfig(tileJson TileJson) (LayerConfig, error) {
 
 	return layerConfig, nil
 }
+//				SELECT array_agg(concat_ws(',', sa.attname, st.typname))
 
 func GetLayerTableList() {
 
@@ -353,7 +334,7 @@ func GetLayerTableList() {
 			postgis_typmod_type(a.atttypmod) AS geometry_type,
 			coalesce(ia.attname, '') AS id_column,
 			(
-				SELECT array_agg(concat_ws(',', sa.attname, st.typname))
+				SELECT array_agg(ARRAY[sa.attname, st.typname]::text[])
 				FROM pg_attribute sa
 				JOIN pg_type st ON sa.atttypid = st.oid
 				WHERE sa.attrelid = c.oid
@@ -376,12 +357,12 @@ func GetLayerTableList() {
 		AND postgis_typmod_srid(a.atttypmod) > 0
 		`
 
-	db, err := DbConnect()
-	if err != nil {
-		log.Fatal(err)
+	db, connerr := DbConnect()
+	if connerr != nil {
+		log.Fatal(connerr)
 	}
 
-	rows, err := db.Query(layerSql)
+	rows, err := db.Query(context.Background(), layerSql)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -394,11 +375,12 @@ func GetLayerTableList() {
 			schema, table, description, geometry_column string
 			srid                                        int
 			geometry_type, id_column                    string
-			props                                       []string
+			// props                                       [][]string
+			props                                    pgtype.TextArray
 		)
 
 		err := rows.Scan(&schema, &table, &description, &geometry_column,
-			&srid, &geometry_type, &id_column, pq.Array(&props))
+			&srid, &geometry_type, &id_column, &props)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -407,17 +389,17 @@ func GetLayerTableList() {
 		// have to split them here, yuck, would rather have
 		// a [][]string, but lib/pq doesn't support that yet
 		properties := make(map[string]string)
-		for _, att := range props {
-			atts := strings.Split(att, ",")
-			// TODO, guard against weird values
-			properties[atts[0]] = atts[1]
+
+		arrLen := props.Dimensions[0].Length
+		arrStart := props.Dimensions[0].LowerBound - 1
+		elmLen := props.Dimensions[1].Length
+		for i := arrStart; i < arrLen; i++ {
+			elmPos := i * elmLen
+			properties[props.Elements[elmPos].String] = props.Elements[elmPos + 1].String
 		}
 
-		// use fully qualified table name as id
-		id := fmt.Sprintf("%s.%s", schema, table)
-
 		lyr := Layer{
-			Id:             id,
+			Id:             fmt.Sprintf("%s.%s", schema, table),
 			Schema:         schema,
 			Table:          table,
 			Description:    description,
