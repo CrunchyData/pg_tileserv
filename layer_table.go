@@ -385,9 +385,12 @@ func GetLayerTableList() {
 			log.Fatal(err)
 		}
 
-		// we get back "name,type" from database query,
-		// have to split them here, yuck, would rather have
-		// a [][]string, but lib/pq doesn't support that yet
+		// We use https://godoc.org/github.com/jackc/pgtype#TextArray
+		// here to scan the text[][] map of attribute name/type
+		// created in the query. It gets a little ugly demapping the
+		// pgx TextArray type, but it is at least native handling of
+		// the array. It's complex because of PgSQL ARRAY generality
+		// really, no fault of pgx
 		properties := make(map[string]string)
 
 		arrLen := props.Dimensions[0].Length
