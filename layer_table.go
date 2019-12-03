@@ -401,8 +401,10 @@ func GetLayerTableList() {
 			properties[props.Elements[elmPos].String] = props.Elements[elmPos + 1].String
 		}
 
+		// "schema.tablename" is our unique key for table layers
+		id := fmt.Sprintf("%s.%s", schema, table)
 		lyr := Layer{
-			Id:             fmt.Sprintf("%s.%s", schema, table),
+			Id:             id,
 			Schema:         schema,
 			Table:          table,
 			Description:    description,
