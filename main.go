@@ -3,7 +3,8 @@ package main
 import (
 	// "bytes"
 	// "database/sql"
-	"github.com/jackc/pgx/v4"
+	// "github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -84,7 +85,7 @@ const programVersion string = "0.1"
 var globalLayers map[string]Layer
 
 // A global database connection pointer
-var globalDb *pgx.Conn = nil
+var globalDb *pgxpool.Pool = nil
 
 // type LayerFunction struct {
 // 	namespace string
@@ -126,10 +127,10 @@ func main() {
 
 /******************************************************************************/
 
-func DbConnect() (*pgx.Conn, error) {
+func DbConnect() (*pgxpool.Pool, error) {
 	if globalDb == nil {
 		var err error
-		globalDb, err = pgx.Connect(context.Background(), globalConfig.DbConnection)
+		globalDb, err = pgxpool.Connect(context.Background(), globalConfig.DbConnection)
 		if err != nil {
 			log.Fatal(err)
 		}
