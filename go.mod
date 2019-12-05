@@ -1,4 +1,4 @@
-module github.com/pramsey/pg_tileserv
+module github.com/CrunchyData/pg_tileserv
 
 go 1.13
 
@@ -8,4 +8,5 @@ require (
 	github.com/jackc/pgtype v1.0.2
 	github.com/jackc/pgx/v4 v4.1.2
 	github.com/lib/pq v1.2.0
+	github.com/sirupsen/logrus v1.4.2
 )

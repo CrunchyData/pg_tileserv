@@ -11,13 +11,13 @@ import (
 	// _ "github.com/lib/pq"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"net/http"
 	// "os"
 	"github.com/BurntSushi/toml"
 	"os"
 	"strconv"
 	"time"
+	log "github.com/sirupsen/logrus"
 )
 
 // Age = 198
@@ -45,6 +45,7 @@ import (
 // 	x, y float64
 // }
 
+
 type Config struct {
 	DbConnection       string `json:"db_connection"`
 	HttpHost           string `json:"http_host"`
@@ -68,6 +69,14 @@ var globalConfig Config = Config{
 	DefaultBuffer:      256,
 	DefaultResolution:  4094,
 	MaxFeaturesPerTile: 50000,
+}
+
+
+type Bounds struct {
+	Minx float64  `json:"minx"`
+	Miny float64  `json:"miny"`
+	Maxx float64  `json:"maxx"`
+	Maxy float64  `json:"maxx"`
 }
 
 const programName string = "pg_tileserv"
@@ -167,10 +176,6 @@ func HandleRequestLayer(w http.ResponseWriter, r *http.Request) {
 	log.Printf("HandleRequestLayer: %s", lyrname)
 
 	if lyr, ok := globalLayers[lyrname]; ok {
-		err := lyr.AddDetails()
-		if err != nil {
-			log.Fatal(err)
-		}
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(lyr)
 	}

@@ -5,9 +5,12 @@ import (
 	// "github.com/lib/pq"
 	"context"
 	"github.com/jackc/pgtype"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
+
+// x-correlation-id
+
 
 // A Layer is a LayerTable or a LayerFunction
 
@@ -34,9 +37,40 @@ type Layer struct {
 	IdColumn       string            `json:"id_column,omitempty"`
 	Resolution     int               `json:"resolution"`
 	Buffer         int               `json:"buffer"`
-	TileJson       TileJson          `json:"tilejson,omitempty"`
-	LayerConfig    LayerConfig       `json:"layerconfig,omitempty"`
+	bounds         *Bounds
+	// TileJson       TileJson          `json:"tilejson,omitempty"`
+	// LayerConfig    LayerConfig       `json:"layerconfig,omitempty"`
 }
+
+func (lyr* Layer) GetBounds() (Bounds, error) {
+	if (lyr.bounds != nil) {
+		return *lyr.bounds, nil
+	}
+	bounds := Bounds{}
+	extentSql := fmt.Sprintf(`
+		WITH ext AS (
+			SELECT ST_Transform(ST_SetSRID(ST_EstimatedExtent('%s', '%s', '%s'), %d), 4326) AS geom
+		)
+		SELECT
+			ST_XMin(ext.geom) AS xmin,
+			ST_YMin(ext.geom) AS ymin,
+			ST_XMax(ext.geom) AS xmax,
+			ST_YMax(ext.geom) AS ymax
+		FROM ext
+		`, lyr.Schema, lyr.Table, lyr.GeometryColumn, lyr.Srid)
+
+	db, err := DbConnect()
+	if err != nil {
+		return bounds, err
+	}
+
+	err = db.QueryRow(context.Background(), extentSql).Scan(&bounds.Minx, &bounds.Miny, &bounds.Minx, &bounds.Miny)
+	if err != nil {
+		return bounds, err
+	}
+	return bounds, nil
+}
+
 
 func (lyr *Layer) Sql(tile *Tile) string {
 
@@ -132,17 +166,6 @@ func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 	}
 	rows.Close()
 	return mvtTile, nil
-}
-
-func (lyr *Layer) AddDetails() error {
-	var err error
-	if lyr.TileJson, err = lyr.GetTileJson(); err != nil {
-		return err
-	}
-	if lyr.LayerConfig, err = lyr.GetLayerConfig(lyr.TileJson); err != nil {
-		return err
-	}
-	return nil
 }
 
 // TODO, return the tile JSON information for this layer

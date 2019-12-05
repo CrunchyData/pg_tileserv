@@ -1,19 +1,14 @@
 package main
 
-import ()
+import (
+	// log "github.com/sirupsen/logrus"
+)
 
 type Tile struct {
 	Zoom int    `json:"zoom"`
 	X    int    `json:"x"`
 	Y    int    `json:"y"`
 	Ext  string `json:"ext"`
-}
-
-type Bounds struct {
-	Minx float64
-	Miny float64
-	Maxx float64
-	Maxy float64
 }
 
 // A global constant, the width of the Web Mercator plane
