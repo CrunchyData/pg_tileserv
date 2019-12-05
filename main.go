@@ -55,6 +55,8 @@ type Config struct {
 	DefaultBuffer      int    `json:"default_buffer"`
 	MaxFeaturesPerTile int    `json:"max_features_per_tile"`
 	Attribution        string `json:"attribution"`
+	DefaultMinZoom      int    `json:"default_minzoom"`
+	DefaultMaxZoom      int    `json:"default_maxzoom"`
 }
 
 // A global variable for configuration parameters and defaults
@@ -69,15 +71,10 @@ var globalConfig Config = Config{
 	DefaultBuffer:      256,
 	DefaultResolution:  4094,
 	MaxFeaturesPerTile: 50000,
+	DefaultMinZoom:     0,
+	DefaultMaxZoom:     25,
 }
 
-
-type Bounds struct {
-	Minx float64  `json:"minx"`
-	Miny float64  `json:"miny"`
-	Maxx float64  `json:"maxx"`
-	Maxy float64  `json:"maxx"`
-}
 
 const programName string = "pg_tileserv"
 const programVersion string = "0.1"
@@ -117,8 +114,8 @@ func main() {
 	}
 
 	// Report our status
-	log.Printf("Connecting to: %s\n", globalConfig.DbConnection)
 	log.Printf("Listening on: %s\n", fmt.Sprintf("%s:%d", globalConfig.HttpHost, globalConfig.HttpPort))
+	log.Printf("Connecting to: %s\n", globalConfig.DbConnection)
 
 	// Load the global layer list right away
 	GetLayerTableList()
@@ -141,6 +138,8 @@ func DbConnect() (*pgx.Conn, error) {
 	return globalDb, nil
 }
 
+/******************************************************************************/
+
 func AssetFileAsString(assetPath string) (asset string) {
 	b, err := ioutil.ReadFile(assetPath)
 	if err != nil {
@@ -162,7 +161,7 @@ func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, globalLayers)
 }
 
-func HandleRequestIndex(w http.ResponseWriter, r *http.Request) {
+func HandleRequestLayerList(w http.ResponseWriter, r *http.Request) {
 	log.Println("HandleRequestIndex")
 	// Update the local copy
 	GetLayerTableList()
@@ -178,6 +177,23 @@ func HandleRequestLayer(w http.ResponseWriter, r *http.Request) {
 	if lyr, ok := globalLayers[lyrname]; ok {
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(lyr)
+	}
+}
+
+func HandleRequestLayerTileJSON(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	lyrname := vars["name"]
+	log.Printf("HandleRequestLayerTileJSON: %s", lyrname)
+
+	if lyr, ok := globalLayers[lyrname]; ok {
+		tileJson, err := lyr.GetTileJson()
+		log.Println(tileJson)
+		log.Println(err)
+		if err != nil {
+			log.Warn(err)
+		}
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(tileJson)
 	}
 }
 
@@ -221,14 +237,6 @@ func HandleRequestTile(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// func trace() (string, int, string) {
-//     pc, file, line, ok := runtime.Caller(1)
-//     if !ok { return "?", 0, "?" }
-
-//     fn := runtime.FuncForPC(pc)
-//     return file, line, fn.Name()
-// }
-
 func HandleRequests() {
 
 	// creates a new instance of a mux router
@@ -236,9 +244,10 @@ func HandleRequests() {
 	// replace http.HandleFunc with myRouter.HandleFunc
 	myRouter.HandleFunc("/", HandleRequestRoot)
 	myRouter.HandleFunc("/index.html", HandleRequestRoot)
-	myRouter.HandleFunc("/index.json", HandleRequestIndex)
+	myRouter.HandleFunc("/index.json", HandleRequestLayerList)
 	myRouter.HandleFunc("/{name}.json", HandleRequestLayer)
 	myRouter.HandleFunc("/{name}.html", HandleRequestLayerPreview)
+	myRouter.HandleFunc("/{name}/tilejson.json", HandleRequestLayerTileJSON)
 	myRouter.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTile)
 
 	// more "production friendly" timeouts
@@ -254,3 +263,24 @@ func HandleRequests() {
 	// and shut down all the database connections / statements
 	log.Fatal(s.ListenAndServe())
 }
+
+/******************************************************************************/
+
+type Bounds struct {
+	Minx float64  `json:"minx"`
+	Miny float64  `json:"miny"`
+	Maxx float64  `json:"maxx"`
+	Maxy float64  `json:"maxx"`
+}
+
+func (b *Bounds) String() string {
+	return fmt.Sprintf("{minx:%g, miny:%g, maxx:%g, maxy:%g}", b.Minx, b.Miny, b.Maxx, b.Maxy)
+}
+
+/******************************************************************************/
+
+type StatusMessage struct {
+	Status string `json:"status"`
+	Message string `json:"message"`
+}
+

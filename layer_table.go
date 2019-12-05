@@ -38,8 +38,6 @@ type Layer struct {
 	Resolution     int               `json:"resolution"`
 	Buffer         int               `json:"buffer"`
 	bounds         *Bounds
-	// TileJson       TileJson          `json:"tilejson,omitempty"`
-	// LayerConfig    LayerConfig       `json:"layerconfig,omitempty"`
 }
 
 func (lyr* Layer) GetBounds() (Bounds, error) {
@@ -64,10 +62,12 @@ func (lyr* Layer) GetBounds() (Bounds, error) {
 		return bounds, err
 	}
 
-	err = db.QueryRow(context.Background(), extentSql).Scan(&bounds.Minx, &bounds.Miny, &bounds.Minx, &bounds.Miny)
+	err = db.QueryRow(context.Background(), extentSql).Scan(&bounds.Minx, &bounds.Miny, &bounds.Maxx, &bounds.Maxy)
 	if err != nil {
 		return bounds, err
 	}
+
+	log.Debug(bounds)
 	return bounds, nil
 }
 
@@ -168,34 +168,6 @@ func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 	return mvtTile, nil
 }
 
-// TODO, return the tile JSON information for this layer
-// http://localhost:3000/public.geonames.jso
-//
-// {
-//    "grids" : null,
-//    "name" : "public.geonames",
-//    "tilejson" : "2.2.0",
-//    "data" : null,
-//    "template" : null,
-//    "scheme" : "xyz",
-//    "version" : "1.0.0",
-//    "center" : null,
-//    "maxzoom" : 30,
-//    "legend" : null,
-//    "description" : null,
-//    "tiles" : [
-//       "http://localhost:3000/public.geonames/{z}/{x}/{y}.pbf"
-//    ],
-//    "bounds" : [
-//       -180,
-//       -90,
-//       180,
-//       90
-//    ],
-//    "id" : null,
-//    "attribution" : null,
-//    "minzoom" : 0
-// }
 
 // https://github.com/mapbox/tilejson-spec/tree/master/2.0.1
 type TileJson struct {
@@ -214,7 +186,22 @@ type TileJson struct {
 	MaxZoom     int       `json:"maxzoom"`
 	Bounds      []float64 `json:"bounds"`
 	Center      []float64 `json:"center"`
-	Id          string    `json:"id"`
+	Id          string     `json:"id"`
+	LayerConfig LayerConfig `json:"layerconfig"`
+}
+
+// https://github.com/mapbox/tilejson-spec/tree/master/2.0.1
+type LayerConfig struct {
+	Id          string `json:"id"`
+	SourceLayer string `json:"source-layer"`
+	Source      struct {
+		Type    string   `json:"type"`
+		Tiles   []string `json:"tiles"`
+		MinZoom int      `json:"minzoom"`
+		MaxZoom int      `json:"maxzoom"`
+	} `json:"source"`
+	Type string `json:"type"`
+	// Paint map[string]interface{} `json:"paint"`
 }
 
 func (lyr *Layer) GetTileJson() (TileJson, error) {
@@ -222,8 +209,8 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 	tileJson := TileJson{
 		Version:  "1.0.0",
 		TileJson: "2.0.1",
-		MinZoom:  0,
-		MaxZoom:  25,
+		MinZoom:  globalConfig.DefaultMinZoom,
+		MaxZoom:  globalConfig.DefaultMaxZoom,
 		Scheme:   "xyz",
 	}
 
@@ -258,73 +245,26 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 	tileJson.Id = lyr.Id
 	tileJson.Attribution = globalConfig.Attribution
 
-	extentSql := fmt.Sprintf(`
-		WITH ext AS (
-			SELECT ST_Transform(ST_SetSRID(ST_EstimatedExtent('%s', '%s', '%s'), %d), 4326) AS geom
-		)
-		SELECT
-			ST_XMin(ext.geom) AS xmin,
-			ST_YMin(ext.geom) AS ymin,
-			ST_XMax(ext.geom) AS xmax,
-			ST_YMax(ext.geom) AS ymax
-		FROM ext
-		`, lyr.Schema, lyr.Table, lyr.GeometryColumn, lyr.Srid)
-
-	db, err := DbConnect()
+	bounds, err := lyr.GetBounds()
 	if err != nil {
 		return tileJson, err
 	}
+	tileJson.Bounds = make([]float64, 4)
+	tileJson.Bounds[0] = bounds.Minx
+	tileJson.Bounds[1] = bounds.Miny
+	tileJson.Bounds[2] = bounds.Maxx
+	tileJson.Bounds[3] = bounds.Maxy
+	tileJson.Center = make([]float64, 2)
+	tileJson.Center[0] = (bounds.Minx+bounds.Maxx)/2.0
+	tileJson.Center[1] = (bounds.Miny+bounds.Maxy)/2.0
 
-	var (
-		xmin, ymin, xmax, ymax float64
-	)
-
-	err = db.QueryRow(context.Background(), extentSql).Scan(&xmin, &ymin, &xmax, &ymax)
-	if err != nil {
-		return tileJson, err
-	}
-	return tileJson, nil
-}
-
-// https://github.com/mapbox/tilejson-spec/tree/master/2.0.1
-type LayerConfig struct {
-	Id          string `json:"id"`
-	SourceLayer string `json:"source-layer"`
-	Source      struct {
-		Type    string   `json:"type"`
-		Tiles   []string `json:"tiles"`
-		MinZoom int      `json:"minzoom"`
-		MaxZoom int      `json:"maxzoom"`
-	} `json:"source"`
-	Type string `json:"type"`
-	// Paint map[string]interface{} `json:"paint"`
-}
-
-func (lyr *Layer) GetLayerConfig(tileJson TileJson) (LayerConfig, error) {
-
-	layerConfig := LayerConfig{
-		Id:          lyr.Id,
-		SourceLayer: lyr.Id,
-	}
-
-	// 'id': json['id'],
-	// 'source-layer': json['id'],
-	// 'source': {
-	//   'type': 'vector',
-	//   'tiles': json['tiles'],
-	//   'minzoom': json['minzoom'],
-	//   'maxzoom': json['maxzoom']
-	// },
-	// 'type': 'circle',
-	// 'paint': {
-	//   'circle-radius': 2,
-	//   'circle-color': '#007cbf'
-	// }
-
-	layerConfig.Source.Type = "vector"
-	layerConfig.Source.Tiles = tileJson.Tiles
-	layerConfig.Source.MinZoom = tileJson.MinZoom
-	layerConfig.Source.MaxZoom = tileJson.MaxZoom
+	tileJson.LayerConfig.Id = lyr.Id
+	tileJson.LayerConfig.SourceLayer = lyr.Id
+	tileJson.LayerConfig.Source.Type = "vector"
+	tileJson.LayerConfig.Source.Tiles = make([]string, 1)
+	tileJson.LayerConfig.Source.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", globalConfig.UrlBase, lyr.Id)
+	tileJson.LayerConfig.Source.MinZoom = globalConfig.DefaultMinZoom
+	tileJson.LayerConfig.Source.MaxZoom = globalConfig.DefaultMaxZoom
 
 	var layerType string
 	switch lyr.GeometryType {
@@ -339,11 +279,12 @@ func (lyr *Layer) GetLayerConfig(tileJson TileJson) (LayerConfig, error) {
 		log.Fatal("unsupported geometry type %s", lyr.GeometryType)
 	}
 
-	layerConfig.Type = layerType
+	tileJson.LayerConfig.Type = layerType
 
-	return layerConfig, nil
+	log.Debug(tileJson)
+
+	return tileJson, nil
 }
-//				SELECT array_agg(concat_ws(',', sa.attname, st.typname))
 
 func GetLayerTableList() {
 

@@ -23,9 +23,8 @@
     var map;
     var layer = '{{.Id}}';
 
-    $.getJSON(layer + ".json", function(json) {
-      console.log(json);
-      var tilejson = json['tilejson'];
+    $.getJSON(layer + "/tilejson.json", function(tilejson) {
+      console.log(tilejson);
 
       var mapConfig = {
         'container': 'map',
@@ -64,7 +63,7 @@
         }
       };
 
-      var layerConfig = json['layerconfig'];
+      var layerConfig = tilejson['layerconfig'];
       if (layerConfig['type'] == "circle") {
         layerConfig['paint'] = {
           "circle-radius": 2,
