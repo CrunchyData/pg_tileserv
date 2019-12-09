@@ -131,7 +131,7 @@ func (lyr *Layer) Sql(tile *Tile) string {
 		globalConfig.MaxFeaturesPerTile,
 		strings.Join(mvtParams, ", "))
 
-	log.Println(sql)
+	log.Debug(sql)
 	return sql
 }
 
@@ -145,7 +145,7 @@ func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 	tileSql := lyr.Sql(tile)
 	rows, err := db.Query(context.Background(), tileSql)
 	if err != nil {
-		log.Println(err)
+		log.Warn(err)
 		return nil, err
 	}
 
@@ -153,14 +153,14 @@ func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 	for rows.Next() {
 		err = rows.Scan(&mvtTile)
 		if err != nil {
-			log.Println(err)
+			log.Warn(err)
 			rows.Close()
 			return nil, err
 		}
 		// Check for errors from iterating over rows.
 	}
 	if err := rows.Err(); err != nil {
-		log.Println(err)
+		log.Warn(err)
 		rows.Close()
 		return nil, err
 	}

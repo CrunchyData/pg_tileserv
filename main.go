@@ -3,8 +3,11 @@ package main
 import (
 	// "bytes"
 	// "database/sql"
-	// "github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	// "github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4/log/logrusadapter"
+
 	"context"
 	"encoding/json"
 	"fmt"
@@ -96,7 +99,7 @@ var globalDb *pgxpool.Pool = nil
 
 func main() {
 
-	log.Printf("%s %s\n", programName, programVersion)
+	log.Infof("%s %s\n", programName, programVersion)
 
 	// Read environment configuration first
 	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
@@ -107,7 +110,7 @@ func main() {
 	if len(os.Args) > 1 {
 		configFile := os.Args[1]
 		if _, err := os.Stat(configFile); err == nil {
-			log.Printf("Reading configuration file: %s\n", configFile)
+			log.Infof("Reading configuration file: %s\n", configFile)
 			if _, err := toml.DecodeFile(configFile, &globalConfig); err != nil {
 				log.Fatal(err)
 			}
@@ -115,10 +118,10 @@ func main() {
 	}
 
 	// Report our status
-	log.Printf("Listening on: %s\n", fmt.Sprintf("%s:%d", globalConfig.HttpHost, globalConfig.HttpPort))
-	log.Printf("Connecting to: %s\n", globalConfig.DbConnection)
+	log.Infof("Listening on: %s:%d", globalConfig.HttpHost, globalConfig.HttpPort)
 
 	// Load the global layer list right away
+	// Also connects to database
 	GetLayerTableList()
 
 	// Get to work
@@ -130,10 +133,23 @@ func main() {
 func DbConnect() (*pgxpool.Pool, error) {
 	if globalDb == nil {
 		var err error
-		globalDb, err = pgxpool.Connect(context.Background(), globalConfig.DbConnection)
+		var config *pgxpool.Config
+		config, err = pgxpool.ParseConfig(globalConfig.DbConnection)
 		if err != nil {
 			log.Fatal(err)
 		}
+		config.ConnConfig.Logger = logrusadapter.NewLogger(log.New())
+		config.ConnConfig.LogLevel = pgx.LogLevelWarn
+		globalDb, err = pgxpool.ConnectConfig(context.Background(), config)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// pgHost := config.ConnConfig.Config.Host
+		// pgDatabase := config.ConnConfig.Config.Database
+		// pgUser := config.ConnConfig.Config.User
+		// pgPort := config.ConnConfig.Config.Port
+		// log.Info(config.ConnConfig.Config)
+		log.Infof("Connected to: %s\n", globalConfig.DbConnection)
 		return globalDb, err
 	}
 	return globalDb, nil
@@ -150,20 +166,20 @@ func AssetFileAsString(assetPath string) (asset string) {
 }
 
 func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
-	log.Println("HandleRequestRoot")
+	log.Trace("HandleRequestRoot")
 	// html := AssetFileAsString("assets/index.html")
 	// fmt.Fprintf(w, html)
 	GetLayerTableList()
 
 	t, err := template.ParseFiles("assets/index.html")
 	if err != nil {
-		log.Println(err)
+		log.Warn(err)
 	}
 	t.Execute(w, globalLayers)
 }
 
 func HandleRequestLayerList(w http.ResponseWriter, r *http.Request) {
-	log.Println("HandleRequestIndex")
+	log.Trace("HandleRequestIndex")
 	// Update the local copy
 	GetLayerTableList()
 	w.Header().Add("Content-Type", "application/json")
@@ -173,7 +189,7 @@ func HandleRequestLayerList(w http.ResponseWriter, r *http.Request) {
 func HandleRequestLayer(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
-	log.Printf("HandleRequestLayer: %s", lyrname)
+	log.Tracef("HandleRequestLayer: %s", lyrname)
 
 	if lyr, ok := globalLayers[lyrname]; ok {
 		w.Header().Add("Content-Type", "application/json")
@@ -184,12 +200,11 @@ func HandleRequestLayer(w http.ResponseWriter, r *http.Request) {
 func HandleRequestLayerTileJSON(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
-	log.Printf("HandleRequestLayerTileJSON: %s", lyrname)
+	log.Tracef("HandleRequestLayerTileJSON: %s", lyrname)
 
 	if lyr, ok := globalLayers[lyrname]; ok {
 		tileJson, err := lyr.GetTileJson()
-		log.Println(tileJson)
-		log.Println(err)
+		log.Trace(tileJson)
 		if err != nil {
 			log.Warn(err)
 		}
@@ -201,12 +216,12 @@ func HandleRequestLayerTileJSON(w http.ResponseWriter, r *http.Request) {
 func HandleRequestLayerPreview(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
-	log.Printf("HandleRequestLayerPreview: %s", lyrname)
+	log.Tracef("HandleRequestLayerPreview: %s", lyrname)
 
 	if lyr, ok := globalLayers[lyrname]; ok {
 		t, err := template.ParseFiles("assets/preview.html")
 		if err != nil {
-			log.Println(err)
+			log.Warn(err)
 		}
 		t.Execute(w, lyr)
 	}
@@ -221,7 +236,7 @@ func HandleRequestTile(w http.ResponseWriter, r *http.Request) {
 		y, _ := strconv.Atoi(vars["y"])
 		zoom, _ := strconv.Atoi(vars["zoom"])
 		ext := vars["ext"]
-		log.Printf("HandleRequestTile: %d/%d/%d.%s", zoom, x, y, ext)
+		log.Debugf("HandleRequestTile: %d/%d/%d.%s", zoom, x, y, ext)
 		tile := Tile{Zoom: zoom, X: x, Y: y, Ext: ext}
 		if !tile.IsValid() {
 			log.Fatal("HandleRequestTile: invalid map tile")
