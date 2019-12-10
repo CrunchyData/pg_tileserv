@@ -90,10 +90,21 @@ func main() {
 		viper.Set("DbConnection", dbUrl)
 	}
 
-	viper.SetConfigName("config")
-	viper.AddConfigPath(fmt.Sprintf("/etc/%s", programName))
-	viper.AddConfigPath(fmt.Sprintf("$HOME/.%s", programName))
-	viper.AddConfigPath(".")
+	// Read the commandline
+	flagDebugOn := getopt.BoolLong("debug", 'd', "log debugging information")
+	flagConfigFile := getopt.StringLong("config", 'c', "", "config file name")
+	getopt.Parse()
+
+
+	if *flagConfigFile != "" {
+		viper.SetConfigFile(*flagConfigFile)
+	} else {
+		viper.SetConfigName("config")
+		viper.AddConfigPath(fmt.Sprintf("/etc/%s", programName))
+		viper.AddConfigPath(fmt.Sprintf("$HOME/.%s", programName))
+		viper.AddConfigPath(".")
+	}
+
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 		    log.Debug(err)
@@ -102,14 +113,9 @@ func main() {
 	    }
 	}
 
-	// Read the commandline
-	flagDebug := getopt.BoolLong("debug", 'd', "bool", "log debugging information")
-	getopt.Parse()
-	if *flagDebug {
+	// Commandline over-rides config file for debugging
+	if *flagDebugOn {
 		viper.Set("Debug", true)
-	}
-
-	if (viper.GetBool("Debug")) {
 		log.SetLevel(log.TraceLevel)
 	}
 
