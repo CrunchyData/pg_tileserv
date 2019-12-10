@@ -10,4 +10,5 @@ require (
 	github.com/jackc/pgx/v4 v4.1.2
 	github.com/lib/pq v1.2.0
 	github.com/sirupsen/logrus v1.4.2
+	github.com/spf13/viper v1.6.1
 )

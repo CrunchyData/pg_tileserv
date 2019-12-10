@@ -1,27 +1,28 @@
 package main
 
 import (
-	// "bytes"
-	// "database/sql"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
-	// "github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4/log/logrusadapter"
-
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	// _ "github.com/lib/pq"
 	"html/template"
-	"io/ioutil"
 	"net/http"
-	// "os"
-	"github.com/BurntSushi/toml"
 	"os"
 	"strconv"
 	"time"
+
+	// REST routing
+	"github.com/gorilla/mux"
+
+	// Database connectivity
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/log/logrusadapter"
+	"github.com/jackc/pgx/v4/pgxpool"
+
+	// Logging
 	log "github.com/sirupsen/logrus"
+
+	// Configuration
+	"github.com/spf13/viper"
 )
 
 // Age = 198
@@ -50,50 +51,22 @@ import (
 // }
 
 
-type Config struct {
-	DbConnection       string `json:"db_connection"`
-	HttpHost           string `json:"http_host"`
-	HttpPort           int    `json:"http_port"`
-	UrlBase            string `json:"url_base"`
-	DefaultResolution  int    `json:"default_resolution"`
-	DefaultBuffer      int    `json:"default_buffer"`
-	MaxFeaturesPerTile int    `json:"max_features_per_tile"`
-	Attribution        string `json:"attribution"`
-	DefaultMinZoom      int    `json:"default_minzoom"`
-	DefaultMaxZoom      int    `json:"default_maxzoom"`
-}
-
-// A global variable for configuration parameters and defaults
-// var globalConfig Config
-
-// For un-provided values, use the defaults
-var globalConfig Config = Config{
-	DbConnection:       "sslmode=disable",
-	HttpHost:           "0.0.0.0",
-	HttpPort:           7800,
-	UrlBase:            "http://localhost:7800",
-	DefaultBuffer:      256,
-	DefaultResolution:  4094,
-	MaxFeaturesPerTile: 50000,
-	DefaultMinZoom:     0,
-	DefaultMaxZoom:     25,
-}
-
 
 const programName string = "pg_tileserv"
 const programVersion string = "0.1"
 
 // A global array of Layer where the state is held for performance
-// Refreshed when GetLayerTableList is called
-var globalLayers map[string]Layer
+// Refreshed when LoadLayerTableList is called
+// Key is of the form: schemaname.tablename
+var globalLayerTables map[string]Layer
+
+// A global array of LayerProc where the state is held for performance
+// Refreshed when LoadLayerTableList is called
+// Key is of the form: schemaname.procname
+var globalLayerProcs map[string]LayerProc
 
 // A global database connection pointer
 var globalDb *pgxpool.Pool = nil
-
-// type LayerFunction struct {
-// 	namespace string
-// 	funcname string
-// }
 
 /******************************************************************************/
 
@@ -101,28 +74,39 @@ func main() {
 
 	log.Infof("%s %s\n", programName, programVersion)
 
+	viper.SetDefault("DbConnection", "sslmode=disable")
+	viper.SetDefault("HttpHost", "0.0.0.0")
+	viper.SetDefault("HttpPort", 7800)
+	viper.SetDefault("UrlBase", "http://localhost:7800")
+	viper.SetDefault("DefaultResolution", 4096)
+	viper.SetDefault("DefaultBuffer", 256)
+	viper.SetDefault("MaxFeaturesPerTile", 50000)
+	viper.SetDefault("DefaultMinZoom", 0)
+	viper.SetDefault("DefaultMaxZoom", 22)
+
 	// Read environment configuration first
 	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
-		globalConfig.DbConnection = dbUrl
+		viper.Set("DbConnection", dbUrl)
 	}
 
-	// Attempt to read and parse command line configuration
-	if len(os.Args) > 1 {
-		configFile := os.Args[1]
-		if _, err := os.Stat(configFile); err == nil {
-			log.Infof("Reading configuration file: %s\n", configFile)
-			if _, err := toml.DecodeFile(configFile, &globalConfig); err != nil {
-				log.Fatal(err)
-			}
-		}
+	viper.SetConfigName("config")
+	viper.AddConfigPath(fmt.Sprintf("/etc/%s", programName))
+	viper.AddConfigPath(fmt.Sprintf("$HOME/.%s", programName))
+	viper.AddConfigPath(".")
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		    log.Debug(err)
+	    } else {
+    		log.Fatal(err)
+	    }
 	}
 
 	// Report our status
-	log.Infof("Listening on: %s:%d", globalConfig.HttpHost, globalConfig.HttpPort)
+	log.Infof("Listening on: %s:%d", viper.GetString("HttpHost"),  viper.GetInt("HttpPort"))
 
 	// Load the global layer list right away
 	// Also connects to database
-	GetLayerTableList()
+	LoadLayerTableList()
 
 	// Get to work
 	HandleRequests()
@@ -134,7 +118,7 @@ func DbConnect() (*pgxpool.Pool, error) {
 	if globalDb == nil {
 		var err error
 		var config *pgxpool.Config
-		config, err = pgxpool.ParseConfig(globalConfig.DbConnection)
+		config, err = pgxpool.ParseConfig(viper.GetString("DbConnection"))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -149,7 +133,7 @@ func DbConnect() (*pgxpool.Pool, error) {
 		// pgUser := config.ConnConfig.Config.User
 		// pgPort := config.ConnConfig.Config.Port
 		// log.Info(config.ConnConfig.Config)
-		log.Infof("Connected to: %s\n", globalConfig.DbConnection)
+		log.Infof("Connected to: %s\n", viper.GetString("DbConnection"))
 		return globalDb, err
 	}
 	return globalDb, nil
@@ -157,52 +141,69 @@ func DbConnect() (*pgxpool.Pool, error) {
 
 /******************************************************************************/
 
-func AssetFileAsString(assetPath string) (asset string) {
-	b, err := ioutil.ReadFile(assetPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return string(b)
-}
-
 func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
-	log.Trace("HandleRequestRoot")
-	// html := AssetFileAsString("assets/index.html")
-	// fmt.Fprintf(w, html)
-	GetLayerTableList()
+	log.WithFields(log.Fields{
+		"event": "handlerequest",
+		"topic": "root",
+	}).Trace("HandleRequestRoot")
+	// Update the local copy
+	LoadLayerTableList()
+	LoadLayerProcList()
 
 	t, err := template.ParseFiles("assets/index.html")
 	if err != nil {
 		log.Warn(err)
 	}
-	t.Execute(w, globalLayers)
+	t.Execute(w, globalLayerTables)
 }
 
-func HandleRequestLayerList(w http.ResponseWriter, r *http.Request) {
-	log.Trace("HandleRequestIndex")
+func HandleRequestTableList(w http.ResponseWriter, r *http.Request) {
+	log.WithFields(log.Fields{
+		"event": "handlerequest",
+		"topic": "tablelist",
+	}).Trace("HandleRequestTableList")
 	// Update the local copy
-	GetLayerTableList()
+	LoadLayerTableList()
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(globalLayers)
+	json.NewEncoder(w).Encode(globalLayerTables)
 }
 
-func HandleRequestLayer(w http.ResponseWriter, r *http.Request) {
+func HandleRequestProcList(w http.ResponseWriter, r *http.Request) {
+	log.WithFields(log.Fields{
+		"event": "handlerequest",
+		"topic": "proclist",
+	}).Trace("HandleRequestProcList")
+	// Update the local copy
+	LoadLayerProcList()
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(globalLayerProcs)
+}
+
+func HandleRequestTable(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
-	log.Tracef("HandleRequestLayer: %s", lyrname)
+	log.WithFields(log.Fields{
+		"event": "handlerequest",
+		"topic": "table",
+		"key":   lyrname,
+	}).Tracef("HandleRequestTable: %s", lyrname)
 
-	if lyr, ok := globalLayers[lyrname]; ok {
+	if lyr, ok := globalLayerTables[lyrname]; ok {
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(lyr)
 	}
 }
 
-func HandleRequestLayerTileJSON(w http.ResponseWriter, r *http.Request) {
+func HandleRequestTableTileJSON(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
-	log.Tracef("HandleRequestLayerTileJSON: %s", lyrname)
+	log.WithFields(log.Fields{
+		"event": "handlerequest",
+		"topic": "tabletilejson",
+		"key":   lyrname,
+	}).Tracef("HandleRequestTableTileJSON: %s", lyrname)
 
-	if lyr, ok := globalLayers[lyrname]; ok {
+	if lyr, ok := globalLayerTables[lyrname]; ok {
 		tileJson, err := lyr.GetTileJson()
 		log.Trace(tileJson)
 		if err != nil {
@@ -213,12 +214,16 @@ func HandleRequestLayerTileJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleRequestLayerPreview(w http.ResponseWriter, r *http.Request) {
+func HandleRequestTablePreview(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
-	log.Tracef("HandleRequestLayerPreview: %s", lyrname)
+	log.WithFields(log.Fields{
+		"event": "handlerequest",
+		"topic": "tablepreview",
+		"key":   lyrname,
+	}).Tracef("HandleRequestTablePreview: %s", lyrname)
 
-	if lyr, ok := globalLayers[lyrname]; ok {
+	if lyr, ok := globalLayerTables[lyrname]; ok {
 		t, err := template.ParseFiles("assets/preview.html")
 		if err != nil {
 			log.Warn(err)
@@ -227,20 +232,25 @@ func HandleRequestLayerPreview(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleRequestTile(w http.ResponseWriter, r *http.Request) {
+func HandleRequestTableTile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	lyrname := vars["name"]
-	if lyr, ok := globalLayers[lyrname]; ok {
+	if lyr, ok := globalLayerTables[lyrname]; ok {
 		x, _ := strconv.Atoi(vars["x"])
 		y, _ := strconv.Atoi(vars["y"])
 		zoom, _ := strconv.Atoi(vars["zoom"])
 		ext := vars["ext"]
-		log.Debugf("HandleRequestTile: %d/%d/%d.%s", zoom, x, y, ext)
 		tile := Tile{Zoom: zoom, X: x, Y: y, Ext: ext}
 		if !tile.IsValid() {
-			log.Fatal("HandleRequestTile: invalid map tile")
+			log.Fatal("HandleRequestTableTile: invalid map tile")
 		}
+		log.WithFields(log.Fields{
+			"event": "handlerequest",
+			"topic": "tabletile",
+			"key":   tile,
+		}).Tracef("HandleRequestTableTile: %s", tile)
+
 		// Replace with SQL fun
 		pbf, err := lyr.GetTile(&tile)
 		if err != nil {
@@ -260,18 +270,22 @@ func HandleRequests() {
 	// replace http.HandleFunc with myRouter.HandleFunc
 	myRouter.HandleFunc("/", HandleRequestRoot)
 	myRouter.HandleFunc("/index.html", HandleRequestRoot)
-	myRouter.HandleFunc("/index.json", HandleRequestLayerList)
-	myRouter.HandleFunc("/{name}.json", HandleRequestLayer)
-	myRouter.HandleFunc("/{name}.html", HandleRequestLayerPreview)
-	myRouter.HandleFunc("/{name}/tilejson.json", HandleRequestLayerTileJSON)
-	myRouter.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTile)
+	myRouter.HandleFunc("/index.json", HandleRequestTableList)
+	myRouter.HandleFunc("/{name}.json", HandleRequestTable)
+	myRouter.HandleFunc("/{name}.html", HandleRequestTablePreview)
+	myRouter.HandleFunc("/{name}/tilejson.json", HandleRequestTableTileJSON)
+	myRouter.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTableTile)
+
+	myRouter.HandleFunc("/rpcs/index.json", HandleRequestProcList)
+	// myRouter.HandleFunc("/rpcs/{name}.json", HandleRequestProc)
+	// myRouter.HandleFunc("/rpcs/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestProcTile)
 
 	// more "production friendly" timeouts
 	// https://blog.simon-frey.eu/go-as-in-golang-standard-net-http-config-will-break-your-production/#You_should_at_least_do_this_The_easy_path
 	s := &http.Server{
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		Addr:         fmt.Sprintf("%s:%d", globalConfig.HttpHost, globalConfig.HttpPort),
+		Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort")),
 		Handler:      myRouter,
 	}
 
@@ -283,10 +297,10 @@ func HandleRequests() {
 /******************************************************************************/
 
 type Bounds struct {
-	Minx float64  `json:"minx"`
-	Miny float64  `json:"miny"`
-	Maxx float64  `json:"maxx"`
-	Maxy float64  `json:"maxx"`
+	Minx float64 `json:"minx"`
+	Miny float64 `json:"miny"`
+	Maxx float64 `json:"maxx"`
+	Maxy float64 `json:"maxx"`
 }
 
 func (b *Bounds) String() string {
@@ -296,7 +310,6 @@ func (b *Bounds) String() string {
 /******************************************************************************/
 
 type StatusMessage struct {
-	Status string `json:"status"`
+	Status  string `json:"status"`
 	Message string `json:"message"`
 }
-

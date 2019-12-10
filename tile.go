@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	// log "github.com/sirupsen/logrus"
 )
 
@@ -44,4 +45,8 @@ func (tile *Tile) Bounds() Bounds {
 	ymax := worldMercMax - tileMercSize*float64(tile.Y)
 
 	return Bounds{xmin, ymin, xmax, ymax}
+}
+
+func (tile *Tile) String() string {
+	return fmt.Sprintf("%d/%d/%d.%s", tile.Zoom, tile.X, tile.Y, tile.Ext)
 }

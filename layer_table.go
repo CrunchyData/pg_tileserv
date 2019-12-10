@@ -7,10 +7,11 @@ import (
 	"github.com/jackc/pgtype"
 	log "github.com/sirupsen/logrus"
 	"strings"
+	// Configuration
+	"github.com/spf13/viper"
 )
 
 // x-correlation-id
-
 
 // A Layer is a LayerTable or a LayerFunction
 
@@ -22,26 +23,24 @@ import (
 // 	GetId() string
 // }
 
-type LayerList []Layer
-
 // type LayerTable struct {
 type Layer struct {
+	Id             string            `json:"id"`
 	Schema         string            `json:"schema"`
 	Table          string            `json:"table"`
 	Description    string            `json:"description,omitempty"`
-	GeometryType   string            `json:"geometry_type"`
 	Properties     map[string]string `json:"properties,omitempty"`
-	GeometryColumn string            `json:"geometry_column"`
-	Srid           int               `json:"srid"`
-	Id             string            `json:"id"`
 	IdColumn       string            `json:"id_column,omitempty"`
+	GeometryColumn string            `json:"geometry_column"`
+	GeometryType   string            `json:"geometry_type"`
+	Srid           int               `json:"srid"`
 	Resolution     int               `json:"resolution"`
 	Buffer         int               `json:"buffer"`
 	bounds         *Bounds
 }
 
-func (lyr* Layer) GetBounds() (Bounds, error) {
-	if (lyr.bounds != nil) {
+func (lyr *Layer) GetBounds() (Bounds, error) {
+	if lyr.bounds != nil {
 		return *lyr.bounds, nil
 	}
 	bounds := Bounds{}
@@ -71,8 +70,7 @@ func (lyr* Layer) GetBounds() (Bounds, error) {
 	return bounds, nil
 }
 
-
-func (lyr *Layer) Sql(tile *Tile) string {
+func (lyr *Layer) TileSql(tile *Tile) string {
 
 	// need both the exact tile boundary for clipping and an
 	// expanded version for querying
@@ -128,7 +126,7 @@ func (lyr *Layer) Sql(tile *Tile) string {
 		lyr.Table,
 		lyr.GeometryColumn,
 		lyr.Srid,
-		globalConfig.MaxFeaturesPerTile,
+		viper.GetInt("MaxFeaturesPerTile"),
 		strings.Join(mvtParams, ", "))
 
 	log.Debug(sql)
@@ -142,7 +140,7 @@ func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 		log.Fatal(err)
 	}
 
-	tileSql := lyr.Sql(tile)
+	tileSql := lyr.TileSql(tile)
 	rows, err := db.Query(context.Background(), tileSql)
 	if err != nil {
 		log.Warn(err)
@@ -168,25 +166,24 @@ func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 	return mvtTile, nil
 }
 
-
 // https://github.com/mapbox/tilejson-spec/tree/master/2.0.1
 type TileJson struct {
-	TileJson    string    `json:"tilejson"`
-	Name        string    `json:"name"`
-	Data        string    `json:"data,omitempty"`
-	Description string    `json:"description,omitempty"`
-	Version     string    `json:"version"`
-	Attribution string    `json:"attribution,omitempty"`
-	Template    string    `json:"template,omitempty"`
-	Legend      string    `json:"legend,omitempty"`
-	Scheme      string    `json:"scheme"`
-	Tiles       []string  `json:"tiles"`
-	Grids       []string  `json:"grids,omitempty"`
-	MinZoom     int       `json:"minzoom"`
-	MaxZoom     int       `json:"maxzoom"`
-	Bounds      []float64 `json:"bounds"`
-	Center      []float64 `json:"center"`
-	Id          string     `json:"id"`
+	TileJson    string      `json:"tilejson"`
+	Name        string      `json:"name"`
+	Data        string      `json:"data,omitempty"`
+	Description string      `json:"description,omitempty"`
+	Version     string      `json:"version"`
+	Attribution string      `json:"attribution,omitempty"`
+	Template    string      `json:"template,omitempty"`
+	Legend      string      `json:"legend,omitempty"`
+	Scheme      string      `json:"scheme"`
+	Tiles       []string    `json:"tiles"`
+	Grids       []string    `json:"grids,omitempty"`
+	MinZoom     int         `json:"minzoom"`
+	MaxZoom     int         `json:"maxzoom"`
+	Bounds      []float64   `json:"bounds"`
+	Center      []float64   `json:"center"`
+	Id          string      `json:"id"`
 	LayerConfig LayerConfig `json:"layerconfig"`
 }
 
@@ -209,8 +206,8 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 	tileJson := TileJson{
 		Version:  "1.0.0",
 		TileJson: "2.0.1",
-		MinZoom:  globalConfig.DefaultMinZoom,
-		MaxZoom:  globalConfig.DefaultMaxZoom,
+		MinZoom:  viper.GetInt("DefaultMinZoom"),
+		MaxZoom:  viper.GetInt("DefaultMaxZoom"),
 		Scheme:   "xyz",
 	}
 
@@ -241,9 +238,9 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 	tileJson.Name = lyr.Id
 	tileJson.Description = lyr.Description
 	tileJson.Tiles = make([]string, 1)
-	tileJson.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", globalConfig.UrlBase, lyr.Id)
+	tileJson.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", viper.GetString("UrlBase"), lyr.Id)
 	tileJson.Id = lyr.Id
-	tileJson.Attribution = globalConfig.Attribution
+	tileJson.Attribution = viper.GetString("Attribution")
 
 	bounds, err := lyr.GetBounds()
 	if err != nil {
@@ -255,16 +252,16 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 	tileJson.Bounds[2] = bounds.Maxx
 	tileJson.Bounds[3] = bounds.Maxy
 	tileJson.Center = make([]float64, 2)
-	tileJson.Center[0] = (bounds.Minx+bounds.Maxx)/2.0
-	tileJson.Center[1] = (bounds.Miny+bounds.Maxy)/2.0
+	tileJson.Center[0] = (bounds.Minx + bounds.Maxx) / 2.0
+	tileJson.Center[1] = (bounds.Miny + bounds.Maxy) / 2.0
 
 	tileJson.LayerConfig.Id = lyr.Id
 	tileJson.LayerConfig.SourceLayer = lyr.Id
 	tileJson.LayerConfig.Source.Type = "vector"
 	tileJson.LayerConfig.Source.Tiles = make([]string, 1)
-	tileJson.LayerConfig.Source.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", globalConfig.UrlBase, lyr.Id)
-	tileJson.LayerConfig.Source.MinZoom = globalConfig.DefaultMinZoom
-	tileJson.LayerConfig.Source.MaxZoom = globalConfig.DefaultMaxZoom
+	tileJson.LayerConfig.Source.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", viper.GetString("UrlBase"), lyr.Id)
+	tileJson.LayerConfig.Source.MinZoom = viper.GetInt("DefaultMinZoom")
+	tileJson.LayerConfig.Source.MaxZoom = viper.GetInt("DefaultMaxZoom")
 
 	var layerType string
 	switch lyr.GeometryType {
@@ -286,7 +283,7 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 	return tileJson, nil
 }
 
-func GetLayerTableList() {
+func LoadLayerTableList() {
 
 	layerSql := `
 		SELECT
@@ -332,7 +329,7 @@ func GetLayerTableList() {
 	}
 
 	// Reset array of layers
-	globalLayers = make(map[string]Layer)
+	globalLayerTables = make(map[string]Layer)
 	for rows.Next() {
 
 		var (
@@ -340,7 +337,7 @@ func GetLayerTableList() {
 			srid                                        int
 			geometry_type, id_column                    string
 			// props                                       [][]string
-			props                                    pgtype.TextArray
+			props pgtype.TextArray
 		)
 
 		err := rows.Scan(&schema, &table, &description, &geometry_column,
@@ -362,7 +359,7 @@ func GetLayerTableList() {
 		elmLen := props.Dimensions[1].Length
 		for i := arrStart; i < arrLen; i++ {
 			elmPos := i * elmLen
-			properties[props.Elements[elmPos].String] = props.Elements[elmPos + 1].String
+			properties[props.Elements[elmPos].String] = props.Elements[elmPos+1].String
 		}
 
 		// "schema.tablename" is our unique key for table layers
@@ -377,11 +374,11 @@ func GetLayerTableList() {
 			GeometryType:   geometry_type,
 			IdColumn:       id_column,
 			Properties:     properties,
-			Resolution:     globalConfig.DefaultResolution,
-			Buffer:         globalConfig.DefaultBuffer,
+			Resolution:     viper.GetInt("DefaultResolution"),
+			Buffer:         viper.GetInt("DefaultBuffer"),
 		}
 
-		globalLayers[id] = lyr
+		globalLayerTables[id] = lyr
 	}
 	// Check for errors from iterating over rows.
 	if err := rows.Err(); err != nil {
