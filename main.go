@@ -23,6 +23,7 @@ import (
 
 	// Configuration
 	"github.com/spf13/viper"
+	"github.com/pborman/getopt/v2"
 )
 
 // Age = 198
@@ -68,11 +69,10 @@ var globalLayerProcs map[string]LayerProc
 // A global database connection pointer
 var globalDb *pgxpool.Pool = nil
 
+
 /******************************************************************************/
 
 func main() {
-
-	log.Infof("%s %s\n", programName, programVersion)
 
 	viper.SetDefault("DbConnection", "sslmode=disable")
 	viper.SetDefault("HttpHost", "0.0.0.0")
@@ -83,6 +83,7 @@ func main() {
 	viper.SetDefault("MaxFeaturesPerTile", 50000)
 	viper.SetDefault("DefaultMinZoom", 0)
 	viper.SetDefault("DefaultMaxZoom", 22)
+	viper.SetDefault("Debug", false)
 
 	// Read environment configuration first
 	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
@@ -101,7 +102,19 @@ func main() {
 	    }
 	}
 
+	// Read the commandline
+	flagDebug := getopt.BoolLong("debug", 'd', "bool", "log debugging information")
+	getopt.Parse()
+	if *flagDebug {
+		viper.Set("Debug", true)
+	}
+
+	if (viper.GetBool("Debug")) {
+		log.SetLevel(log.TraceLevel)
+	}
+
 	// Report our status
+	log.Infof("%s %s\n", programName, programVersion)
 	log.Infof("Listening on: %s:%d", viper.GetString("HttpHost"),  viper.GetInt("HttpPort"))
 
 	// Load the global layer list right away
@@ -122,8 +135,15 @@ func DbConnect() (*pgxpool.Pool, error) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		// Read current log level and use one less-fine level
+		// below that
 		config.ConnConfig.Logger = logrusadapter.NewLogger(log.New())
-		config.ConnConfig.LogLevel = pgx.LogLevelWarn
+		levelString, _ := (log.GetLevel() - 1).MarshalText()
+		pgxLevel, _ := pgx.LogLevelFromString(string(levelString))
+		config.ConnConfig.LogLevel = pgxLevel
+
+		// Connect!
 		globalDb, err = pgxpool.ConnectConfig(context.Background(), config)
 		if err != nil {
 			log.Fatal(err)
@@ -138,6 +158,7 @@ func DbConnect() (*pgxpool.Pool, error) {
 	}
 	return globalDb, nil
 }
+
 
 /******************************************************************************/
 
@@ -248,8 +269,8 @@ func HandleRequestTableTile(w http.ResponseWriter, r *http.Request) {
 		log.WithFields(log.Fields{
 			"event": "handlerequest",
 			"topic": "tabletile",
-			"key":   tile,
-		}).Tracef("HandleRequestTableTile: %s", tile)
+			"key":   tile.String(),
+		}).Tracef("HandleRequestTableTile: %s", tile.String())
 
 		// Replace with SQL fun
 		pbf, err := lyr.GetTile(&tile)
