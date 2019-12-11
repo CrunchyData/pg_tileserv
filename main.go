@@ -9,9 +9,11 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"errors"
 
 	// REST routing
 	"github.com/gorilla/mux"
+	"github.com/gorilla/handlers"
 
 	// Database connectivity
 	"github.com/jackc/pgx/v4"
@@ -22,8 +24,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	// Configuration
-	"github.com/spf13/viper"
 	"github.com/pborman/getopt/v2"
+	"github.com/spf13/viper"
 )
 
 // Age = 198
@@ -51,8 +53,6 @@ import (
 // 	x, y float64
 // }
 
-
-
 const programName string = "pg_tileserv"
 const programVersion string = "0.1"
 
@@ -68,7 +68,6 @@ var globalLayerProcs map[string]LayerProc
 
 // A global database connection pointer
 var globalDb *pgxpool.Pool = nil
-
 
 /******************************************************************************/
 
@@ -95,7 +94,6 @@ func main() {
 	flagConfigFile := getopt.StringLong("config", 'c', "", "config file name")
 	getopt.Parse()
 
-
 	if *flagConfigFile != "" {
 		viper.SetConfigFile(*flagConfigFile)
 	} else {
@@ -107,10 +105,10 @@ func main() {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-		    log.Debug(err)
-	    } else {
-    		log.Fatal(err)
-	    }
+			log.Debug(err)
+		} else {
+			log.Fatal(err)
+		}
 	}
 
 	// Commandline over-rides config file for debugging
@@ -121,7 +119,7 @@ func main() {
 
 	// Report our status
 	log.Infof("%s %s\n", programName, programVersion)
-	log.Infof("Listening on: %s:%d", viper.GetString("HttpHost"),  viper.GetInt("HttpPort"))
+	log.Infof("Listening on: %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
 
 	// Load the global layer list right away
 	// Also connects to database
@@ -165,7 +163,6 @@ func DbConnect() (*pgxpool.Pool, error) {
 	return globalDb, nil
 }
 
-
 /******************************************************************************/
 
 func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
@@ -191,6 +188,7 @@ func HandleRequestTableList(w http.ResponseWriter, r *http.Request) {
 	}).Trace("HandleRequestTableList")
 	// Update the local copy
 	LoadLayerTableList()
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(globalLayerTables)
 }
@@ -202,6 +200,8 @@ func HandleRequestProcList(w http.ResponseWriter, r *http.Request) {
 	}).Trace("HandleRequestProcList")
 	// Update the local copy
 	LoadLayerProcList()
+	// todo ERROR on db
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(globalLayerProcs)
 }
@@ -216,9 +216,28 @@ func HandleRequestTable(w http.ResponseWriter, r *http.Request) {
 	}).Tracef("HandleRequestTable: %s", lyrname)
 
 	if lyr, ok := globalLayerTables[lyrname]; ok {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(lyr)
 	}
+	// todo ERROR
+}
+
+func HandleRequestProc(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	lyrname := vars["name"]
+	log.WithFields(log.Fields{
+		"event": "handlerequest",
+		"topic": "proc",
+		"key":   lyrname,
+	}).Tracef("HandleRequestProc: %s", lyrname)
+
+	if lyr, ok := globalLayerProcs[lyrname]; ok {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(lyr)
+	}
+	// todo ERROR
 }
 
 func HandleRequestTableTileJSON(w http.ResponseWriter, r *http.Request) {
@@ -236,6 +255,7 @@ func HandleRequestTableTileJSON(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Warn(err)
 		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(tileJson)
 	}
@@ -259,19 +279,25 @@ func HandleRequestTablePreview(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleRequestTableTile(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	lyrname := vars["name"]
-	if lyr, ok := globalLayerTables[lyrname]; ok {
+func MakeTile(vars map[string]string) (Tile, error) {
+		// Route restriction should ensure these are numbers
 		x, _ := strconv.Atoi(vars["x"])
 		y, _ := strconv.Atoi(vars["y"])
 		zoom, _ := strconv.Atoi(vars["zoom"])
 		ext := vars["ext"]
 		tile := Tile{Zoom: zoom, X: x, Y: y, Ext: ext}
 		if !tile.IsValid() {
-			log.Fatal("HandleRequestTableTile: invalid map tile")
+			return tile, errors.New(fmt.Sprintf("invalid tile address %s", tile.String()))
 		}
+		return tile, nil
+}
+
+func HandleRequestTableTile(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	lyrname := vars["name"]
+	if lyr, ok := globalLayerTables[lyrname]; ok {
+		tile, _ := MakeTile(vars)
+
 		log.WithFields(log.Fields{
 			"event": "handlerequest",
 			"topic": "tabletile",
@@ -283,6 +309,33 @@ func HandleRequestTableTile(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			// TODO return a 500 or something
 		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
+		_, err = w.Write(pbf)
+		return
+	}
+
+}
+
+func HandleRequestProcTile(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	lyrname := vars["name"]
+	if lyr, ok := globalLayerProcs[lyrname]; ok {
+		tile, _ := MakeTile(vars)
+		log.WithFields(log.Fields{
+			"event": "handlerequest",
+			"topic": "tabletile",
+			"key":   tile.String(),
+		}).Tracef("HandleRequestTableTile: %s", tile.String())
+
+		// Replace with SQL fun
+		procArgs := lyr.GetLayerProcArgs(r.URL.Query())
+		pbf, err := lyr.GetTile(&tile, procArgs)
+
+		if err != nil {
+			// TODO return a 500 or something
+		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
 		_, err = w.Write(pbf)
 		return
@@ -293,19 +346,23 @@ func HandleRequestTableTile(w http.ResponseWriter, r *http.Request) {
 func HandleRequests() {
 
 	// creates a new instance of a mux router
-	myRouter := mux.NewRouter().StrictSlash(true)
+	r := mux.NewRouter().StrictSlash(true)
 	// replace http.HandleFunc with myRouter.HandleFunc
-	myRouter.HandleFunc("/", HandleRequestRoot)
-	myRouter.HandleFunc("/index.html", HandleRequestRoot)
-	myRouter.HandleFunc("/index.json", HandleRequestTableList)
-	myRouter.HandleFunc("/{name}.json", HandleRequestTable)
-	myRouter.HandleFunc("/{name}.html", HandleRequestTablePreview)
-	myRouter.HandleFunc("/{name}/tilejson.json", HandleRequestTableTileJSON)
-	myRouter.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTableTile)
+	r.HandleFunc("/", HandleRequestRoot).Methods("GET")
+	r.HandleFunc("/index.html", HandleRequestRoot).Methods("GET")
+	r.HandleFunc("/index.json", HandleRequestTableList).Methods("GET")
+	r.HandleFunc("/{name}.json", HandleRequestTable).Methods("GET")
+	r.HandleFunc("/{name}.html", HandleRequestTablePreview).Methods("GET")
+	r.HandleFunc("/{name}/tilejson.json", HandleRequestTableTileJSON).Methods("GET")
+	r.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTableTile).Methods("GET")
 
-	myRouter.HandleFunc("/rpcs/index.json", HandleRequestProcList)
+	r.HandleFunc("/rpcs/index.json", HandleRequestProcList).Methods("GET")
+	r.HandleFunc("/rpcs/{name}.json", HandleRequestProc).Methods("GET")
 	// myRouter.HandleFunc("/rpcs/{name}.json", HandleRequestProc)
 	// myRouter.HandleFunc("/rpcs/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestProcTile)
+
+	// Allow CORS from anywhere
+	corsOpt := handlers.AllowedOrigins([]string{"*"})
 
 	// more "production friendly" timeouts
 	// https://blog.simon-frey.eu/go-as-in-golang-standard-net-http-config-will-break-your-production/#You_should_at_least_do_this_The_easy_path
@@ -313,7 +370,7 @@ func HandleRequests() {
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort")),
-		Handler:      myRouter,
+		Handler:      handlers.CORS(corsOpt)(r),
 	}
 
 	// TODO figure out how to gracefully shut down on ^C

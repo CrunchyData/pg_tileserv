@@ -308,8 +308,7 @@ func LoadLayerTableList() {
 		JOIN pg_attribute a ON (a.attrelid = c.oid)
 		JOIN pg_type t ON (a.atttypid = t.oid)
 		LEFT JOIN pg_description d ON (c.oid = d.objoid)
-		LEFT JOIN pg_index i ON (c.oid = i.indrelid AND i.indisprimary
-		AND i.indnatts = 1)
+		LEFT JOIN pg_index i ON (c.oid = i.indrelid AND i.indisprimary AND i.indnatts = 1)
 		LEFT JOIN pg_attribute ia ON (ia.attrelid = i.indexrelid)
 		LEFT JOIN pg_type it ON (ia.atttypid = it.oid AND it.typname in ('int2', 'int4', 'int8'))
 		WHERE c.relkind = 'r'

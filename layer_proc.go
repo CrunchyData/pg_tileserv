@@ -1,8 +1,18 @@
 package main
 
 import (
+	"net/url"
+	"fmt"
+	"strings"
+
+	// Database
 	"context"
-	"log"
+
+	log "github.com/sirupsen/logrus"
+
+
+	// "github.com/jackc/pgtype"
+
 	// "fmt"
 	// "fmt"
 	// "github.com/lib/pq"
@@ -20,6 +30,54 @@ type LayerProc struct {
 	Description   string   `json:"description,omitempty"`
 	Arguments     []string `json:"arguments,omitempty"`
 	ArgumentTypes []string `json:"argument_types,omitempty"`
+}
+
+
+func (lyr *LayerProc) GetLayerProcArgs(vals url.Values) map[string]string {
+	procArgs := make(map[string]string)
+	for _, arg := range lyr.Arguments {
+		if val, ok := vals[arg]; ok {
+			procArgs[arg] = val[0]
+		}
+	}
+	return procArgs
+}
+
+
+func (lyr *LayerProc) GetTile(tile *Tile, args map[string]string) ([]byte, error) {
+
+	db, err := DbConnect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Complete the set of all parameters we are going to call
+	// in the proc
+	args["z"] = string(tile.Zoom)
+	args["x"] = string(tile.X)
+	args["y"] = string(tile.Y)
+
+	// Need ordered list of named parameters and values to
+	// pass into the Query
+	keys := make([]string, 16)
+	vals := make([]interface{}, 16)
+	i := 1
+	for k, v := range args {
+		keys = append(keys, fmt.Sprintf("%s => $%d", k, i))
+		vals = append(vals, v)
+	}
+
+	// Build the SQL
+	sql := fmt.Sprintf("SELECT %s(%s)", lyr.Id, strings.Join(keys, ", "))
+
+	row := db.QueryRow(context.Background(), sql, vals)
+	var mvtTile []byte
+	err = row.Scan(&mvtTile)
+	if err != nil {
+		log.Warn(err)
+		return nil, err
+	} else {
+		return mvtTile, nil
+	}
 }
 
 func LoadLayerProcList() {
