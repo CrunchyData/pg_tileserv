@@ -5,9 +5,10 @@
   </head>
 <body>
   <h1>pg_tileserv</h1>
+  <h2>Table Layers</h2>
   <ul>
-    <li><strong><a href='/index.json'>index.json</a></strong> for layer list</li>
-  {{ range $key, $value := . }}
+    <li><strong><a href='index.json'>index.json</a></strong> for layer list</li>
+  {{ range $key, $value := .Tables }}
      <li><strong><a href='{{ $key }}.html'>{{ $key }}</a></strong>: {{ $value.Description }}
       <ul>
         <li><a href='{{ $key }}.json'>{{ $key }}.json</a> for layer information</li>
@@ -15,8 +16,28 @@
       </ul>
     </li>
   {{ end }}
-
   </ul>
+
+  <h2>Function Layers</h2>
+  <ul>
+    <li><strong><a href='func/index.json'>func/index.json</a></strong> for layer list</li>
+  {{ range $key, $value := .Functions }}
+     <li><strong><a href='func/{{ $key }}.html'>{{ $key }}</a></strong>: {{ $value.Description }}
+      <ul>
+        <li><a href='func/{{ $key }}.json'>func/{{ $key }}.json</a> for layer information</li>
+        <li><strong>func/{{ $key }}/{z}/{x}/{y}.pbf</strong> for tiles
+          <ul>
+            {{ range $i, $a := $value.Arguments }}
+            <li>{{ $a }}[{{ index $value.ArgumentTypes $i }}]</li>
+            {{ end }}
+          </ul>
+        </li>
+      </ul>
+    </li>
+  {{ end }}
+  </ul>
+
+
 
 </body>
 </html>

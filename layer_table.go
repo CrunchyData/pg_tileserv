@@ -141,29 +141,15 @@ func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
 	}
 
 	tileSql := lyr.TileSql(tile)
-	rows, err := db.Query(context.Background(), tileSql)
+	row := db.QueryRow(context.Background(), tileSql)
+	var mvtTile []byte
+	err = row.Scan(&mvtTile)
 	if err != nil {
 		log.Warn(err)
 		return nil, err
+	} else {
+		return mvtTile, nil
 	}
-
-	var mvtTile []byte
-	for rows.Next() {
-		err = rows.Scan(&mvtTile)
-		if err != nil {
-			log.Warn(err)
-			rows.Close()
-			return nil, err
-		}
-		// Check for errors from iterating over rows.
-	}
-	if err := rows.Err(); err != nil {
-		log.Warn(err)
-		rows.Close()
-		return nil, err
-	}
-	rows.Close()
-	return mvtTile, nil
 }
 
 // https://github.com/mapbox/tilejson-spec/tree/master/2.0.1

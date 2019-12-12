@@ -61,10 +61,10 @@ const programVersion string = "0.1"
 // Key is of the form: schemaname.tablename
 var globalLayerTables map[string]Layer
 
-// A global array of LayerProc where the state is held for performance
+// A global array of LayerFunc where the state is held for performance
 // Refreshed when LoadLayerTableList is called
 // Key is of the form: schemaname.procname
-var globalLayerProcs map[string]LayerProc
+var globalLayerFunctions map[string]LayerFunction
 
 // A global database connection pointer
 var globalDb *pgxpool.Pool = nil
@@ -124,7 +124,7 @@ func main() {
 	// Load the global layer list right away
 	// Also connects to database
 	LoadLayerTableList()
-	LoadLayerProcList()
+	LoadLayerFunctionList()
 
 	// Get to work
 	HandleRequests()
@@ -136,7 +136,8 @@ func DbConnect() (*pgxpool.Pool, error) {
 	if globalDb == nil {
 		var err error
 		var config *pgxpool.Config
-		config, err = pgxpool.ParseConfig(viper.GetString("DbConnection"))
+		dbConnection := viper.GetString("DbConnection")
+		config, err = pgxpool.ParseConfig(dbConnection)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -153,12 +154,11 @@ func DbConnect() (*pgxpool.Pool, error) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		// pgHost := config.ConnConfig.Config.Host
-		// pgDatabase := config.ConnConfig.Config.Database
-		// pgUser := config.ConnConfig.Config.User
-		// pgPort := config.ConnConfig.Config.Port
-		// log.Info(config.ConnConfig.Config)
-		log.Infof("Connected to: %s\n", viper.GetString("DbConnection"))
+		dbName := config.ConnConfig.Config.Database
+		dbUser := config.ConnConfig.Config.User
+		dbHost := config.ConnConfig.Config.Host
+		log.Infof("Connected as '%s' to '%s' @ '%s'", dbUser, dbName, dbHost)
+
 		return globalDb, err
 	}
 	return globalDb, nil
@@ -173,13 +173,23 @@ func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
 	}).Trace("HandleRequestRoot")
 	// Update the local copy
 	LoadLayerTableList()
-	LoadLayerProcList()
+	LoadLayerFunctionList()
+
+	type globalInfo struct {
+		Tables map[string]Layer
+		Functions map[string]LayerFunction
+	}
+	info := globalInfo{
+		globalLayerTables,
+		globalLayerFunctions,
+	}
 
 	t, err := template.ParseFiles("assets/index.html")
 	if err != nil {
 		log.Warn(err)
 	}
-	t.Execute(w, globalLayerTables)
+	// t.Execute(w, globalLayerTables)
+	t.Execute(w, info)
 }
 
 func HandleRequestTableList(w http.ResponseWriter, r *http.Request) {
@@ -194,17 +204,17 @@ func HandleRequestTableList(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(globalLayerTables)
 }
 
-func HandleRequestProcList(w http.ResponseWriter, r *http.Request) {
+func HandleRequestFunctionList(w http.ResponseWriter, r *http.Request) {
 	log.WithFields(log.Fields{
 		"event": "handlerequest",
 		"topic": "proclist",
-	}).Trace("HandleRequestProcList")
+	}).Trace("HandleRequestFunctionList")
 	// Update the local copy
-	LoadLayerProcList()
+	LoadLayerFunctionList()
 	// todo ERROR on db
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(globalLayerProcs)
+	json.NewEncoder(w).Encode(globalLayerFunctions)
 }
 
 func HandleRequestTable(w http.ResponseWriter, r *http.Request) {
@@ -224,16 +234,16 @@ func HandleRequestTable(w http.ResponseWriter, r *http.Request) {
 	// todo ERROR
 }
 
-func HandleRequestProc(w http.ResponseWriter, r *http.Request) {
+func HandleRequestFunction(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
 	log.WithFields(log.Fields{
 		"event": "handlerequest",
 		"topic": "proc",
 		"key":   lyrname,
-	}).Tracef("HandleRequestProc: %s", lyrname)
+	}).Tracef("HandleRequestFunction: %s", lyrname)
 
-	if lyr, ok := globalLayerProcs[lyrname]; ok {
+	if lyr, ok := globalLayerFunctions[lyrname]; ok {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(lyr)
@@ -318,19 +328,19 @@ func HandleRequestTableTile(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func HandleRequestProcTile(w http.ResponseWriter, r *http.Request) {
+func HandleRequestFunctionTile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
-	if lyr, ok := globalLayerProcs[lyrname]; ok {
+	if lyr, ok := globalLayerFunctions[lyrname]; ok {
 		tile, _ := MakeTile(vars)
 		log.WithFields(log.Fields{
 			"event": "handlerequest",
 			"topic": "proctile",
 			"key":   tile.String(),
-		}).Tracef("HandleRequestProcTile: %s", tile.String())
+		}).Tracef("HandleRequestFunctionTile: %s", tile.String())
 
 		// Replace with SQL fun
-		procArgs := lyr.GetLayerProcArgs(r.URL.Query())
+		procArgs := lyr.GetLayerFunctionArgs(r.URL.Query())
 		pbf, err := lyr.GetTile(&tile, procArgs)
 
 		if err != nil {
@@ -357,9 +367,9 @@ func HandleRequests() {
 	r.HandleFunc("/{name}/tilejson.json", HandleRequestTableTileJSON).Methods("GET")
 	r.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTableTile).Methods("GET")
 
-	r.HandleFunc("/rpcs/index.json", HandleRequestProcList).Methods("GET")
-	r.HandleFunc("/rpcs/{name}.json", HandleRequestProc).Methods("GET")
-	r.HandleFunc("/rpcs/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestProcTile)
+	r.HandleFunc("/func/index.json", HandleRequestFunctionList).Methods("GET")
+	r.HandleFunc("/func/{name}.json", HandleRequestFunction).Methods("GET")
+	r.HandleFunc("/func/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestFunctionTile)
 
 	// Allow CORS from anywhere
 	corsOpt := handlers.AllowedOrigins([]string{"*"})

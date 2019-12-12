@@ -23,9 +23,9 @@ import (
 )
 
 // type LayerTable struct {
-type LayerProc struct {
+type LayerFunction struct {
 	Id            string   `json:"id"`
-	Proc          string   `json:"proc"`
+	Function          string   `json:"function"`
 	Schema        string   `json:"schema"`
 	Description   string   `json:"description,omitempty"`
 	Arguments     []string `json:"arguments,omitempty"`
@@ -33,31 +33,23 @@ type LayerProc struct {
 }
 
 
-func (lyr *LayerProc) GetLayerProcArgs(vals url.Values) map[string]string {
-	procArgs := make(map[string]string)
+func (lyr *LayerFunction) GetLayerFunctionArgs(vals url.Values) map[string]string {
+	funcArgs := make(map[string]string)
 	for _, arg := range lyr.Arguments {
 		if val, ok := vals[arg]; ok {
-			procArgs[arg] = val[0]
+			funcArgs[arg] = val[0]
 		}
 	}
-	return procArgs
+	return funcArgs
 }
 
 
-func (lyr *LayerProc) GetTile(tile *Tile, args map[string]string) ([]byte, error) {
+func (lyr *LayerFunction) GetTile(tile *Tile, args map[string]string) ([]byte, error) {
 
 	db, err := DbConnect()
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Complete the set of all parameters we are going to call
-	// in the proc
-	args["z"] = string(tile.Zoom)
-	args["x"] = string(tile.X)
-	args["y"] = string(tile.Y)
-	log.Debugf("GetTile tile: %s", tile.String())
-	log.Debugf("GetTile string(tile.Zoom): %s", string(tile.Zoom))
-	log.Debugf("GetTile (tile.Zoom): %d", tile.Zoom)
 
 	// Need ordered list of named parameters and values to
 	// pass into the Query
@@ -80,10 +72,12 @@ func (lyr *LayerProc) GetTile(tile *Tile, args map[string]string) ([]byte, error
 	}
 
 	// Build the SQL
-	log.Debugf("GetTile keys: %s", keys)
-	log.Debugf("GetTile vals: %s", vals)
 	sql := fmt.Sprintf("SELECT %s(%s)", lyr.Id, strings.Join(keys, ", "))
-	log.Debugf("GetTile sql: %s", sql)
+	log.WithFields(log.Fields{
+		"event": "function.gettile",
+		"topic": "sql",
+		"key":   sql,
+	}).Debugf("Func GetTile: %s", sql)
 
 	row := db.QueryRow(context.Background(), sql, vals...)
 	var mvtTile []byte
@@ -96,9 +90,9 @@ func (lyr *LayerProc) GetTile(tile *Tile, args map[string]string) ([]byte, error
 	}
 }
 
-func LoadLayerProcList() {
+func LoadLayerFunctionList() {
 
-	// Valid procs **must** have signature of
+	// Valid functions **must** have signature of
 	// function(z integer, x integer, y integer) returns bytea
 	layerSql := `
 		SELECT
@@ -128,29 +122,29 @@ func LoadLayerProcList() {
 	}
 
 	// Reset array of layers
-	globalLayerProcs = make(map[string]LayerProc)
+	globalLayerFunctions = make(map[string]LayerFunction)
 	for rows.Next() {
 
 		var (
-			id, schema, proc, description string
+			id, schema, function, description string
 			argnames, argtypes            []string
 		)
 
-		err := rows.Scan(&id, &schema, &proc, &description, &argnames, &argtypes)
+		err := rows.Scan(&id, &schema, &function, &description, &argnames, &argtypes)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		lyr := LayerProc{
+		lyr := LayerFunction{
 			Id:            id,
 			Schema:        schema,
-			Proc:          proc,
+			Function:      function,
 			Description:   description,
-			Arguments:     argnames,
-			ArgumentTypes: argtypes,
+			Arguments:     argnames[3:],
+			ArgumentTypes: argtypes[3:],
 		}
 
-		globalLayerProcs[id] = lyr
+		globalLayerFunctions[id] = lyr
 	}
 	// Check for errors from iterating over rows.
 	if err := rows.Err(); err != nil {
