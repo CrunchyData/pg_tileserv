@@ -55,21 +55,37 @@ func (lyr *LayerProc) GetTile(tile *Tile, args map[string]string) ([]byte, error
 	args["z"] = string(tile.Zoom)
 	args["x"] = string(tile.X)
 	args["y"] = string(tile.Y)
+	log.Debugf("GetTile tile: %s", tile.String())
+	log.Debugf("GetTile string(tile.Zoom): %s", string(tile.Zoom))
+	log.Debugf("GetTile (tile.Zoom): %d", tile.Zoom)
 
 	// Need ordered list of named parameters and values to
 	// pass into the Query
-	keys := make([]string, 16)
-	vals := make([]interface{}, 16)
+	keys := make([]string, 0)
+	vals := make([]interface{}, 0)
 	i := 1
 	for k, v := range args {
 		keys = append(keys, fmt.Sprintf("%s => $%d", k, i))
-		vals = append(vals, v)
+		switch k {
+		case "x":
+			vals = append(vals, tile.X)
+		case "y":
+			vals = append(vals, tile.Y)
+		case "z":
+			vals = append(vals, tile.Zoom)
+		default:
+			vals = append(vals, v)
+		}
+		i += 1
 	}
 
 	// Build the SQL
+	log.Debugf("GetTile keys: %s", keys)
+	log.Debugf("GetTile vals: %s", vals)
 	sql := fmt.Sprintf("SELECT %s(%s)", lyr.Id, strings.Join(keys, ", "))
+	log.Debugf("GetTile sql: %s", sql)
 
-	row := db.QueryRow(context.Background(), sql, vals)
+	row := db.QueryRow(context.Background(), sql, vals...)
 	var mvtTile []byte
 	err = row.Scan(&mvtTile)
 	if err != nil {

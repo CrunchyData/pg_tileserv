@@ -124,6 +124,7 @@ func main() {
 	// Load the global layer list right away
 	// Also connects to database
 	LoadLayerTableList()
+	LoadLayerProcList()
 
 	// Get to work
 	HandleRequests()
@@ -324,9 +325,9 @@ func HandleRequestProcTile(w http.ResponseWriter, r *http.Request) {
 		tile, _ := MakeTile(vars)
 		log.WithFields(log.Fields{
 			"event": "handlerequest",
-			"topic": "tabletile",
+			"topic": "proctile",
 			"key":   tile.String(),
-		}).Tracef("HandleRequestTableTile: %s", tile.String())
+		}).Tracef("HandleRequestProcTile: %s", tile.String())
 
 		// Replace with SQL fun
 		procArgs := lyr.GetLayerProcArgs(r.URL.Query())
@@ -358,8 +359,7 @@ func HandleRequests() {
 
 	r.HandleFunc("/rpcs/index.json", HandleRequestProcList).Methods("GET")
 	r.HandleFunc("/rpcs/{name}.json", HandleRequestProc).Methods("GET")
-	// myRouter.HandleFunc("/rpcs/{name}.json", HandleRequestProc)
-	// myRouter.HandleFunc("/rpcs/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestProcTile)
+	r.HandleFunc("/rpcs/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestProcTile)
 
 	// Allow CORS from anywhere
 	corsOpt := handlers.AllowedOrigins([]string{"*"})
