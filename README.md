@@ -174,7 +174,7 @@ LANGUAGE 'sql';
 
 
 CREATE OR REPLACE
-FUNCTION HexPopulationSummary2(z integer, x integer, y integer)
+FUNCTION HexPopulationSummary3(z integer, x integer, y integer, arg1 text default 'arg1', arg2 integer default 101)
 RETURNS bytea
 AS $$
 WITH

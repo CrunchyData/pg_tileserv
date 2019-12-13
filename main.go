@@ -3,17 +3,17 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-	"errors"
 
 	// REST routing
-	"github.com/gorilla/mux"
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 
 	// Database connectivity
 	"github.com/jackc/pgx/v4"
@@ -176,7 +176,7 @@ func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
 	LoadLayerFunctionList()
 
 	type globalInfo struct {
-		Tables map[string]Layer
+		Tables    map[string]Layer
 		Functions map[string]LayerFunction
 	}
 	info := globalInfo{
@@ -291,16 +291,16 @@ func HandleRequestTablePreview(w http.ResponseWriter, r *http.Request) {
 }
 
 func MakeTile(vars map[string]string) (Tile, error) {
-		// Route restriction should ensure these are numbers
-		x, _ := strconv.Atoi(vars["x"])
-		y, _ := strconv.Atoi(vars["y"])
-		zoom, _ := strconv.Atoi(vars["zoom"])
-		ext := vars["ext"]
-		tile := Tile{Zoom: zoom, X: x, Y: y, Ext: ext}
-		if !tile.IsValid() {
-			return tile, errors.New(fmt.Sprintf("invalid tile address %s", tile.String()))
-		}
-		return tile, nil
+	// Route restriction should ensure these are numbers
+	x, _ := strconv.Atoi(vars["x"])
+	y, _ := strconv.Atoi(vars["y"])
+	zoom, _ := strconv.Atoi(vars["zoom"])
+	ext := vars["ext"]
+	tile := Tile{Zoom: zoom, X: x, Y: y, Ext: ext}
+	if !tile.IsValid() {
+		return tile, errors.New(fmt.Sprintf("invalid tile address %s", tile.String()))
+	}
+	return tile, nil
 }
 
 func HandleRequestTableTile(w http.ResponseWriter, r *http.Request) {

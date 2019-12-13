@@ -29,13 +29,18 @@ type Layer struct {
 	Schema         string            `json:"schema"`
 	Table          string            `json:"table"`
 	Description    string            `json:"description,omitempty"`
-	Properties     map[string]string `json:"properties,omitempty"`
-	IdColumn       string            `json:"id_column,omitempty"`
-	GeometryColumn string            `json:"geometry_column"`
+	Attributes     map[string]string `json:"attributes,omitempty"`
+	IdColumn       string
+	GeometryColumn string
 	GeometryType   string            `json:"geometry_type"`
-	Srid           int               `json:"srid"`
-	Resolution     int               `json:"resolution"`
-	Buffer         int               `json:"buffer"`
+	Srid           int
+	Buffer    int
+	Resolution    int
+	Center        []float64  `json:"center,omitempty"`
+	MinZoom       int `json:"minzoom,omitempty"`
+	MaxZoom       int `json:"maxzoom,omitempty"`
+	Tiles         string `json:"tiles,omitempty"`
+	SourceLayer   int `json:"source-layer,omitempty"`
 	bounds         *Bounds
 }
 
@@ -84,7 +89,7 @@ func (lyr *Layer) TileSql(tile *Tile) string {
 	// attributes
 	// TODO, support attribute restriction in tile query
 	attrNames := make([]string, 0)
-	for k := range lyr.Properties {
+	for k := range lyr.Attributes {
 		attrNames = append(attrNames, fmt.Sprintf("\"%s\"", k))
 	}
 
@@ -322,11 +327,11 @@ func LoadLayerTableList() {
 			srid                                        int
 			geometry_type, id_column                    string
 			// props                                       [][]string
-			props pgtype.TextArray
+			atts pgtype.TextArray
 		)
 
 		err := rows.Scan(&schema, &table, &description, &geometry_column,
-			&srid, &geometry_type, &id_column, &props)
+			&srid, &geometry_type, &id_column, &atts)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -337,14 +342,14 @@ func LoadLayerTableList() {
 		// pgx TextArray type, but it is at least native handling of
 		// the array. It's complex because of PgSQL ARRAY generality
 		// really, no fault of pgx
-		properties := make(map[string]string)
+		attributes := make(map[string]string)
 
-		arrLen := props.Dimensions[0].Length
-		arrStart := props.Dimensions[0].LowerBound - 1
-		elmLen := props.Dimensions[1].Length
+		arrLen := atts.Dimensions[0].Length
+		arrStart := atts.Dimensions[0].LowerBound - 1
+		elmLen := atts.Dimensions[1].Length
 		for i := arrStart; i < arrLen; i++ {
 			elmPos := i * elmLen
-			properties[props.Elements[elmPos].String] = props.Elements[elmPos+1].String
+			attributes[atts.Elements[elmPos].String] = atts.Elements[elmPos+1].String
 		}
 
 		// "schema.tablename" is our unique key for table layers
@@ -358,7 +363,7 @@ func LoadLayerTableList() {
 			Srid:           srid,
 			GeometryType:   geometry_type,
 			IdColumn:       id_column,
-			Properties:     properties,
+			Attributes:     attributes,
 			Resolution:     viper.GetInt("DefaultResolution"),
 			Buffer:         viper.GetInt("DefaultBuffer"),
 		}

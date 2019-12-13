@@ -1,18 +1,15 @@
 package main
 
 import (
-	"net/url"
 	"fmt"
+	"net/url"
 	"strings"
 
 	// Database
 	"context"
 
 	log "github.com/sirupsen/logrus"
-
-
 	// "github.com/jackc/pgtype"
-
 	// "fmt"
 	// "fmt"
 	// "github.com/lib/pq"
@@ -25,13 +22,17 @@ import (
 // type LayerTable struct {
 type LayerFunction struct {
 	Id            string   `json:"id"`
-	Function          string   `json:"function"`
 	Schema        string   `json:"schema"`
+	Function      string   `json:"function"`
 	Description   string   `json:"description,omitempty"`
 	Arguments     []string `json:"arguments,omitempty"`
 	ArgumentTypes []string `json:"argument_types,omitempty"`
+	Center        []float64  `json:"center,omitempty"`
+	MinZoom       int `json:"minzoom,omitempty"`
+	MaxZoom       int `json:"maxzoom,omitempty"`
+	Tiles         string `json:"tiles,omitempty"`
+	SourceLayer   string `json:"source-layer,omitempty"`
 }
-
 
 func (lyr *LayerFunction) GetLayerFunctionArgs(vals url.Values) map[string]string {
 	funcArgs := make(map[string]string)
@@ -42,7 +43,6 @@ func (lyr *LayerFunction) GetLayerFunctionArgs(vals url.Values) map[string]strin
 	}
 	return funcArgs
 }
-
 
 func (lyr *LayerFunction) GetTile(tile *Tile, args map[string]string) ([]byte, error) {
 
@@ -127,7 +127,7 @@ func LoadLayerFunctionList() {
 
 		var (
 			id, schema, function, description string
-			argnames, argtypes            []string
+			argnames, argtypes                []string
 		)
 
 		err := rows.Scan(&id, &schema, &function, &description, &argnames, &argtypes)
