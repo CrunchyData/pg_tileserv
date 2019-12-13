@@ -8,7 +8,7 @@ An experiment in a [PostGIS](https://postgis.net/)-only tile server in [Go](http
 
 ## Function Sources
 
-```
+```sql
 CREATE OR REPLACE
 FUNCTION countries_name(z integer, x integer, y integer, name_prefix text)
 RETURNS bytea
@@ -29,7 +29,7 @@ $$
 LANGUAGE 'sql';
 ```
 
-```
+```sql
 CREATE OR REPLACE
 FUNCTION squares(z integer, x integer, y integer, depth integer)
 RETURNS bytea

@@ -4,9 +4,11 @@ import (
 	"fmt"
 	// "github.com/lib/pq"
 	"context"
+	"strings"
+
 	"github.com/jackc/pgtype"
 	log "github.com/sirupsen/logrus"
-	"strings"
+
 	// Configuration
 	"github.com/spf13/viper"
 )
@@ -18,13 +20,8 @@ import (
 // in either case it should be able to generate
 // SQL to produce tiles given an input tile
 
-// type Layer interface {
-// 	GetSQL(*Tile) string
-// 	GetId() string
-// }
-
 // type LayerTable struct {
-type Layer struct {
+type LayerTable struct {
 	Id             string            `json:"id"`
 	Schema         string            `json:"schema"`
 	Table          string            `json:"table"`
@@ -44,7 +41,18 @@ type Layer struct {
 	bounds         *Bounds
 }
 
-func (lyr *Layer) GetBounds() (Bounds, error) {
+type LayerJson struct {
+	Id string
+}
+
+type TileRequest struct {
+	tile       Tile
+	sql        string
+	limit      int
+	attributes []string
+}
+
+func (lyr *LayerTable) GetBounds() (Bounds, error) {
 	if lyr.bounds != nil {
 		return *lyr.bounds, nil
 	}
@@ -66,7 +74,7 @@ func (lyr *Layer) GetBounds() (Bounds, error) {
 		return bounds, err
 	}
 
-	err = db.QueryRow(context.Background(), extentSql).Scan(&bounds.Minx, &bounds.Miny, &bounds.Maxx, &bounds.Maxy)
+	err = db.QueryRow(context.Background(), extentSql).Scan(&bounds.Xmin, &bounds.Ymin, &bounds.Xmax, &bounds.Ymax)
 	if err != nil {
 		return bounds, err
 	}
@@ -75,16 +83,15 @@ func (lyr *Layer) GetBounds() (Bounds, error) {
 	return bounds, nil
 }
 
-func (lyr *Layer) TileSql(tile *Tile) string {
+func (lyr *LayerTable) TileSql(tile *Tile) string {
 
 	// need both the exact tile boundary for clipping and an
 	// expanded version for querying
 	tileBounds := tile.Bounds()
-	tileSql := fmt.Sprintf("ST_MakeEnvelope(%g, %g, %g, %g, 3857)",
-		tileBounds.Minx, tileBounds.Miny,
-		tileBounds.Maxx, tileBounds.Maxy)
-	tileQueryExpand := tile.Width() * float64(lyr.Buffer) / float64(lyr.Resolution)
-	tileQuerySql := fmt.Sprintf("ST_Expand(%s, %g)", tileSql, tileQueryExpand)
+	queryBounds := tile.Bounds()
+	queryBounds.Expand(float64(lyr.Buffer) / float64(lyr.Resolution))
+	tileSql := tileBounds.SQL()
+	tileQuerySql := queryBounds.SQL()
 	// convert the attribute name/type map into a SQL query for all
 	// attributes
 	// TODO, support attribute restriction in tile query
@@ -138,7 +145,7 @@ func (lyr *Layer) TileSql(tile *Tile) string {
 	return sql
 }
 
-func (lyr *Layer) GetTile(tile *Tile) ([]byte, error) {
+func (lyr *LayerTable) GetTile(tile *Tile) ([]byte, error) {
 
 	db, err := DbConnect()
 	if err != nil {
@@ -192,7 +199,7 @@ type LayerConfig struct {
 	// Paint map[string]interface{} `json:"paint"`
 }
 
-func (lyr *Layer) GetTileJson() (TileJson, error) {
+func (lyr *LayerTable) GetTileJson() (TileJson, error) {
 	// initialize struct with known constants
 	tileJson := TileJson{
 		Version:  "1.0.0",
@@ -238,13 +245,13 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 		return tileJson, err
 	}
 	tileJson.Bounds = make([]float64, 4)
-	tileJson.Bounds[0] = bounds.Minx
-	tileJson.Bounds[1] = bounds.Miny
-	tileJson.Bounds[2] = bounds.Maxx
-	tileJson.Bounds[3] = bounds.Maxy
+	tileJson.Bounds[0] = bounds.Xmin
+	tileJson.Bounds[1] = bounds.Ymin
+	tileJson.Bounds[2] = bounds.Xmax
+	tileJson.Bounds[3] = bounds.Ymax
 	tileJson.Center = make([]float64, 2)
-	tileJson.Center[0] = (bounds.Minx + bounds.Maxx) / 2.0
-	tileJson.Center[1] = (bounds.Miny + bounds.Maxy) / 2.0
+	tileJson.Center[0] = (bounds.Xmin + bounds.Xmax) / 2.0
+	tileJson.Center[1] = (bounds.Ymin + bounds.Ymax) / 2.0
 
 	tileJson.LayerConfig.Id = lyr.Id
 	tileJson.LayerConfig.SourceLayer = lyr.Id
@@ -264,7 +271,7 @@ func (lyr *Layer) GetTileJson() (TileJson, error) {
 		layerType = "line"
 		// layerType = "fill"
 	default:
-		log.Fatal("unsupported geometry type %s", lyr.GeometryType)
+		log.Fatalf("unsupported geometry type %s", lyr.GeometryType)
 	}
 
 	tileJson.LayerConfig.Type = layerType
@@ -319,7 +326,7 @@ func LoadLayerTableList() {
 	}
 
 	// Reset array of layers
-	globalLayerTables = make(map[string]Layer)
+	globalLayerTables = make(map[string]LayerTable)
 	for rows.Next() {
 
 		var (
@@ -354,7 +361,7 @@ func LoadLayerTableList() {
 
 		// "schema.tablename" is our unique key for table layers
 		id := fmt.Sprintf("%s.%s", schema, table)
-		lyr := Layer{
+		lyr := LayerTable{
 			Id:             id,
 			Schema:         schema,
 			Table:          table,

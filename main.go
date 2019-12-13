@@ -55,13 +55,19 @@ import (
 // 	x, y float64
 // }
 
+// programName is the name string we use
 const programName string = "pg_tileserv"
+
+// programVersion is the version string we use
 const programVersion string = "0.1"
+
+// worldMercWidth is the width of the Web Mercator plane
+const worldMercWidth float64 = 40075016.6855784
 
 // A global array of Layer where the state is held for performance
 // Refreshed when LoadLayerTableList is called
 // Key is of the form: schemaname.tablename
-var globalLayerTables map[string]Layer
+var globalLayerTables map[string]LayerTable
 
 // A global array of LayerFunc where the state is held for performance
 // Refreshed when LoadLayerTableList is called
@@ -185,7 +191,7 @@ func serverURLBase(r *http.Request) string {
 
 	// Check for the IETF standard "Forwarded" header
 	// for reverse proxy information
-	xf := http.CanonicalHeaderKey("Forwarded");
+	xf := http.CanonicalHeaderKey("Forwarded")
 	if f, ok := r.Header[xf]; ok {
 		if fm, err := httpforwarded.Parse(f); err == nil {
 			ph = fm["host"][0]
@@ -196,19 +202,18 @@ func serverURLBase(r *http.Request) string {
 
 	// Check the X-Forwarded-Host and X-Forwarded-Proto
 	// headers
-	xfh := http.CanonicalHeaderKey("X-Forwarded-Host");
+	xfh := http.CanonicalHeaderKey("X-Forwarded-Host")
 	if fh, ok := r.Header[xfh]; ok {
 		ph = fh[0]
 	}
 
-	xfp := http.CanonicalHeaderKey("X-Forwarded-Proto");
+	xfp := http.CanonicalHeaderKey("X-Forwarded-Proto")
 	if fp, ok := r.Header[xfp]; ok {
 		ps = fp[0]
 	}
 
 	return fmt.Sprintf("%v://%v%v", ps, ph, pb)
 }
-
 
 func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
 	log.WithFields(log.Fields{
@@ -220,7 +225,7 @@ func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
 	LoadLayerFunctionList()
 
 	type globalInfo struct {
-		Tables    map[string]Layer
+		Tables    map[string]LayerTable
 		Functions map[string]LayerFunction
 	}
 	info := globalInfo{
@@ -430,19 +435,6 @@ func HandleRequests() {
 	// TODO figure out how to gracefully shut down on ^C
 	// and shut down all the database connections / statements
 	log.Fatal(s.ListenAndServe())
-}
-
-/******************************************************************************/
-
-type Bounds struct {
-	Minx float64 `json:"minx"`
-	Miny float64 `json:"miny"`
-	Maxx float64 `json:"maxx"`
-	Maxy float64 `json:"maxx"`
-}
-
-func (b *Bounds) String() string {
-	return fmt.Sprintf("{minx:%g, miny:%g, maxx:%g, maxy:%g}", b.Minx, b.Miny, b.Maxx, b.Maxy)
 }
 
 /******************************************************************************/

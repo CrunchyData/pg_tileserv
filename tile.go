@@ -12,9 +12,6 @@ type Tile struct {
 	Ext  string `json:"ext"`
 }
 
-// A global constant, the width of the Web Mercator plane
-const worldMercWidth float64 = 40075016.6855784
-
 func (tile *Tile) Width() float64 {
 	worldTileSize := int(1) << tile.Zoom
 	return worldMercWidth / float64(worldTileSize)
