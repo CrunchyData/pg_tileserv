@@ -21,17 +21,17 @@ import (
 
 // type LayerTable struct {
 type LayerFunction struct {
-	Id            string   `json:"id"`
-	Schema        string   `json:"schema"`
-	Function      string   `json:"function"`
-	Description   string   `json:"description,omitempty"`
-	Arguments     []string `json:"arguments,omitempty"`
-	ArgumentTypes []string `json:"argument_types,omitempty"`
-	Center        []float64  `json:"center,omitempty"`
-	MinZoom       int `json:"minzoom,omitempty"`
-	MaxZoom       int `json:"maxzoom,omitempty"`
-	Tiles         string `json:"tiles,omitempty"`
-	SourceLayer   string `json:"source-layer,omitempty"`
+	Id            string    `json:"id"`
+	Schema        string    `json:"schema"`
+	Function      string    `json:"function"`
+	Description   string    `json:"description,omitempty"`
+	Arguments     []string  `json:"arguments,omitempty"`
+	ArgumentTypes []string  `json:"argument_types,omitempty"`
+	Center        []float64 `json:"center,omitempty"`
+	MinZoom       int       `json:"minzoom,omitempty"`
+	MaxZoom       int       `json:"maxzoom,omitempty"`
+	Tiles         string    `json:"tiles,omitempty"`
+	SourceLayer   string    `json:"source-layer,omitempty"`
 }
 
 func (lyr *LayerFunction) GetLayerFunctionArgs(vals url.Values) map[string]string {

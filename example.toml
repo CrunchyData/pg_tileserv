@@ -8,3 +8,7 @@ DefaultResolution  4096
 DefaultBuffer      256
 MaxFeaturesPerTile 10000
 Attribution        "Copyright (c) The Universe"
+UrlBase            http://localhost:7800
+DefaultMinZoom     0
+DefaultMaxZoom"    22
+Debug              false

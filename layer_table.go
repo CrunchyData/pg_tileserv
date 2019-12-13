@@ -30,17 +30,17 @@ type Layer struct {
 	Table          string            `json:"table"`
 	Description    string            `json:"description,omitempty"`
 	Attributes     map[string]string `json:"attributes,omitempty"`
+	GeometryType   string            `json:"geometry_type"`
+	Center         []float64         `json:"center,omitempty"`
+	MinZoom        int               `json:"minzoom,omitempty"`
+	MaxZoom        int               `json:"maxzoom,omitempty"`
+	Tiles          string            `json:"tiles,omitempty"`
+	SourceLayer    int               `json:"source-layer,omitempty"`
 	IdColumn       string
 	GeometryColumn string
-	GeometryType   string            `json:"geometry_type"`
 	Srid           int
-	Buffer    int
-	Resolution    int
-	Center        []float64  `json:"center,omitempty"`
-	MinZoom       int `json:"minzoom,omitempty"`
-	MaxZoom       int `json:"maxzoom,omitempty"`
-	Tiles         string `json:"tiles,omitempty"`
-	SourceLayer   int `json:"source-layer,omitempty"`
+	Buffer         int
+	Resolution     int
 	bounds         *Bounds
 }
 
