@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
-
-	// "github.com/lib/pq"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
+	// "github.com/lib/pq"
 	"github.com/jackc/pgtype"
 	log "github.com/sirupsen/logrus"
 
@@ -110,7 +110,18 @@ func getTableDetailJson(lyr *LayerTable, req *http.Request) (TableDetailJson, er
 	// Tile URL is relative to server base
 	td.TileUrl = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.Id)
 
-	// Attributes:   lyr.Attributes, xxx
+	// Want to add the attributes to the Json representation
+	// in table order, which is fidly
+	tmpMap := make(map[int]TableAttribute)
+	tmpKeys := make([]int, 0, len(lyr.Attributes))
+	for _, v := range lyr.Attributes {
+		tmpMap[v.order] = v
+		tmpKeys = append(tmpKeys, v.order)
+	}
+	sort.Ints(tmpKeys)
+	for _, v := range tmpKeys {
+		td.Attributes = append(td.Attributes, tmpMap[v])
+	}
 
 	// Read table bounds and convert to Json
 	bnds, err := lyr.GetBounds()
@@ -247,7 +258,7 @@ func GetTableLayers() ([]LayerTable, error) {
 		postgis_typmod_type(a.atttypmod) AS geometry_type,
 		coalesce(ia.attname, '') AS id_column,
 		(
-			SELECT array_agg(ARRAY[sa.attname, st.typname, coalesce(da.description,''), sa,attnum::text]::text[] ORDER BY sa.attnum)
+			SELECT array_agg(ARRAY[sa.attname, st.typname, coalesce(da.description,''), sa.attnum::text]::text[] ORDER BY sa.attnum)
 			FROM pg_attribute sa
 			JOIN pg_type st ON sa.atttypid = st.oid
 			LEFT JOIN pg_description da ON (c.oid = da.objoid and sa.attnum = da.objsubid)
@@ -317,8 +328,8 @@ func GetTableLayers() ([]LayerTable, error) {
 				Type:        atts.Elements[pos+1].String,
 				Description: atts.Elements[pos+2].String,
 			}
-			elm.order, _ = strconv.Atoi(atts.Elements[pos+2].String)
-
+			elm.order, _ = strconv.Atoi(atts.Elements[pos+3].String)
+			log.Debug(atts.Elements[pos])
 			attributes[elmId] = elm
 		}
 
