@@ -9,13 +9,11 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	// REST routing
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/theckman/httpforwarded"
 
 	// Database connectivity
 	"github.com/jackc/pgx/v4"
@@ -91,7 +89,6 @@ func main() {
 	viper.SetDefault("DefaultMinZoom", 0)
 	viper.SetDefault("DefaultMaxZoom", 22)
 	viper.SetDefault("Debug", false)
-	viper.SetDefault("Attribution", "")
 
 	// Read environment configuration first
 	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
@@ -132,7 +129,9 @@ func main() {
 
 	// Load the global layer list right away
 	// Also connects to database
-	LoadLayerTableList()
+	if err := LoadLayers(); err != nil {
+		log.Fatal(err)
+	}
 	LoadLayerFunctionList()
 
 	// Get to work
@@ -175,53 +174,13 @@ func DbConnect() (*pgxpool.Pool, error) {
 
 /******************************************************************************/
 
-func serverURLBase(r *http.Request) string {
-
-	// Use configuration file settings if we have them
-	if viper.GetString("UrlBase") != "" {
-		return viper.GetString("UrlBase")
-	}
-
-	// Preferred scheme
-	ps := "http"
-	// Preferred host:port
-	ph := strings.TrimRight(r.Host, "/")
-	// Preferred base path
-	pb := "/"
-
-	// Check for the IETF standard "Forwarded" header
-	// for reverse proxy information
-	xf := http.CanonicalHeaderKey("Forwarded")
-	if f, ok := r.Header[xf]; ok {
-		if fm, err := httpforwarded.Parse(f); err == nil {
-			ph = fm["host"][0]
-			ps = fm["proto"][0]
-			return fmt.Sprintf("%v://%v%v", ps, ph, pb)
-		}
-	}
-
-	// Check the X-Forwarded-Host and X-Forwarded-Proto
-	// headers
-	xfh := http.CanonicalHeaderKey("X-Forwarded-Host")
-	if fh, ok := r.Header[xfh]; ok {
-		ph = fh[0]
-	}
-
-	xfp := http.CanonicalHeaderKey("X-Forwarded-Proto")
-	if fp, ok := r.Header[xfp]; ok {
-		ps = fp[0]
-	}
-
-	return fmt.Sprintf("%v://%v%v", ps, ph, pb)
-}
-
 func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
 	log.WithFields(log.Fields{
 		"event": "handlerequest",
 		"topic": "root",
 	}).Trace("HandleRequestRoot")
 	// Update the local copy
-	LoadLayerTableList()
+	// LoadLayerTableList()
 	LoadLayerFunctionList()
 
 	type globalInfo struct {
@@ -247,7 +206,7 @@ func HandleRequestTableList(w http.ResponseWriter, r *http.Request) {
 		"topic": "tablelist",
 	}).Trace("HandleRequestTableList")
 	// Update the local copy
-	LoadLayerTableList()
+	// LoadLayerTableList()
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(globalLayerTables)
@@ -298,27 +257,6 @@ func HandleRequestFunction(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(lyr)
 	}
 	// todo ERROR
-}
-
-func HandleRequestTableTileJSON(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	lyrname := vars["name"]
-	log.WithFields(log.Fields{
-		"event": "handlerequest",
-		"topic": "tabletilejson",
-		"key":   lyrname,
-	}).Tracef("HandleRequestTableTileJSON: %s", lyrname)
-
-	if lyr, ok := globalLayerTables[lyrname]; ok {
-		tileJson, err := lyr.GetTileJson()
-		log.Trace(tileJson)
-		if err != nil {
-			log.Warn(err)
-		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Add("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(tileJson)
-	}
 }
 
 func HandleRequestTablePreview(w http.ResponseWriter, r *http.Request) {
@@ -403,22 +341,60 @@ func HandleRequestFunctionTile(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func RequestLayerList(w http.ResponseWriter, r *http.Request) {
+	log.WithFields(log.Fields{
+		"event": "request",
+		"topic": "layerlist",
+	}).Trace("RequestLayerList")
+	// Update the global in-memory list from
+	// the database
+	if err := LoadLayers(); err != nil {
+		// return nil, error
+	}
+	w.Header().Add("Content-Type", "application/json")
+	jsonLayers := GetJsonLayers(r)
+	json.NewEncoder(w).Encode(jsonLayers)
+}
+
+func RequestLayerDetail(w http.ResponseWriter, r *http.Request) {
+	lyrId := mux.Vars(r)["name"]
+	log.WithFields(log.Fields{
+		"event": "request",
+		"topic": "layerdetail",
+	}).Tracef("RequestLayerDetail(%s)", lyrId)
+
+	if err := LoadLayers(); err != nil {
+		// return nil, error
+	}
+
+	lyr, errLyr := GetLayer(lyrId)
+	if errLyr != nil {
+		// return nil, error
+	}
+
+	errWrite := lyr.WriteLayerJson(w, r)
+	if errWrite != nil {
+		// return nil, error
+	}
+}
+
 func HandleRequests() {
 
 	// creates a new instance of a mux router
 	r := mux.NewRouter().StrictSlash(true)
 	// replace http.HandleFunc with myRouter.HandleFunc
-	r.HandleFunc("/", HandleRequestRoot).Methods("GET")
-	r.HandleFunc("/index.html", HandleRequestRoot).Methods("GET")
-	r.HandleFunc("/index.json", HandleRequestTableList).Methods("GET")
-	r.HandleFunc("/{name}.json", HandleRequestTable).Methods("GET")
-	r.HandleFunc("/{name}.html", HandleRequestTablePreview).Methods("GET")
-	r.HandleFunc("/{name}/tilejson.json", HandleRequestTableTileJSON).Methods("GET")
-	r.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTableTile).Methods("GET")
+	// r.HandleFunc("/", HandleRequestRoot).Methods("GET")
+	// r.HandleFunc("/index.html", HandleRequestRoot).Methods("GET")
+	// r.HandleFunc("/index.json", HandleRequestTableList).Methods("GET")
+	r.HandleFunc("/layers.json", RequestLayerList).Methods("GET")
+	r.HandleFunc("/{name}.json", RequestLayerDetail).Methods("GET")
+	// r.HandleFunc("/{name}.html", HandleRequestTablePreview).Methods("GET")
+	// r.HandleFunc("/{name}/tilejson.json", HandleRequestTableTileJSON).Methods("GET")
+	// r.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTableTile).Methods("GET")
 
-	r.HandleFunc("/func/index.json", HandleRequestFunctionList).Methods("GET")
-	r.HandleFunc("/func/{name}.json", HandleRequestFunction).Methods("GET")
-	r.HandleFunc("/func/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestFunctionTile)
+	// r.HandleFunc("/func/index.json", HandleRequestFunctionList).Methods("GET")
+	// r.HandleFunc("/func/{name}.json", HandleRequestFunction).Methods("GET")
+	// r.HandleFunc("/func/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestFunctionTile)
 
 	// Allow CORS from anywhere
 	corsOpt := handlers.AllowedOrigins([]string{"*"})

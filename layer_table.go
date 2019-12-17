@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+
 	// "github.com/lib/pq"
 	"context"
+	"encoding/json"
+	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgtype"
@@ -14,48 +18,115 @@ import (
 )
 
 // x-correlation-id
-
 // A Layer is a LayerTable or a LayerFunction
-
 // in either case it should be able to generate
 // SQL to produce tiles given an input tile
 
-// type LayerTable struct {
 type LayerTable struct {
-	Id             string            `json:"id"`
-	Schema         string            `json:"schema"`
-	Table          string            `json:"table"`
-	Description    string            `json:"description,omitempty"`
-	Attributes     map[string]string `json:"attributes,omitempty"`
-	GeometryType   string            `json:"geometry_type"`
-	Center         []float64         `json:"center,omitempty"`
-	MinZoom        int               `json:"minzoom,omitempty"`
-	MaxZoom        int               `json:"maxzoom,omitempty"`
-	Tiles          string            `json:"tiles,omitempty"`
-	SourceLayer    int               `json:"source-layer,omitempty"`
+	Id             string
+	Schema         string
+	Table          string
+	Description    string
+	Attributes     map[string]TableAttribute
+	GeometryType   string
 	IdColumn       string
 	GeometryColumn string
 	Srid           int
-	Buffer         int
-	Resolution     int
-	bounds         *Bounds
 }
 
-type LayerJson struct {
-	Id string
+type TableAttribute struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	order       int
 }
 
-type TileRequest struct {
-	tile       Tile
-	sql        string
-	limit      int
-	attributes []string
+type TableDetailJson struct {
+	Id           string           `json:"id"`
+	Schema       string           `json:"schema"`
+	Name         string           `json:"name"`
+	Description  string           `json:"description"`
+	Attributes   []TableAttribute `json:"attributes"`
+	GeometryType string           `json:"geometrytype"`
+	Center       [2]float64       `json:"center"`
+	Bounds       [4]float64       `json:"bounds"`
+	MinZoom      int              `json:"minzoom"`
+	MaxZoom      int              `json:"maxzoom"`
+	TileUrl      string           `json:"tileurl"`
+	SourceLayer  string           `json:"sourcelayer"`
+}
+
+/********************************************************************************
+ * Layer Interface
+ */
+
+func (lyr LayerTable) GetType() layerType {
+	return layerTypeTable
+}
+
+func (lyr LayerTable) GetId() string {
+	return lyr.Id
+}
+
+func (lyr LayerTable) GetDescription() string {
+	return lyr.Description
+}
+
+func (lyr LayerTable) GetName() string {
+	return lyr.Table
+}
+
+func (lyr LayerTable) GetSchema() string {
+	return lyr.Schema
+}
+
+func (lyr LayerTable) GetTileRequest(tile Tile, req *http.Request) TileRequest {
+	return TileRequest{} // TODO IMPLEMENT
+}
+
+func (lyr LayerTable) WriteLayerJson(w http.ResponseWriter, req *http.Request) error {
+	jsonTableDetail, err := getTableDetailJson(&lyr, req)
+	if err != nil {
+		return err
+	}
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(jsonTableDetail)
+	return nil // TODO IMPLEMENT
+}
+
+/********************************************************************************/
+
+func getTableDetailJson(lyr *LayerTable, req *http.Request) (TableDetailJson, error) {
+	td := TableDetailJson{
+		Id:           lyr.Id,
+		Schema:       lyr.Schema,
+		Name:         lyr.Table,
+		Description:  lyr.Description,
+		GeometryType: lyr.GeometryType,
+		MinZoom:      viper.GetInt("DefaultMinZoom"),
+		MaxZoom:      viper.GetInt("DefaultMaxoom"),
+		SourceLayer:  lyr.Id,
+	}
+	// Tile URL is relative to server base
+	td.TileUrl = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.Id)
+
+	// Attributes:   lyr.Attributes, xxx
+
+	// Read table bounds and convert to Json
+	bnds, err := lyr.GetBounds()
+	if err != nil {
+		return td, err
+	}
+	td.Bounds[0] = bnds.Xmin
+	td.Bounds[1] = bnds.Ymin
+	td.Bounds[2] = bnds.Xmax
+	td.Bounds[3] = bnds.Ymax
+	td.Center[0] = (bnds.Xmin + bnds.Xmax) / 2.0
+	td.Center[1] = (bnds.Ymin + bnds.Ymax) / 2.0
+	return td, nil
 }
 
 func (lyr *LayerTable) GetBounds() (Bounds, error) {
-	if lyr.bounds != nil {
-		return *lyr.bounds, nil
-	}
 	bounds := Bounds{}
 	extentSql := fmt.Sprintf(`
 		WITH ext AS (
@@ -89,7 +160,7 @@ func (lyr *LayerTable) TileSql(tile *Tile) string {
 	// expanded version for querying
 	tileBounds := tile.Bounds()
 	queryBounds := tile.Bounds()
-	queryBounds.Expand(float64(lyr.Buffer) / float64(lyr.Resolution))
+	// queryBounds.Expand(float64(lyr.Buffer) / float64(lyr.Resolution))
 	tileSql := tileBounds.SQL()
 	tileQuerySql := queryBounds.SQL()
 	// convert the attribute name/type map into a SQL query for all
@@ -103,7 +174,7 @@ func (lyr *LayerTable) TileSql(tile *Tile) string {
 	// only specify MVT format parameters we have configured
 	mvtParams := make([]string, 0)
 	mvtParams = append(mvtParams, fmt.Sprintf("'%s'::text", lyr.Id))
-	mvtParams = append(mvtParams, fmt.Sprintf("%d", lyr.Resolution))
+	// mvtParams = append(mvtParams, fmt.Sprintf("%d", lyr.Resolution)) xxx
 	if lyr.GeometryColumn != "" {
 		mvtParams = append(mvtParams, fmt.Sprintf("'%s'::text", lyr.GeometryColumn))
 	}
@@ -131,8 +202,8 @@ func (lyr *LayerTable) TileSql(tile *Tile) string {
 		tileQuerySql,
 		tileSql,
 		lyr.GeometryColumn,
-		lyr.Resolution,
-		lyr.Buffer,
+		// lyr.Resolution, xxxx
+		// lyr.Buffer, xxx
 		strings.Join(attrNames, ", "),
 		lyr.Schema,
 		lyr.Table,
@@ -164,169 +235,53 @@ func (lyr *LayerTable) GetTile(tile *Tile) ([]byte, error) {
 	}
 }
 
-// https://github.com/mapbox/tilejson-spec/tree/master/2.0.1
-type TileJson struct {
-	TileJson    string      `json:"tilejson"`
-	Name        string      `json:"name"`
-	Data        string      `json:"data,omitempty"`
-	Description string      `json:"description,omitempty"`
-	Version     string      `json:"version"`
-	Attribution string      `json:"attribution,omitempty"`
-	Template    string      `json:"template,omitempty"`
-	Legend      string      `json:"legend,omitempty"`
-	Scheme      string      `json:"scheme"`
-	Tiles       []string    `json:"tiles"`
-	Grids       []string    `json:"grids,omitempty"`
-	MinZoom     int         `json:"minzoom"`
-	MaxZoom     int         `json:"maxzoom"`
-	Bounds      []float64   `json:"bounds"`
-	Center      []float64   `json:"center"`
-	Id          string      `json:"id"`
-	LayerConfig LayerConfig `json:"layerconfig"`
-}
-
-// https://github.com/mapbox/tilejson-spec/tree/master/2.0.1
-type LayerConfig struct {
-	Id          string `json:"id"`
-	SourceLayer string `json:"source-layer"`
-	Source      struct {
-		Type    string   `json:"type"`
-		Tiles   []string `json:"tiles"`
-		MinZoom int      `json:"minzoom"`
-		MaxZoom int      `json:"maxzoom"`
-	} `json:"source"`
-	Type string `json:"type"`
-	// Paint map[string]interface{} `json:"paint"`
-}
-
-func (lyr *LayerTable) GetTileJson() (TileJson, error) {
-	// initialize struct with known constants
-	tileJson := TileJson{
-		Version:  "1.0.0",
-		TileJson: "2.0.1",
-		MinZoom:  viper.GetInt("DefaultMinZoom"),
-		MaxZoom:  viper.GetInt("DefaultMaxZoom"),
-		Scheme:   "xyz",
-	}
-
-	//    "grids" : null,
-	//    "name" : "public.geonames",
-	//    "tilejson" : "2.2.0",
-	//    "data" : null,
-	//    "template" : null,
-	//    "scheme" : "xyz",
-	//    "version" : "1.0.0",
-	//    "center" : null,
-	//    "maxzoom" : 30,
-	//    "legend" : null,
-	//    "description" : null,
-	//    "tiles" : [
-	//       "http://localhost:3000/public.geonames/{z}/{x}/{y}.pbf"
-	//    ],
-	//    "bounds" : [
-	//       -180,
-	//       -90,
-	//       180,
-	//       90
-	//    ],
-	//    "id" : null,
-	//    "attribution" : null,
-	//    "minzoom" : 0
-
-	tileJson.Name = lyr.Id
-	tileJson.Description = lyr.Description
-	tileJson.Tiles = make([]string, 1)
-	tileJson.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", viper.GetString("UrlBase"), lyr.Id)
-	tileJson.Id = lyr.Id
-	tileJson.Attribution = viper.GetString("Attribution")
-
-	bounds, err := lyr.GetBounds()
-	if err != nil {
-		return tileJson, err
-	}
-	tileJson.Bounds = make([]float64, 4)
-	tileJson.Bounds[0] = bounds.Xmin
-	tileJson.Bounds[1] = bounds.Ymin
-	tileJson.Bounds[2] = bounds.Xmax
-	tileJson.Bounds[3] = bounds.Ymax
-	tileJson.Center = make([]float64, 2)
-	tileJson.Center[0] = (bounds.Xmin + bounds.Xmax) / 2.0
-	tileJson.Center[1] = (bounds.Ymin + bounds.Ymax) / 2.0
-
-	tileJson.LayerConfig.Id = lyr.Id
-	tileJson.LayerConfig.SourceLayer = lyr.Id
-	tileJson.LayerConfig.Source.Type = "vector"
-	tileJson.LayerConfig.Source.Tiles = make([]string, 1)
-	tileJson.LayerConfig.Source.Tiles[0] = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", viper.GetString("UrlBase"), lyr.Id)
-	tileJson.LayerConfig.Source.MinZoom = viper.GetInt("DefaultMinZoom")
-	tileJson.LayerConfig.Source.MaxZoom = viper.GetInt("DefaultMaxZoom")
-
-	var layerType string
-	switch lyr.GeometryType {
-	case "Point", "MultiPoint":
-		layerType = "circle"
-	case "LineString", "MultiLineString":
-		layerType = "line"
-	case "Polygon", "MultiPolygon":
-		layerType = "line"
-		// layerType = "fill"
-	default:
-		log.Fatalf("unsupported geometry type %s", lyr.GeometryType)
-	}
-
-	tileJson.LayerConfig.Type = layerType
-
-	log.Debug(tileJson)
-
-	return tileJson, nil
-}
-
-func LoadLayerTableList() {
+func GetTableLayers() ([]LayerTable, error) {
 
 	layerSql := `
-		SELECT
-			n.nspname AS schema,
-			c.relname AS table,
-			coalesce(d.description, '') AS description,
-			a.attname AS geometry_column,
-			postgis_typmod_srid(a.atttypmod) AS srid,
-			postgis_typmod_type(a.atttypmod) AS geometry_type,
-			coalesce(ia.attname, '') AS id_column,
-			(
-				SELECT array_agg(ARRAY[sa.attname, st.typname]::text[])
-				FROM pg_attribute sa
-				JOIN pg_type st ON sa.atttypid = st.oid
-				WHERE sa.attrelid = c.oid
-				AND sa.attnum > 0
-				AND NOT sa.attisdropped
-				AND st.typname NOT IN ('geometry', 'geography')
-			) AS props
-		FROM pg_class c
-		JOIN pg_namespace n ON (c.relnamespace = n.oid)
-		JOIN pg_attribute a ON (a.attrelid = c.oid)
-		JOIN pg_type t ON (a.atttypid = t.oid)
-		LEFT JOIN pg_description d ON (c.oid = d.objoid)
-		LEFT JOIN pg_index i ON (c.oid = i.indrelid AND i.indisprimary AND i.indnatts = 1)
-		LEFT JOIN pg_attribute ia ON (ia.attrelid = i.indexrelid)
-		LEFT JOIN pg_type it ON (ia.atttypid = it.oid AND it.typname in ('int2', 'int4', 'int8'))
-		WHERE c.relkind = 'r'
+	SELECT
+		n.nspname AS schema,
+		c.relname AS table,
+		coalesce(d.description, '') AS description,
+		a.attname AS geometry_column,
+		postgis_typmod_srid(a.atttypmod) AS srid,
+		postgis_typmod_type(a.atttypmod) AS geometry_type,
+		coalesce(ia.attname, '') AS id_column,
+		(
+			SELECT array_agg(ARRAY[sa.attname, st.typname, coalesce(da.description,''), sa,attnum::text]::text[] ORDER BY sa.attnum)
+			FROM pg_attribute sa
+			JOIN pg_type st ON sa.atttypid = st.oid
+			LEFT JOIN pg_description da ON (c.oid = da.objoid and sa.attnum = da.objsubid)
+			WHERE sa.attrelid = c.oid
+			AND sa.attnum > 0
+			AND NOT sa.attisdropped
+			AND st.typname NOT IN ('geometry', 'geography')
+		) AS props
+	FROM pg_class c
+	JOIN pg_namespace n ON (c.relnamespace = n.oid)
+	JOIN pg_attribute a ON (a.attrelid = c.oid)
+	JOIN pg_type t ON (a.atttypid = t.oid)
+	LEFT JOIN pg_description d ON (c.oid = d.objoid and d.objsubid = 0)
+	LEFT JOIN pg_index i ON (c.oid = i.indrelid AND i.indisprimary AND i.indnatts = 1)
+	LEFT JOIN pg_attribute ia ON (ia.attrelid = i.indexrelid)
+	LEFT JOIN pg_type it ON (ia.atttypid = it.oid AND it.typname in ('int2', 'int4', 'int8'))
+	WHERE c.relkind = 'r'
 		AND t.typname = 'geometry'
 		AND has_table_privilege(c.oid, 'select')
 		AND postgis_typmod_srid(a.atttypmod) > 0
-		`
+	`
 
 	db, connerr := DbConnect()
 	if connerr != nil {
-		log.Fatal(connerr)
+		return nil, connerr
 	}
 
 	rows, err := db.Query(context.Background(), layerSql)
 	if err != nil {
-		log.Fatal(err)
+		return nil, connerr
 	}
 
 	// Reset array of layers
-	globalLayerTables = make(map[string]LayerTable)
+	layerTables := make([]LayerTable, 0)
 	for rows.Next() {
 
 		var (
@@ -340,7 +295,7 @@ func LoadLayerTableList() {
 		err := rows.Scan(&schema, &table, &description, &geometry_column,
 			&srid, &geometry_type, &id_column, &atts)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 
 		// We use https://godoc.org/github.com/jackc/pgtype#TextArray
@@ -349,14 +304,22 @@ func LoadLayerTableList() {
 		// pgx TextArray type, but it is at least native handling of
 		// the array. It's complex because of PgSQL ARRAY generality
 		// really, no fault of pgx
-		attributes := make(map[string]string)
+		attributes := make(map[string]TableAttribute)
 
 		arrLen := atts.Dimensions[0].Length
 		arrStart := atts.Dimensions[0].LowerBound - 1
 		elmLen := atts.Dimensions[1].Length
 		for i := arrStart; i < arrLen; i++ {
-			elmPos := i * elmLen
-			attributes[atts.Elements[elmPos].String] = atts.Elements[elmPos+1].String
+			pos := i * elmLen
+			elmId := atts.Elements[pos].String
+			elm := TableAttribute{
+				Name:        elmId,
+				Type:        atts.Elements[pos+1].String,
+				Description: atts.Elements[pos+2].String,
+			}
+			elm.order, _ = strconv.Atoi(atts.Elements[pos+2].String)
+
+			attributes[elmId] = elm
 		}
 
 		// "schema.tablename" is our unique key for table layers
@@ -371,16 +334,13 @@ func LoadLayerTableList() {
 			GeometryType:   geometry_type,
 			IdColumn:       id_column,
 			Attributes:     attributes,
-			Resolution:     viper.GetInt("DefaultResolution"),
-			Buffer:         viper.GetInt("DefaultBuffer"),
 		}
 
-		globalLayerTables[id] = lyr
+		layerTables = append(layerTables, lyr)
 	}
 	// Check for errors from iterating over rows.
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	rows.Close()
-	return
+	return layerTables, nil
 }

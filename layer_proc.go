@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -33,6 +35,40 @@ type LayerFunction struct {
 	Tiles         string    `json:"tiles,omitempty"`
 	SourceLayer   string    `json:"source-layer,omitempty"`
 }
+
+/********************************************************************************
+ * Layer Interface
+ */
+
+func (lyr LayerFunction) GetType() layerType {
+	return layerTypeFunction
+}
+
+func (lyr LayerFunction) GetId() string {
+	return lyr.Id
+}
+
+func (lyr LayerFunction) GetDescription() string {
+	return lyr.Description
+}
+
+func (lyr LayerFunction) GetName() string {
+	return lyr.Function
+}
+
+func (lyr LayerFunction) GetSchema() string {
+	return lyr.Schema
+}
+
+func (lyr LayerFunction) GetTileRequest(tile Tile, req *http.Request) TileRequest {
+	return TileRequest{} // TODO IMPLEMENT
+}
+
+func (lyr LayerFunction) WriteLayerJson(w http.ResponseWriter, req *http.Request) error {
+	return nil // TODO IMPLEMENT
+}
+
+/********************************************************************************/
 
 func (lyr *LayerFunction) GetLayerFunctionArgs(vals url.Values) map[string]string {
 	funcArgs := make(map[string]string)
@@ -88,6 +124,70 @@ func (lyr *LayerFunction) GetTile(tile *Tile, args map[string]string) ([]byte, e
 	} else {
 		return mvtTile, nil
 	}
+}
+
+func GetFunctionLayers() ([]LayerFunction, error) {
+
+	// Valid functions **must** have signature of
+	// function(z integer, x integer, y integer) returns bytea
+	layerSql := `
+		SELECT
+		Format('%s.%s', n.nspname, p.proname) AS id,
+		n.nspname,
+		p.proname,
+		coalesce(d.description, '') AS description,
+		coalesce(p.proargnames, ARRAY[]::text[]) AS argnames,
+		coalesce(string_to_array(oidvectortypes(p.proargtypes),', '), ARRAY[]::text[]) AS argtypes
+		FROM pg_proc p
+		JOIN pg_namespace n ON (p.pronamespace = n.oid)
+		LEFT JOIN pg_description d ON (p.oid = d.objoid)
+		WHERE p.proargtypes[0:2] = ARRAY[23::oid, 23::oid, 23::oid]
+		AND p.proargnames[1:3] = ARRAY['z'::text, 'x'::text, 'y'::text]
+		AND prorettype = 17
+		AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute') ;
+		`
+
+	db, connerr := DbConnect()
+	if connerr != nil {
+		return nil, connerr
+	}
+
+	rows, err := db.Query(context.Background(), layerSql)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reset array of layers
+	layerFunctions := make([]LayerFunction, 0)
+	for rows.Next() {
+
+		var (
+			id, schema, function, description string
+			argnames, argtypes                []string
+		)
+
+		err := rows.Scan(&id, &schema, &function, &description, &argnames, &argtypes)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		lyr := LayerFunction{
+			Id:            id,
+			Schema:        schema,
+			Function:      function,
+			Description:   description,
+			Arguments:     argnames[3:],
+			ArgumentTypes: argtypes[3:],
+		}
+
+		layerFunctions = append(layerFunctions, lyr)
+	}
+	// Check for errors from iterating over rows.
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+	return layerFunctions, nil
 }
 
 func LoadLayerFunctionList() {
