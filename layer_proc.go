@@ -1,11 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-
 	"net/http"
-	"net/url"
+	"sort"
 	"strings"
+	// "net/url"
 
 	// Database
 	"context"
@@ -13,22 +14,43 @@ import (
 	// "github.com/lib/pq"
 	// "github.com/jackc/pgtype"
 
+	// Logging
 	log "github.com/sirupsen/logrus"
+
+	// Configuration
+	"github.com/spf13/viper"
 )
 
 // type LayerTable struct {
 type LayerFunction struct {
-	Id            string    `json:"id"`
-	Schema        string    `json:"schema"`
-	Function      string    `json:"function"`
-	Description   string    `json:"description,omitempty"`
-	Arguments     []string  `json:"arguments,omitempty"`
-	ArgumentTypes []string  `json:"argument_types,omitempty"`
-	Center        []float64 `json:"center,omitempty"`
-	MinZoom       int       `json:"minzoom,omitempty"`
-	MaxZoom       int       `json:"maxzoom,omitempty"`
-	Tiles         string    `json:"tiles,omitempty"`
-	SourceLayer   string    `json:"source-layer,omitempty"`
+	Id          string
+	Schema      string
+	Function    string
+	Description string
+	Arguments   map[string]FunctionArgument
+	MinZoom     int
+	MaxZoom     int
+	Tiles       string
+	SourceLayer string
+}
+
+type FunctionArgument struct {
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Default string `json:"default,omitempty"`
+	order   int
+}
+
+type FunctionDetailJson struct {
+	Id          string             `json:"id"`
+	Schema      string             `json:"schema"`
+	Name        string             `json:"name"`
+	Description string             `json:"description,omitempty"`
+	Arguments   []FunctionArgument `json:"arguments,omitempty"`
+	MinZoom     int                `json:"minzoom"`
+	MaxZoom     int                `json:"maxzoom"`
+	TileUrl     string             `json:"tileurl"`
+	SourceLayer string             `json:"sourcelayer"`
 }
 
 /********************************************************************************
@@ -60,11 +82,48 @@ func (lyr LayerFunction) GetTileRequest(tile Tile, reqParams *map[string]string)
 }
 
 func (lyr LayerFunction) WriteLayerJson(w http.ResponseWriter, req *http.Request) error {
-	return nil // TODO IMPLEMENT
+	jsonTableDetail, err := lyr.getFunctionDetailJson(req)
+	if err != nil {
+		return err
+	}
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(jsonTableDetail)
+	// all good, no error
+	return nil
 }
 
 /********************************************************************************/
 
+func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDetailJson, error) {
+
+	td := FunctionDetailJson{
+		Id:          lyr.Id,
+		Schema:      lyr.Schema,
+		Name:        lyr.Function,
+		Description: lyr.Description,
+		MinZoom:     viper.GetInt("DefaultMinZoom"),
+		MaxZoom:     viper.GetInt("DefaultMaxZoom"),
+		SourceLayer: lyr.Id,
+	}
+	// TileURL is relative to server base
+	td.TileUrl = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.Id)
+
+	// Want to add the attributes to the Json representation
+	// in table order, which is fiddly
+	tmpMap := make(map[int]FunctionArgument)
+	tmpKeys := make([]int, 0, len(lyr.Arguments))
+	for _, v := range lyr.Arguments {
+		tmpMap[v.order] = v
+		tmpKeys = append(tmpKeys, v.order)
+	}
+	sort.Ints(tmpKeys)
+	for _, v := range tmpKeys {
+		td.Arguments = append(td.Arguments, tmpMap[v])
+	}
+	return td, nil
+}
+
+/*
 func (lyr *LayerFunction) GetLayerFunctionArgs(vals url.Values) map[string]string {
 	funcArgs := make(map[string]string)
 	for _, arg := range lyr.Arguments {
@@ -74,6 +133,7 @@ func (lyr *LayerFunction) GetLayerFunctionArgs(vals url.Values) map[string]strin
 	}
 	return funcArgs
 }
+*/
 
 func (lyr *LayerFunction) GetTile(tile *Tile, args map[string]string) ([]byte, error) {
 
@@ -166,13 +226,23 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 			log.Fatal(err)
 		}
 
+		args := make(map[string]FunctionArgument)
+		// First three arguments have to be z, x, y
+		for i := 3; i < len(argnames); i++ {
+			args[argnames[i]] = FunctionArgument{
+				order:   i - 3,
+				Name:    argnames[i],
+				Type:    argtypes[i],
+				Default: "", // TODO, add this in
+			}
+		}
+
 		lyr := LayerFunction{
-			Id:            id,
-			Schema:        schema,
-			Function:      function,
-			Description:   description,
-			Arguments:     argnames[3:],
-			ArgumentTypes: argtypes[3:],
+			Id:          id,
+			Schema:      schema,
+			Function:    function,
+			Description: description,
+			Arguments:   args,
 		}
 
 		layerFunctions = append(layerFunctions, lyr)
@@ -183,68 +253,4 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 	}
 	rows.Close()
 	return layerFunctions, nil
-}
-
-func LoadLayerFunctionList() {
-
-	// Valid functions **must** have signature of
-	// function(z integer, x integer, y integer) returns bytea
-	layerSql := `
-		SELECT
-		Format('%s.%s', n.nspname, p.proname) AS id,
-		n.nspname,
-		p.proname,
-		coalesce(d.description, '') AS description,
-		coalesce(p.proargnames, ARRAY[]::text[]) AS argnames,
-		coalesce(string_to_array(oidvectortypes(p.proargtypes),', '), ARRAY[]::text[]) AS argtypes
-		FROM pg_proc p
-		JOIN pg_namespace n ON (p.pronamespace = n.oid)
-		LEFT JOIN pg_description d ON (p.oid = d.objoid)
-		WHERE p.proargtypes[0:2] = ARRAY[23::oid, 23::oid, 23::oid]
-		AND p.proargnames[1:3] = ARRAY['z'::text, 'x'::text, 'y'::text]
-		AND prorettype = 17
-		AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute') ;
-		`
-
-	db, connerr := DbConnect()
-	if connerr != nil {
-		log.Fatal(connerr)
-	}
-
-	rows, err := db.Query(context.Background(), layerSql)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Reset array of layers
-	globalLayerFunctions = make(map[string]LayerFunction)
-	for rows.Next() {
-
-		var (
-			id, schema, function, description string
-			argnames, argtypes                []string
-		)
-
-		err := rows.Scan(&id, &schema, &function, &description, &argnames, &argtypes)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		lyr := LayerFunction{
-			Id:            id,
-			Schema:        schema,
-			Function:      function,
-			Description:   description,
-			Arguments:     argnames[3:],
-			ArgumentTypes: argtypes[3:],
-		}
-
-		globalLayerFunctions[id] = lyr
-	}
-	// Check for errors from iterating over rows.
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-	rows.Close()
-	return
 }

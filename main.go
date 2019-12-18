@@ -129,7 +129,6 @@ func main() {
 	if err := LoadLayers(); err != nil {
 		log.Fatal(err)
 	}
-	LoadLayerFunctionList()
 
 	// Get to work
 	HandleRequests()
@@ -146,7 +145,7 @@ func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
 	}).Trace("HandleRequestRoot")
 	// Update the local copy
 	// LoadLayerTableList()
-	LoadLayerFunctionList()
+	// LoadLayerFunctionList()
 
 	type globalInfo struct {
 		Tables    map[string]LayerTable
@@ -183,7 +182,7 @@ func HandleRequestFunctionList(w http.ResponseWriter, r *http.Request) {
 		"topic": "proclist",
 	}).Trace("HandleRequestFunctionList")
 	// Update the local copy
-	LoadLayerFunctionList()
+	// LoadLayerFunctionList()
 	// todo ERROR on db
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Content-Type", "application/json")
@@ -255,31 +254,31 @@ func MakeTile(vars map[string]string) (Tile, error) {
 	return tile, nil
 }
 
-func HandleRequestFunctionTile(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	lyrname := vars["name"]
-	if lyr, ok := globalLayerFunctions[lyrname]; ok {
-		tile, _ := MakeTile(vars)
-		log.WithFields(log.Fields{
-			"event": "handlerequest",
-			"topic": "proctile",
-			"key":   tile.String(),
-		}).Tracef("HandleRequestFunctionTile: %s", tile.String())
+// func HandleRequestFunctionTile(w http.ResponseWriter, r *http.Request) {
+// 	vars := mux.Vars(r)
+// 	lyrname := vars["name"]
+// 	if lyr, ok := globalLayerFunctions[lyrname]; ok {
+// 		tile, _ := MakeTile(vars)
+// 		log.WithFields(log.Fields{
+// 			"event": "handlerequest",
+// 			"topic": "proctile",
+// 			"key":   tile.String(),
+// 		}).Tracef("HandleRequestFunctionTile: %s", tile.String())
 
-		// Replace with SQL fun
-		procArgs := lyr.GetLayerFunctionArgs(r.URL.Query())
-		pbf, err := lyr.GetTile(&tile, procArgs)
+// 		// Replace with SQL fun
+// 		procArgs := lyr.GetLayerFunctionArgs(r.URL.Query())
+// 		pbf, err := lyr.GetTile(&tile, procArgs)
 
-		if err != nil {
-			// TODO return a 500 or something
-		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
-		_, err = w.Write(pbf)
-		return
-	}
+// 		if err != nil {
+// 			// TODO return a 500 or something
+// 		}
+// 		w.Header().Set("Access-Control-Allow-Origin", "*")
+// 		w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
+// 		_, err = w.Write(pbf)
+// 		return
+// 	}
 
-}
+// }
 
 func RequestListJson(w http.ResponseWriter, r *http.Request) {
 	log.WithFields(log.Fields{
