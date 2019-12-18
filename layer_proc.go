@@ -9,16 +9,11 @@ import (
 
 	// Database
 	"context"
+	// "github.com/jackc/pgtype"
+	// "github.com/lib/pq"
+	// "github.com/jackc/pgtype"
 
 	log "github.com/sirupsen/logrus"
-	// "github.com/jackc/pgtype"
-	// "fmt"
-	// "fmt"
-	// "github.com/lib/pq"
-	// "context"
-	// "github.com/jackc/pgtype"
-	// log "github.com/sirupsen/logrus"
-	// "strings"
 )
 
 // type LayerTable struct {
@@ -60,7 +55,7 @@ func (lyr LayerFunction) GetSchema() string {
 	return lyr.Schema
 }
 
-func (lyr LayerFunction) GetTileRequest(tile Tile, req *http.Request) TileRequest {
+func (lyr LayerFunction) GetTileRequest(tile Tile, reqParams *map[string]string) TileRequest {
 	return TileRequest{} // TODO IMPLEMENT
 }
 

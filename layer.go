@@ -31,21 +31,14 @@ type Layer interface {
 	GetDescription() string
 	GetName() string
 	GetSchema() string
-	GetTileRequest(tile Tile, req *http.Request) TileRequest
+	GetTileRequest(tile Tile, reqParams *map[string]string) TileRequest
 	WriteLayerJson(w http.ResponseWriter, req *http.Request) error
 }
 
-// generic arguments we accept
-// * limit
-// * attributes
-// * resolution
-// * buffer
-
 type TileRequest struct {
-	request *http.Request
-	tile    Tile
-	sql     string
-	args    []interface{}
+	Tile Tile
+	Sql  string
+	Args []interface{}
 }
 
 // A global array of Layer where the state is held for performance

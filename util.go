@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/spf13/viper"
-	"github.com/theckman/httpforwarded"
+	"html/template"
 	"net/http"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"github.com/theckman/httpforwarded"
 	// log "github.com/sirupsen/logrus"
 )
 
@@ -45,4 +49,29 @@ func serverURLBase(r *http.Request) string {
 	}
 
 	return fmt.Sprintf("%v://%v", ps, ph)
+}
+
+var globalTemplates map[string](*template.Template)
+
+func getSqlTemplate(name string, tmpl string) *template.Template {
+	// TODO, uncomment when SQL works
+	// t, ok := globalTemplates[name]
+	// if ok {
+	// 	return t
+	// }
+	t := template.Must(template.New(name).Parse(tmpl))
+	globalTemplates[name] = t
+	return t
+}
+
+func renderSqlTemplate(name string, tmpl string, data interface{}) (string, error) {
+	var buf bytes.Buffer
+	t := getSqlTemplate(name, tmpl)
+	err := t.Execute(&buf, data)
+	if err != nil {
+		return string(buf.Bytes()), err
+	}
+	sql := string(buf.Bytes())
+	log.Debug(sql)
+	return sql, nil
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,8 +15,6 @@ import (
 	"github.com/gorilla/mux"
 
 	// Database connectivity
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
 
 	// Logging
@@ -85,7 +82,7 @@ func main() {
 	viper.SetDefault("UrlBase", "http://localhost:7800")
 	viper.SetDefault("DefaultResolution", 4096)
 	viper.SetDefault("DefaultBuffer", 256)
-	viper.SetDefault("MaxFeaturesPerTile", 50000)
+	viper.SetDefault("MaxFeaturesPerTile", 50)
 	viper.SetDefault("DefaultMinZoom", 0)
 	viper.SetDefault("DefaultMaxZoom", 22)
 	viper.SetDefault("Debug", false)
@@ -139,38 +136,6 @@ func main() {
 }
 
 /******************************************************************************/
-
-func DbConnect() (*pgxpool.Pool, error) {
-	if globalDb == nil {
-		var err error
-		var config *pgxpool.Config
-		dbConnection := viper.GetString("DbConnection")
-		config, err = pgxpool.ParseConfig(dbConnection)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Read current log level and use one less-fine level
-		// below that
-		config.ConnConfig.Logger = logrusadapter.NewLogger(log.New())
-		levelString, _ := (log.GetLevel() - 1).MarshalText()
-		pgxLevel, _ := pgx.LogLevelFromString(string(levelString))
-		config.ConnConfig.LogLevel = pgxLevel
-
-		// Connect!
-		globalDb, err = pgxpool.ConnectConfig(context.Background(), config)
-		if err != nil {
-			log.Fatal(err)
-		}
-		dbName := config.ConnConfig.Config.Database
-		dbUser := config.ConnConfig.Config.User
-		dbHost := config.ConnConfig.Config.Host
-		log.Infof("Connected as '%s' to '%s' @ '%s'", dbUser, dbName, dbHost)
-
-		return globalDb, err
-	}
-	return globalDb, nil
-}
 
 /******************************************************************************/
 
@@ -341,7 +306,7 @@ func HandleRequestFunctionTile(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func RequestLayerList(w http.ResponseWriter, r *http.Request) {
+func RequestListJson(w http.ResponseWriter, r *http.Request) {
 	log.WithFields(log.Fields{
 		"event": "request",
 		"topic": "layerlist",
@@ -349,14 +314,15 @@ func RequestLayerList(w http.ResponseWriter, r *http.Request) {
 	// Update the global in-memory list from
 	// the database
 	if err := LoadLayers(); err != nil {
-		// return nil, error
+		// return nil, err
+		return
 	}
 	w.Header().Add("Content-Type", "application/json")
 	jsonLayers := GetJsonLayers(r)
 	json.NewEncoder(w).Encode(jsonLayers)
 }
 
-func RequestLayerDetail(w http.ResponseWriter, r *http.Request) {
+func RequestDetailJson(w http.ResponseWriter, r *http.Request) {
 	lyrId := mux.Vars(r)["name"]
 	log.WithFields(log.Fields{
 		"event": "request",
@@ -365,17 +331,55 @@ func RequestLayerDetail(w http.ResponseWriter, r *http.Request) {
 
 	if err := LoadLayers(); err != nil {
 		// return nil, error
+		return
 	}
 
 	lyr, errLyr := GetLayer(lyrId)
 	if errLyr != nil {
-		// return nil, error
+		// return nil, errLyr
+		return
 	}
 
 	errWrite := lyr.WriteLayerJson(w, r)
 	if errWrite != nil {
-		// return nil, error
+		// return nil, errWrite
+		return
 	}
+}
+
+func RequestLayerTile(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	lyr, errLyr := GetLayer(vars["name"])
+	if errLyr != nil {
+		// return nil, errLyr
+		return
+	}
+	tile, errTile := MakeTile(vars)
+	if errTile != nil {
+		// return nil, errTile
+		return
+	}
+
+	log.WithFields(log.Fields{
+		"event": "request",
+		"topic": "tile",
+		"key":   tile.String(),
+	}).Tracef("RequestLayerTile: %s", tile.String())
+
+	tilerequest := lyr.GetTileRequest(tile, &vars)
+	mvt, errMvt := DBTileRequest(&tilerequest)
+	if errMvt != nil {
+		// return nil, errMvt
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
+
+	if _, err := w.Write(mvt); err != nil {
+		// return nil, errWrite
+		return
+	}
+	return
 }
 
 func HandleRequests() {
@@ -386,8 +390,6 @@ func HandleRequests() {
 	// r.HandleFunc("/", HandleRequestRoot).Methods("GET")
 	// r.HandleFunc("/index.html", HandleRequestRoot).Methods("GET")
 	// r.HandleFunc("/index.json", HandleRequestTableList).Methods("GET")
-	r.HandleFunc("/layers.json", RequestLayerList).Methods("GET")
-	r.HandleFunc("/{name}.json", RequestLayerDetail).Methods("GET")
 	// r.HandleFunc("/{name}.html", HandleRequestTablePreview).Methods("GET")
 	// r.HandleFunc("/{name}/tilejson.json", HandleRequestTableTileJSON).Methods("GET")
 	// r.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestTableTile).Methods("GET")
@@ -395,6 +397,10 @@ func HandleRequests() {
 	// r.HandleFunc("/func/index.json", HandleRequestFunctionList).Methods("GET")
 	// r.HandleFunc("/func/{name}.json", HandleRequestFunction).Methods("GET")
 	// r.HandleFunc("/func/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", HandleRequestFunctionTile)
+
+	r.HandleFunc("/index.json", RequestListJson).Methods("GET")
+	r.HandleFunc("/{name}.json", RequestDetailJson).Methods("GET")
+	r.HandleFunc("/{name}/{zoom:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", RequestLayerTile).Methods("GET")
 
 	// Allow CORS from anywhere
 	corsOpt := handlers.AllowedOrigins([]string{"*"})
