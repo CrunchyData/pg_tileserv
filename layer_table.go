@@ -94,18 +94,13 @@ func (lyr LayerTable) WriteLayerJson(w http.ResponseWriter, req *http.Request) e
 }
 
 func (lyr LayerTable) GetTileRequest(tile Tile, reqParams *map[string]string) TileRequest {
-	// type TileRequest struct {
-	// 	Tile    Tile
-	// 	Sql     string
-	// 	Args    []interface{}
-	// }
 	rp := lyr.getRequestParameters(reqParams)
 	sql, _ := lyr.requestSql(&tile, &rp)
 
 	tr := TileRequest{
 		Tile: tile,
 		Sql:  sql,
-		Args: make([]interface{}, 0, 0),
+		Args: nil,
 	}
 	return tr
 }
@@ -278,7 +273,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, rp *requestParameters) (string, er
 	// expanded version for querying
 	tileBounds := tile.Bounds()
 	queryBounds := tile.Bounds()
-	queryBounds.Expand(float64(rp.Buffer) / float64(rp.Resolution))
+	queryBounds.Expand(tile.Width() * float64(rp.Buffer) / float64(rp.Resolution))
 	tileSql := tileBounds.SQL()
 	tileQuerySql := queryBounds.SQL()
 
@@ -291,13 +286,12 @@ func (lyr *LayerTable) requestSql(tile *Tile, rp *requestParameters) (string, er
 
 	// only specify MVT format parameters we have configured
 	mvtParams := make([]string, 0)
-	mvtParams = append(mvtParams, fmt.Sprintf("'%s'::text", lyr.Id))
-	// mvtParams = append(mvtParams, fmt.Sprintf("%d", lyr.Resolution)) xxx
+	mvtParams = append(mvtParams, fmt.Sprintf("'%s', %d", lyr.Id, rp.Resolution))
 	if lyr.GeometryColumn != "" {
-		mvtParams = append(mvtParams, fmt.Sprintf("'%s'::text", lyr.GeometryColumn))
+		mvtParams = append(mvtParams, fmt.Sprintf("'%s'", lyr.GeometryColumn))
 	}
 	if lyr.IdColumn != "" {
-		mvtParams = append(mvtParams, fmt.Sprintf("'%s'::text", lyr.IdColumn))
+		mvtParams = append(mvtParams, fmt.Sprintf("'%s'", lyr.IdColumn))
 	}
 
 	sp := sqlParameters{
@@ -314,114 +308,33 @@ func (lyr *LayerTable) requestSql(tile *Tile, rp *requestParameters) (string, er
 		Srid:           lyr.Srid,
 	}
 
-	tmpl := `
+	tmplSql := `
 		WITH
 		bounds AS (
-		  SELECT {{ .TileSql }}  AS geom_query,
-		         {{ .QuerySql }} AS geom_clip
+		  SELECT {{ .TileSql }}  AS geom_clip,
+		         {{ .QuerySql }} AS geom_query
 		),
 		mvtgeom AS (
 		  SELECT ST_AsMVTGeom(
-			       ST_Transform(t.{{ .GeometrColumn }}, 3857), 
-			       bounds.geom_clip, 
-			       {{ .Resolution }}, 
+			       ST_Transform(t.{{ .GeometryColumn }}, 3857),
+			       bounds.geom_clip,
+			       {{ .Resolution }},
 			       {{ .Buffer }}
 			     ) AS geom,
 		         {{ .Attributes }}
 		  FROM "{{ .Schema }}"."{{ .Table }}" t, bounds
-		  WHERE ST_Intersects(t.{{ .GeometryColumn }}, 
+		  WHERE ST_Intersects(t.{{ .GeometryColumn }},
 			                  ST_Transform(bounds.geom_query, {{ .Srid }}))
 		  LIMIT {{ .Limit }}
 		)
 		SELECT ST_AsMVT(mvtgeom.*, {{ .MvtParams }}) FROM mvtgeom
 		`
 
-	sql, err := renderSqlTemplate("tableTileSql", tmpl, sp)
+	sql, err := renderSqlTemplate("tableTileSql", tmplSql, sp)
 	if err != nil {
 		return "", err
 	}
 	return sql, err
-}
-
-func (lyr *LayerTable) TileSql(tile *Tile) string {
-
-	// need both the exact tile boundary for clipping and an
-	// expanded version for querying
-	tileBounds := tile.Bounds()
-	queryBounds := tile.Bounds()
-	// queryBounds.Expand(float64(lyr.Buffer) / float64(lyr.Resolution))
-	tileSql := tileBounds.SQL()
-	tileQuerySql := queryBounds.SQL()
-	// convert the attribute name/type map into a SQL query for all
-	// attributes
-	// TODO, support attribute restriction in tile query
-	attrNames := make([]string, 0)
-	for k := range lyr.Attributes {
-		attrNames = append(attrNames, fmt.Sprintf("\"%s\"", k))
-	}
-
-	// only specify MVT format parameters we have configured
-	mvtParams := make([]string, 0)
-	mvtParams = append(mvtParams, fmt.Sprintf("'%s'::text", lyr.Id))
-	// mvtParams = append(mvtParams, fmt.Sprintf("%d", lyr.Resolution)) xxx
-	if lyr.GeometryColumn != "" {
-		mvtParams = append(mvtParams, fmt.Sprintf("'%s'::text", lyr.GeometryColumn))
-	}
-	if lyr.IdColumn != "" {
-		mvtParams = append(mvtParams, fmt.Sprintf("'%s'::text", lyr.IdColumn))
-	}
-
-	sqlTmpl := `
-		WITH
-		bounds AS (
-		  SELECT %s AS geom_query,
-		         %s AS geom_clip
-		),
-		mvtgeom AS (
-		  SELECT ST_AsMVTGeom(ST_Transform(t.%s, 3857), bounds.geom_clip, %d, %d) AS geom,
-		       %s
-		  FROM "%s"."%s" t, bounds
-		  WHERE ST_Intersects(t.%s, ST_Transform(bounds.geom_query, %d))
-		  LIMIT %d
-		)
-		SELECT ST_AsMVT(mvtgeom.*, %s) FROM mvtgeom
-		`
-
-	sql := fmt.Sprintf(sqlTmpl,
-		tileQuerySql,
-		tileSql,
-		lyr.GeometryColumn,
-		// lyr.Resolution, xxxx
-		// lyr.Buffer, xxx
-		strings.Join(attrNames, ", "),
-		lyr.Schema,
-		lyr.Table,
-		lyr.GeometryColumn,
-		lyr.Srid,
-		viper.GetInt("MaxFeaturesPerTile"),
-		strings.Join(mvtParams, ", "))
-
-	log.Debug(sql)
-	return sql
-}
-
-func (lyr *LayerTable) GetTile(tile *Tile) ([]byte, error) {
-
-	db, err := DbConnect()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tileSql := lyr.TileSql(tile)
-	row := db.QueryRow(context.Background(), tileSql)
-	var mvtTile []byte
-	err = row.Scan(&mvtTile)
-	if err != nil {
-		log.Warn(err)
-		return nil, err
-	} else {
-		return mvtTile, nil
-	}
 }
 
 func GetTableLayers() ([]LayerTable, error) {

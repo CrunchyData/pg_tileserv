@@ -3,9 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strings"
+	"text/template"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -51,7 +51,7 @@ func serverURLBase(r *http.Request) string {
 	return fmt.Sprintf("%v://%v", ps, ph)
 }
 
-var globalTemplates map[string](*template.Template)
+var globalTemplates map[string](*template.Template) = make(map[string](*template.Template))
 
 func getSqlTemplate(name string, tmpl string) *template.Template {
 	// TODO, uncomment when SQL works
@@ -59,9 +59,13 @@ func getSqlTemplate(name string, tmpl string) *template.Template {
 	// if ok {
 	// 	return t
 	// }
-	t := template.Must(template.New(name).Parse(tmpl))
-	globalTemplates[name] = t
-	return t
+	t := template.New(name)
+	tp, err := t.Parse(tmpl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	globalTemplates[name] = tp
+	return tp
 }
 
 func renderSqlTemplate(name string, tmpl string, data interface{}) (string, error) {

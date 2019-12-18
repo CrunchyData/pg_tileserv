@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
 	"strconv"
+	"text/template"
 	"time"
 
 	// REST routing
@@ -253,31 +253,6 @@ func MakeTile(vars map[string]string) (Tile, error) {
 		return tile, errors.New(fmt.Sprintf("invalid tile address %s", tile.String()))
 	}
 	return tile, nil
-}
-
-func HandleRequestTableTile(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	lyrname := vars["name"]
-	if lyr, ok := globalLayerTables[lyrname]; ok {
-		tile, _ := MakeTile(vars)
-
-		log.WithFields(log.Fields{
-			"event": "handlerequest",
-			"topic": "tabletile",
-			"key":   tile.String(),
-		}).Tracef("HandleRequestTableTile: %s", tile.String())
-
-		// Replace with SQL fun
-		pbf, err := lyr.GetTile(&tile)
-		if err != nil {
-			// TODO return a 500 or something
-		}
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
-		_, err = w.Write(pbf)
-		return
-	}
-
 }
 
 func HandleRequestFunctionTile(w http.ResponseWriter, r *http.Request) {

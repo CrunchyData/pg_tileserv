@@ -52,7 +52,7 @@ func DBTileRequest(tr *TileRequest) ([]byte, error) {
 		log.Error(err)
 		return nil, err
 	}
-	row := db.QueryRow(context.Background(), tr.Sql, tr.Args)
+	row := db.QueryRow(context.Background(), tr.Sql, tr.Args...)
 	var mvtTile []byte
 	err = row.Scan(&mvtTile)
 	if err != nil {
