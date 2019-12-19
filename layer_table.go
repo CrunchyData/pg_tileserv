@@ -10,11 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	// REST routing
-
-	// "github.com/lib/pq"
-
+	// Database
 	"github.com/jackc/pgtype"
+
+	// Logging
 	log "github.com/sirupsen/logrus"
 
 	// Configuration

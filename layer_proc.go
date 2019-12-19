@@ -1,22 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
-
-	// "net/url"
-
-	// REST routing
-
-	// Database
-	"context"
-	// "github.com/jackc/pgtype"
-	// "github.com/lib/pq"
-	// "github.com/jackc/pgtype"
 
 	// Logging
 	log "github.com/sirupsen/logrus"
@@ -172,64 +163,6 @@ func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDeta
 		td.Arguments = append(td.Arguments, tmpMap[v])
 	}
 	return td, nil
-}
-
-/*
-func (lyr *LayerFunction) GetLayerFunctionArgs(vals url.Values) map[string]string {
-	funcArgs := make(map[string]string)
-	for _, arg := range lyr.Arguments {
-		if val, ok := vals[arg]; ok {
-			funcArgs[arg] = val[0]
-		}
-	}
-	return funcArgs
-}
-*/
-
-func (lyr *LayerFunction) GetTile(tile *Tile, args map[string]string) ([]byte, error) {
-
-	db, err := DbConnect()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Need ordered list of named parameters and values to
-	// pass into the Query
-	keys := make([]string, 0)
-	vals := make([]interface{}, 0)
-	i := 1
-	for k, v := range args {
-		keys = append(keys, fmt.Sprintf("%s => $%d", k, i))
-		switch k {
-		case "x":
-			vals = append(vals, tile.X)
-		case "y":
-			vals = append(vals, tile.Y)
-		case "z":
-			vals = append(vals, tile.Zoom)
-		default:
-			vals = append(vals, v)
-		}
-		i += 1
-	}
-
-	// Build the SQL
-	sql := fmt.Sprintf("SELECT %s(%s)", lyr.Id, strings.Join(keys, ", "))
-	log.WithFields(log.Fields{
-		"event": "function.gettile",
-		"topic": "sql",
-		"key":   sql,
-	}).Debugf("Func GetTile: %s", sql)
-
-	row := db.QueryRow(context.Background(), sql, vals...)
-	var mvtTile []byte
-	err = row.Scan(&mvtTile)
-	if err != nil {
-		log.Warn(err)
-		return nil, err
-	} else {
-		return mvtTile, nil
-	}
 }
 
 func GetFunctionLayers() ([]LayerFunction, error) {
