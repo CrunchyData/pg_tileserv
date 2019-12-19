@@ -219,12 +219,39 @@ func requestTile(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+type tileAppError struct {
+	HttpCode int
+	SrcErr   error
+	Topic    string
+	Message  string
+}
+
+func (tae tileAppError) Error() string {
+	if tae.Message != "" {
+		return fmt.Sprint("%s (%s)", tae.HttpCode, tae.Message, tae.SrcErr.Error())
+	}
+	return fmt.Sprint("%s", tae.HttpCode, tae.SrcErr.Error())
+}
+
 type tileAppHandler func(w http.ResponseWriter, r *http.Request) error
 
 func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := fn(w, r); err != nil {
-		http.Error(w, err.Error(), 500)
-		log.Error(err)
+		if hdr, ok := r.Header["x-correlation-id"]; ok {
+			log.WithField("correlation-id", hdr[0])
+		}
+		if e, ok := err.(tileAppError); ok {
+			if e.Topic != "" {
+				log.WithField("topic", e.Topic)
+			}
+			log.WithField("key", e.Message)
+			log.WithField("src", e.SrcErr.Error())
+			log.Error(err)
+			http.Error(w, e.Error(), e.HttpCode)
+		} else {
+			log.Error(err)
+			http.Error(w, err.Error(), 500)
+		}
 	}
 }
 
