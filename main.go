@@ -219,6 +219,11 @@ func requestTile(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+/******************************************************************************/
+
+// tileAppError is an optional error structure functions can return
+// if they want to specify the particular HTTP error code to be used
+// in their error return
 type tileAppError struct {
 	HttpCode int
 	SrcErr   error
@@ -226,15 +231,24 @@ type tileAppError struct {
 	Message  string
 }
 
+// Error prints out a reasonable string format
 func (tae tileAppError) Error() string {
 	if tae.Message != "" {
-		return fmt.Sprint("%s (%s)", tae.HttpCode, tae.Message, tae.SrcErr.Error())
+		return fmt.Sprintf("%s (%s)", tae.Message, tae.SrcErr.Error())
 	}
-	return fmt.Sprint("%s", tae.HttpCode, tae.SrcErr.Error())
+	return fmt.Sprintf("%s", tae.SrcErr.Error())
 }
 
+// tileAppHandler is a function handler that can replace the
+// existing handler and provide richer error handling, see below and
+// https://blog.golang.org/error-handling-and-go
 type tileAppHandler func(w http.ResponseWriter, r *http.Request) error
 
+// ServeHTTP logs as much useful information as possible in
+// a field format for potential Json logging streams
+// as well as returning HTTP error response codes on failure
+// so clients can see what is going on
+// TODO: return JSON document body for the HTTP error
 func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := fn(w, r); err != nil {
 		if hdr, ok := r.Header["x-correlation-id"]; ok {
@@ -255,9 +269,7 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TODO, propogate id headers to error logging
-// TODO, ensure all logging uses fields
-// x-correlation-id
+/******************************************************************************/
 
 func handleRequests() {
 
