@@ -31,7 +31,7 @@ type Layer interface {
 	GetDescription() string
 	GetName() string
 	GetSchema() string
-	GetTileRequest(tile Tile, reqParams *map[string]string) TileRequest
+	GetTileRequest(r *http.Request) TileRequest
 	WriteLayerJson(w http.ResponseWriter, req *http.Request) error
 }
 

@@ -340,7 +340,7 @@ func RequestLayerTile(w http.ResponseWriter, r *http.Request) {
 		"key":   tile.String(),
 	}).Tracef("RequestLayerTile: %s", tile.String())
 
-	tilerequest := lyr.GetTileRequest(tile, &vars)
+	tilerequest := lyr.GetTileRequest(tile, r)
 	mvt, errMvt := DBTileRequest(&tilerequest)
 	if errMvt != nil {
 		// return nil, errMvt

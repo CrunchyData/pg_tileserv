@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 
+	// REST routing
+	"github.com/gorilla/mux"
+
 	// "github.com/lib/pq"
 
 	"github.com/jackc/pgtype"
@@ -93,8 +96,10 @@ func (lyr LayerTable) WriteLayerJson(w http.ResponseWriter, req *http.Request) e
 	return nil
 }
 
-func (lyr LayerTable) GetTileRequest(tile Tile, reqParams *map[string]string) TileRequest {
-	rp := lyr.getRequestParameters(reqParams)
+func (lyr LayerTable) GetTileRequest(r *http.Request) TileRequest {
+	reqParams := mux.Vars(r)
+	rp := lyr.getRequestParameters(&reqParams)
+	tile, _ := MakeTile(reqParams)
 	sql, _ := lyr.requestSql(&tile, &rp)
 
 	tr := TileRequest{

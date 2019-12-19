@@ -8,6 +8,9 @@ import (
 	"strings"
 	// "net/url"
 
+	// REST routing
+	"github.com/gorilla/mux"
+
 	// Database
 	"context"
 	// "github.com/jackc/pgtype"
@@ -77,7 +80,18 @@ func (lyr LayerFunction) GetSchema() string {
 	return lyr.Schema
 }
 
-func (lyr LayerFunction) GetTileRequest(tile Tile, reqParams *map[string]string) TileRequest {
+func (lyr LayerFunction) GetTileRequest(r *http.Request) TileRequest {
+
+	// rp := lyr.getRequestParameters(reqParams)
+	// sql, _ := lyr.requestSql(&tile, &rp)
+
+	// tr := TileRequest{
+	// 	Tile: tile,
+	// 	Sql:  sql,
+	// 	Args: nil,
+	// }
+	// return tr
+
 	return TileRequest{} // TODO IMPLEMENT
 }
 
@@ -93,6 +107,18 @@ func (lyr LayerFunction) WriteLayerJson(w http.ResponseWriter, req *http.Request
 }
 
 /********************************************************************************/
+
+/*
+func (lyr *LayerFunction) getFunctionArgs(vals url.Values) map[string]string {
+	funcArgs := make(map[string]string)
+	for _, arg := range lyr.Arguments {
+		if val, ok := vals[arg]; ok {
+			funcArgs[arg] = val[0]
+		}
+	}
+	return funcArgs
+}
+*/
 
 func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDetailJson, error) {
 
