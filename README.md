@@ -31,7 +31,7 @@ LANGUAGE 'sql';
 
 ```sql
 CREATE OR REPLACE
-FUNCTION squares(z integer, x integer, y integer, depth integer)
+FUNCTION squares(z integer, x integer, y integer, depth integer default 2)
 RETURNS bytea
 AS $$
 DECLARE
@@ -58,7 +58,10 @@ BEGIN
     RETURN rslt;
 END;
 $$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql' 
+IMMUTABLE
+STRICT
+PARALLEL SAFE;
 ```
 
 

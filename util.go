@@ -13,13 +13,19 @@ import (
 	// log "github.com/sirupsen/logrus"
 )
 
+// serverURLBase returns the server URL
+// that the client used to access this service.
+// In the case of access via a proxy service, if
+// the standard headers are set, we return that
+// URL base. If necessary the automatic calculation
+// can be over-ridden by setting the "UrlBase"
+// configuration option
 func serverURLBase(r *http.Request) string {
-
 	// Use configuration file settings if we have them
-	if viper.GetString("UrlBase") != "" {
-		return viper.GetString("UrlBase")
+	configUrl := viper.GetString("UrlBase")
+	if configUrl != "" {
+		return configUrl
 	}
-
 	// Preferred scheme
 	ps := "http"
 	// Preferred host:port
@@ -42,7 +48,6 @@ func serverURLBase(r *http.Request) string {
 	if fh, ok := r.Header[xfh]; ok {
 		ph = fh[0]
 	}
-
 	xfp := http.CanonicalHeaderKey("X-Forwarded-Proto")
 	if fp, ok := r.Header[xfp]; ok {
 		ps = fp[0]

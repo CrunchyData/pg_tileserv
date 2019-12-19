@@ -25,6 +25,10 @@ func (lt layerType) String() string {
 	}
 }
 
+// A Layer is a LayerTable or a LayerFunction
+// in either case it should be able to generate
+// a TileRequest containing SQL to produce tiles
+// given an input tile
 type Layer interface {
 	GetType() layerType
 	GetId() string
@@ -99,13 +103,3 @@ func GetJsonLayers(r *http.Request) map[string]LayerJson {
 	}
 	return json
 }
-
-// R http.Request
-
-// GetLayers(R) => []LayerJson
-// GetLayerDetail(R, Id) => LayerDetailJson
-
-// GetTile(R, Id, ZXY)
-
-//   GetTileRequest(Tile, R, Layer, ) => TileRequest
-//   GetMVT(TileRequest) => []byte

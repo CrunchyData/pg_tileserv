@@ -20,11 +20,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// x-correlation-id
-// A Layer is a LayerTable or a LayerFunction
-// in either case it should be able to generate
-// SQL to produce tiles given an input tile
-
 type LayerTable struct {
 	Id             string
 	Schema         string
