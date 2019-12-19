@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
+
 	// "net/url"
 
 	// REST routing
-	"github.com/gorilla/mux"
 
 	// Database
 	"context"
@@ -80,19 +81,17 @@ func (lyr LayerFunction) GetSchema() string {
 	return lyr.Schema
 }
 
-func (lyr LayerFunction) GetTileRequest(r *http.Request) TileRequest {
+func (lyr LayerFunction) GetTileRequest(tile Tile, r *http.Request) TileRequest {
 
-	// rp := lyr.getRequestParameters(reqParams)
-	// sql, _ := lyr.requestSql(&tile, &rp)
+	procArgs := lyr.getFunctionArgs(r.URL.Query())
+	sql, data, _ := lyr.requestSql(tile, procArgs)
 
-	// tr := TileRequest{
-	// 	Tile: tile,
-	// 	Sql:  sql,
-	// 	Args: nil,
-	// }
-	// return tr
-
-	return TileRequest{} // TODO IMPLEMENT
+	tr := TileRequest{
+		Tile: tile,
+		Sql:  sql,
+		Args: data,
+	}
+	return tr
 }
 
 func (lyr LayerFunction) WriteLayerJson(w http.ResponseWriter, req *http.Request) error {
@@ -108,17 +107,19 @@ func (lyr LayerFunction) WriteLayerJson(w http.ResponseWriter, req *http.Request
 
 /********************************************************************************/
 
-/*
+func (lyr *LayerFunction) requestSql(tile Tile, args map[string]string) (string, []interface{}, error) {
+	return "", make([]interface{}, 0), nil
+}
+
 func (lyr *LayerFunction) getFunctionArgs(vals url.Values) map[string]string {
 	funcArgs := make(map[string]string)
-	for _, arg := range lyr.Arguments {
-		if val, ok := vals[arg]; ok {
-			funcArgs[arg] = val[0]
+	for k, v := range vals {
+		if arg, ok := lyr.Arguments[k]; ok {
+			funcArgs[arg.Name] = v[0]
 		}
 	}
 	return funcArgs
 }
-*/
 
 func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDetailJson, error) {
 

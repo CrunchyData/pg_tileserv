@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	// REST routing
-	"github.com/gorilla/mux"
 
 	// "github.com/lib/pq"
 
@@ -96,10 +95,8 @@ func (lyr LayerTable) WriteLayerJson(w http.ResponseWriter, req *http.Request) e
 	return nil
 }
 
-func (lyr LayerTable) GetTileRequest(r *http.Request) TileRequest {
-	reqParams := mux.Vars(r)
-	rp := lyr.getRequestParameters(&reqParams)
-	tile, _ := MakeTile(reqParams)
+func (lyr LayerTable) GetTileRequest(tile Tile, r *http.Request) TileRequest {
+	rp := lyr.getQueryParameters(r.URL.Query())
 	sql, _ := lyr.requestSql(&tile, &rp)
 
 	tr := TileRequest{
@@ -112,7 +109,7 @@ func (lyr LayerTable) GetTileRequest(r *http.Request) TileRequest {
 
 /********************************************************************************/
 
-type requestParameters struct {
+type queryParameters struct {
 	Limit      int
 	Attributes []string
 	Resolution int
@@ -121,10 +118,10 @@ type requestParameters struct {
 
 // getRequestIntParameter ignores missing parameters and non-integer parameters,
 // returning the "unknown integer" value for this case, which is -1
-func getRequestIntParameter(reqParams *map[string]string, param string) int {
-	sParam, ok := (*reqParams)[param]
+func getQueryIntParameter(q url.Values, param string) int {
+	sParam, ok := q[param]
 	if ok {
-		iParam, err := strconv.Atoi(sParam)
+		iParam, err := strconv.Atoi(sParam[0])
 		if err == nil {
 			return iParam
 		}
@@ -136,12 +133,12 @@ func getRequestIntParameter(reqParams *map[string]string, param string) int {
 // with the attributes in the table layer, and returns a slice of
 // just those that occur in both, or a slice of all table attributes
 // if there is not query parameter, or no matches
-func (lyr *LayerTable) getRequestAttributesParameter(reqParams *map[string]string) []string {
-	sAtts, ok := (*reqParams)["attributes"]
+func (lyr *LayerTable) getQueryAttributesParameter(q url.Values) []string {
+	sAtts, ok := q["attributes"]
 	lyrAtts := (*lyr).Attributes
 	queryAtts := make([]string, 0, len(lyrAtts))
 	if ok {
-		aAtts := strings.Split(sAtts, ",")
+		aAtts := strings.Split(sAtts[0], ",")
 		for _, att := range aAtts {
 			decAtt, err := url.QueryUnescape(att)
 			if err == nil {
@@ -167,12 +164,12 @@ func (lyr *LayerTable) getRequestAttributesParameter(reqParams *map[string]strin
 // getRequestParameters reads user-settables parameters
 // from the request URL, or uses the system defaults
 // if the parameters are not set
-func (lyr *LayerTable) getRequestParameters(reqParams *map[string]string) requestParameters {
-	rp := requestParameters{
-		Limit:      getRequestIntParameter(reqParams, "limit"),
-		Resolution: getRequestIntParameter(reqParams, "resolution"),
-		Buffer:     getRequestIntParameter(reqParams, "buffer"),
-		Attributes: lyr.getRequestAttributesParameter(reqParams),
+func (lyr *LayerTable) getQueryParameters(q url.Values) queryParameters {
+	rp := queryParameters{
+		Limit:      getQueryIntParameter(q, "limit"),
+		Resolution: getQueryIntParameter(q, "resolution"),
+		Buffer:     getQueryIntParameter(q, "buffer"),
+		Attributes: lyr.getQueryAttributesParameter(q),
 	}
 	if rp.Limit < 0 {
 		rp.Limit = viper.GetInt("MaxFeaturesPerTile")
@@ -258,7 +255,7 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 	return bounds, nil
 }
 
-func (lyr *LayerTable) requestSql(tile *Tile, rp *requestParameters) (string, error) {
+func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, error) {
 
 	type sqlParameters struct {
 		TileSql        string
@@ -278,20 +275,20 @@ func (lyr *LayerTable) requestSql(tile *Tile, rp *requestParameters) (string, er
 	// expanded version for querying
 	tileBounds := tile.Bounds()
 	queryBounds := tile.Bounds()
-	queryBounds.Expand(tile.Width() * float64(rp.Buffer) / float64(rp.Resolution))
+	queryBounds.Expand(tile.Width() * float64(qp.Buffer) / float64(qp.Resolution))
 	tileSql := tileBounds.SQL()
 	tileQuerySql := queryBounds.SQL()
 
 	// preserve case and special characters in column names
 	// of SQL query by double quoting names
-	attrNames := make([]string, 0, len(rp.Attributes))
-	for _, a := range rp.Attributes {
+	attrNames := make([]string, 0, len(qp.Attributes))
+	for _, a := range qp.Attributes {
 		attrNames = append(attrNames, fmt.Sprintf("\"%s\"", a))
 	}
 
 	// only specify MVT format parameters we have configured
 	mvtParams := make([]string, 0)
-	mvtParams = append(mvtParams, fmt.Sprintf("'%s', %d", lyr.Id, rp.Resolution))
+	mvtParams = append(mvtParams, fmt.Sprintf("'%s', %d", lyr.Id, qp.Resolution))
 	if lyr.GeometryColumn != "" {
 		mvtParams = append(mvtParams, fmt.Sprintf("'%s'", lyr.GeometryColumn))
 	}
@@ -302,11 +299,11 @@ func (lyr *LayerTable) requestSql(tile *Tile, rp *requestParameters) (string, er
 	sp := sqlParameters{
 		TileSql:        tileSql,
 		QuerySql:       tileQuerySql,
-		Resolution:     rp.Resolution,
-		Buffer:         rp.Buffer,
+		Resolution:     qp.Resolution,
+		Buffer:         qp.Buffer,
 		Attributes:     strings.Join(attrNames, ", "),
 		MvtParams:      strings.Join(mvtParams, ", "),
-		Limit:          rp.Limit,
+		Limit:          qp.Limit,
 		Schema:         lyr.Schema,
 		Table:          lyr.Table,
 		GeometryColumn: lyr.GeometryColumn,
