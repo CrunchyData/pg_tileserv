@@ -108,7 +108,26 @@ func (lyr LayerFunction) WriteLayerJson(w http.ResponseWriter, req *http.Request
 /********************************************************************************/
 
 func (lyr *LayerFunction) requestSql(tile Tile, args map[string]string) (string, []interface{}, error) {
-	return "", make([]interface{}, 0), nil
+	// Need ordered list of named parameters and values to
+	// pass into the Query
+	keys := []string{"x => $1", "y => $2", "z => $3"}
+	vals := []interface{}{tile.X, tile.Y, tile.Zoom}
+	i := 4
+	for k, v := range args {
+		keys = append(keys, fmt.Sprintf("%s => $%d", k, i))
+		vals = append(vals, v)
+		i += 1
+	}
+
+	// Build the SQL
+	sql := fmt.Sprintf("SELECT \"%s\".\"%s\"(%s)", lyr.Schema, lyr.Function, strings.Join(keys, ", "))
+	log.WithFields(log.Fields{
+		"event": "tile",
+		"topic": "sql",
+		"key":   sql,
+	}).Debugf("requestSql: %s", sql)
+
+	return sql, vals, nil
 }
 
 func (lyr *LayerFunction) getFunctionArgs(vals url.Values) map[string]string {
@@ -118,6 +137,11 @@ func (lyr *LayerFunction) getFunctionArgs(vals url.Values) map[string]string {
 			funcArgs[arg.Name] = v[0]
 		}
 	}
+	log.WithFields(log.Fields{
+		"event": "tile",
+		"topic": "args",
+		"key":   funcArgs,
+	}).Debug(funcArgs)
 	return funcArgs
 }
 
