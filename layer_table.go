@@ -128,18 +128,22 @@ func getQueryIntParameter(q url.Values, param string) int {
 // just those that occur in both, or a slice of all table attributes
 // if there is not query parameter, or no matches
 func (lyr *LayerTable) getQueryAttributesParameter(q url.Values) []string {
-	sAtts, ok := q["attributes"]
+	sAtts, haveAttributes := q["attributes"]
 	lyrAtts := (*lyr).Attributes
 	queryAtts := make([]string, 0, len(lyrAtts))
-	if ok {
+	haveIdColumn := false
+
+	if haveAttributes {
 		aAtts := strings.Split(sAtts[0], ",")
 		for _, att := range aAtts {
 			decAtt, err := url.QueryUnescape(att)
 			if err == nil {
-				var att TableAttribute
 				decAtt = strings.Trim(decAtt, " ")
-				att, ok = lyrAtts[decAtt]
+				att, ok := lyrAtts[decAtt]
 				if ok {
+					if att.Name == lyr.IdColumn {
+						haveIdColumn = true
+					}
 					queryAtts = append(queryAtts, att.Name)
 				}
 			}
@@ -151,6 +155,9 @@ func (lyr *LayerTable) getQueryAttributesParameter(q url.Values) []string {
 		for _, v := range lyrAtts {
 			queryAtts = append(queryAtts, v.Name)
 		}
+	}
+	if (!haveIdColumn) && lyr.IdColumn != "" {
+		queryAtts = append(queryAtts, lyr.IdColumn)
 	}
 	return queryAtts
 }
