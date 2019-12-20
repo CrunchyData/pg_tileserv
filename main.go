@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -45,7 +46,7 @@ func main() {
 	viper.SetDefault("UrlBase", "")
 	viper.SetDefault("DefaultResolution", 4096)
 	viper.SetDefault("DefaultBuffer", 256)
-	viper.SetDefault("MaxFeaturesPerTile", 50)
+	viper.SetDefault("MaxFeaturesPerTile", 50000)
 	viper.SetDefault("DefaultMinZoom", 0)
 	viper.SetDefault("DefaultMaxZoom", 22)
 	viper.SetDefault("Debug", false)
@@ -117,7 +118,64 @@ func HandleRequestTablePreview(w http.ResponseWriter, r *http.Request) {
 		t.Execute(w, lyr)
 	}
 }
+
+	lyrId := mux.Vars(r)["name"]
+	log.WithFields(log.Fields{
+		"event": "request",
+		"topic": "layerdetail",
+	}).Tracef("requestDetailJson(%s)", lyrId)
+
+	// Refresh the layers list
+	if err := LoadLayers(); err != nil {
+		return err
+	}
+
+	lyr, errLyr := GetLayer(lyrId)
+	if errLyr != nil {
+		return errLyr
+	}
+
+	errWrite := lyr.WriteLayerJson(w, r)
+	if errWrite != nil {
+		return errWrite
+	}
+	return nil
+
 */
+
+func requestPreview(w http.ResponseWriter, r *http.Request) error {
+	lyrId := mux.Vars(r)["name"]
+	log.WithFields(log.Fields{
+		"event": "request",
+		"topic": "layerpreview",
+		"key":   lyrId,
+	}).Tracef("requestPreview: %s", lyrId)
+
+	// Refresh the layers list
+	if err := LoadLayers(); err != nil {
+		return err
+	}
+	// Get the requested layer
+	lyr, errLyr := GetLayer(lyrId)
+	if errLyr != nil {
+		return errLyr
+	}
+
+	switch lyr.(type) {
+	case LayerTable:
+		tmpl, err := template.ParseFiles("assets/preview-table.html")
+		if err != nil {
+			return err
+		}
+		l, _ := lyr.(LayerTable)
+		tmpl.Execute(w, l)
+	case LayerFunction:
+		return errors.New("function preview not yet implemented")
+	default:
+		return errors.New("unknown layer type") // never get here
+	}
+	return nil
+}
 
 func requestListHtml(w http.ResponseWriter, r *http.Request) error {
 	log.WithFields(log.Fields{
@@ -271,7 +329,7 @@ func handleRequests() {
 	r := mux.NewRouter().StrictSlash(true)
 	r.Handle("/", tileAppHandler(requestListHtml))
 	r.Handle("/index.html", tileAppHandler(requestListHtml))
-	// r.HandleFunc("/{name}.html", RequestDetailHtml).Methods("GET")
+	r.Handle("/{name}.html", tileAppHandler(requestPreview))
 	r.Handle("/index.json", tileAppHandler(requestListJson))
 	r.Handle("/{name}.json", tileAppHandler(requestDetailJson))
 	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileAppHandler(requestTile))
@@ -285,7 +343,7 @@ func handleRequests() {
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort")),
-		Handler:      handlers.CORS(corsOpt)(r),
+		Handler:      handlers.CompressHandler(handlers.CORS(corsOpt)(r)),
 	}
 
 	// TODO figure out how to gracefully shut down on ^C

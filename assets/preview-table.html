@@ -21,16 +21,16 @@
   <script>
 
     var map;
-    var layer = '{{.Id}}';
 
-    $.getJSON(layer + "/tilejson.json", function(tilejson) {
-      console.log(tilejson);
+    $.getJSON("{{.Id}}.json", function(layer) {
+      console.log(layer);
 
       var mapConfig = {
         'container': 'map',
-        'center': tilejson['center'],
-        'zoom': 3, //tilejson['minzoom'],
-        // 'bounds': tilejson['bounds'],
+        // use 'bounds' or 'center/zoom' but not both at once
+        // 'center': layer['center'],
+        // 'zoom': layer['minzoom'],
+        'bounds': layer['bounds'],
         'style': {
           'version': 8,
           'sources': {
@@ -51,6 +51,12 @@
                 "http://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
                 "http://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png"
               ]
+            },
+            'wikimedia': {
+              'type': 'raster',
+              'tiles': [
+                "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png"
+              ]
             }
           },
           'layers': [{
@@ -63,34 +69,60 @@
         }
       };
 
-      var layerConfig = tilejson['layerconfig'];
-      if (layerConfig['type'] == "circle") {
-        layerConfig['paint'] = {
-          "circle-radius": 2,
-          "circle-color": "red",
-        };
+      var paint = {};
+      var painttype = "circle";
+
+      switch (layer['geometrytype']) {
+        case 'LineString':
+        case 'MultiLineString':
+          painttype = "line";
+          paint = {
+            "line-width": 1,
+            "line-color": "red"
+          };
+          break;
+        case 'Polygon':
+        case 'MultiPolygon':
+          // painttype = "fill";
+          // paint = {
+          //   "fill-color": "red",
+          //   "fill-opacity": 0.1,
+          //   "fill-outline-color": "red"
+          // };
+          painttype = "line";
+          paint = {
+            "line-width": 1,
+            "line-color": "red"
+          };
+          break;
+        default:
+        // case 'Point':
+        // case 'MultiPoint':
+          painttype = "circle";
+          paint = {
+            "circle-radius": 2,
+            "circle-color": "red",
+          };
+          break;
       }
-      else if (layerConfig['type'] == "line") {
-        layerConfig['paint'] = {
-          "line-width": 1,
-          "line-color": "red"
-        };
-      }
-      else if (layerConfig['type'] == "fill") {
-        layerConfig['paint'] = {
-          "fill-color": "red",
-          "fill-opacity": 0.1,
-          "fill-outine-color": "red"
-        };
-      }
-      else {
-        layerConfig['paint'] = {};
-      }
+
+      var layerConfig = {
+        "id": layer["id"],
+        "source": {
+          "type": "vector",
+          "tiles": [layer["tileurl"]],
+          "minzoom": layer["minzoom"],
+          "maxzoom": layer["maxzoom"]
+        },
+        "source-layer": layer["id"],
+        "type": painttype,
+        "paint": paint
+      };
 
       map = new mapboxgl.Map(mapConfig);
       map.addControl(new mapboxgl.NavigationControl());
 
-      map.on('load', function() {
+      map.on("load", function() {
         map.addLayer(layerConfig)
       });
 
