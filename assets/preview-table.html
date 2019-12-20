@@ -14,7 +14,12 @@
   </head>
 <body>
 
-  <div id="meta"><h1>{{.Id}}</h1></div>
+  <div id="meta">
+    <h1>{{ .Id }}</h1>
+    {{ if .Description }}
+    <p>{{ .Description }}</p>
+    {{ end }}
+  </div>
 
   <div id="map"></div>
 
@@ -22,7 +27,7 @@
 
     var map;
 
-    $.getJSON("{{.Id}}.json", function(layer) {
+    $.getJSON("{{ .Id }}.json", function(layer) {
       console.log(layer);
 
       var mapConfig = {
@@ -69,61 +74,94 @@
         }
       };
 
-      var paint = {};
-      var painttype = "circle";
+      var paints = {
+        "circle":{
+          "circle-radius": 3,
+          "circle-color": "red"
+        },
+        "line":{
+          "line-width": 1.5,
+          "line-color": "red"
+        },
+        "fill":{
+          "fill-color": "red",
+          "fill-opacity": 0.1,
+          "fill-outline-color": "red"
+        }
+      };
 
-      switch (layer['geometrytype']) {
-        case 'LineString':
-        case 'MultiLineString':
-          painttype = "line";
-          paint = {
-            "line-width": 1,
-            "line-color": "red"
-          };
-          break;
-        case 'Polygon':
-        case 'MultiPolygon':
-          // painttype = "fill";
-          // paint = {
-          //   "fill-color": "red",
-          //   "fill-opacity": 0.1,
-          //   "fill-outline-color": "red"
-          // };
-          painttype = "line";
-          paint = {
-            "line-width": 1,
-            "line-color": "red"
-          };
-          break;
-        default:
-        // case 'Point':
-        // case 'MultiPoint':
-          painttype = "circle";
-          paint = {
-            "circle-radius": 2,
-            "circle-color": "red",
-          };
-          break;
-      }
+      var painttypes = {
+        "LineString":"line",
+        "MultiLineString":"line",
+        "Polygon":"fill",
+        "MultiPolygon":"fill",
+        "Point":"circle",
+        "MultiPoint":"circle"
+      };
 
-      var layerConfig = {
-        "id": layer["id"],
-        "source": {
+      function layerSource(tileurl) {
+        return {
           "type": "vector",
-          "tiles": [layer["tileurl"]],
+          "tiles": [tileurl],
           "minzoom": layer["minzoom"],
           "maxzoom": layer["maxzoom"]
-        },
-        "source-layer": layer["id"],
-        "type": painttype,
-        "paint": paint
+        }
+      };
+
+      function layerConfig(id, painttype, paint) {
+        return {
+          "id": id,
+          "source": layer["id"],
+          "source-layer": layer["id"],
+          "type": painttype,
+          "paint": paint
+        }
       };
 
       map = new mapboxgl.Map(mapConfig);
       map.addControl(new mapboxgl.NavigationControl());
 
       map.on("load", function() {
-        map.addLayer(layerConfig)
+
+        map.addSource(layer["id"], layerSource(layer["tileurl"]));
+
+        var painttype = painttypes[layer["geometrytype"]];
+        map.addLayer(layerConfig(layer["id"], painttype, paints[painttype]));
+        // polygons are rendered with a fill and a line layer separately
+        if (painttype == "fill") {
+          map.addLayer(layerConfig(layer["id"] + ".line", "line", paints["line"]));
+        }
+
+        // Convert feature properties into html
+        function featureHtml(f) {
+          var p = f.properties;
+          var h = "<p>";
+          for (var k in p) {
+            h += "<b>" + k + ":</b> " + p[k] + "<br/>"
+          }
+          h += "</p>";
+          return h
+        }
+
+        // When a click event occurs on a feature in the states layer, open a popup at the
+        // location of the click, with description HTML from its properties.
+        map.on('click', layer["id"], function(e) {
+          new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(featureHtml(e.features[0]))
+          .addTo(map);
+        });
+
+        // // Change the cursor to a pointer when the mouse is over the states layer.
+        map.on('mouseenter', layer["id"], function() {
+          map.getCanvas().style.cursor = 'pointer';
+        });
+
+        // // Change it back to a pointer when it leaves.
+        map.on('mouseleave', layer["id"], function() {
+          map.getCanvas().style.cursor = '';
+        });
+
       });
 
     });

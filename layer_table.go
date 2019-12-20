@@ -344,7 +344,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 			       bounds.geom_clip,
 			       {{ .Resolution }},
 			       {{ .Buffer }}
-				 ) AS geom 
+				 ) AS geom
 				 {{ if .Attributes }}
 				 , {{ .Attributes }}
 				 {{ end }}
@@ -447,7 +447,6 @@ func GetTableLayers() ([]LayerTable, error) {
 					Description: atts.Elements[pos+2].String,
 				}
 				elm.order, _ = strconv.Atoi(atts.Elements[pos+3].String)
-				log.Debug(atts.Elements[pos])
 				attributes[elmId] = elm
 			}
 		}
