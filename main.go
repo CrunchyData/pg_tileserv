@@ -100,8 +100,6 @@ func main() {
 
 /******************************************************************************/
 
-/******************************************************************************/
-
 /*
 func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
 	log.WithFields(log.Fields{
@@ -234,7 +232,7 @@ type tileAppError struct {
 // Error prints out a reasonable string format
 func (tae tileAppError) Error() string {
 	if tae.Message != "" {
-		return fmt.Sprintf("%s (%s)", tae.Message, tae.SrcErr.Error())
+		return fmt.Sprintf("%s\n%s", tae.Message, tae.SrcErr.Error())
 	}
 	return fmt.Sprintf("%s", tae.SrcErr.Error())
 }
@@ -255,6 +253,9 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.WithField("correlation-id", hdr[0])
 		}
 		if e, ok := err.(tileAppError); ok {
+			if e.HttpCode == 0 {
+				e.HttpCode = 500
+			}
 			if e.Topic != "" {
 				log.WithField("topic", e.Topic)
 			}

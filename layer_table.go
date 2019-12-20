@@ -247,12 +247,29 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 		return bounds, err
 	}
 
-	err = db.QueryRow(context.Background(), extentSql).Scan(&bounds.Xmin, &bounds.Ymin, &bounds.Xmax, &bounds.Ymax)
+	var (
+		xmin pgtype.Float8
+		xmax pgtype.Float8
+		ymin pgtype.Float8
+		ymax pgtype.Float8
+	)
+
+	err = db.QueryRow(context.Background(), extentSql).Scan(&xmin, &ymin, &xmax, &ymax)
 	if err != nil {
-		return bounds, err
+		return bounds, tileAppError{
+			SrcErr:  err,
+			Message: "Unable to calculate table bounds",
+		}
+	}
+	if xmin.Status == pgtype.Null {
+		warning := fmt.Sprintf("GetBounds failed, ANALYZE %s", lyr.Table)
+		log.WithFields(log.Fields{
+			"event": "request",
+			"topic": "detail",
+			"key":   warning,
+		}).Warn(warning)
 	}
 
-	log.Debug(bounds)
 	return bounds, nil
 }
 
