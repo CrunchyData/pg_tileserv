@@ -1,0 +1,172 @@
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <title>pg_tileserv: {{.Id}}</title>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+    <style type="text/css">
+      body {margin:0;padding:0;}
+      #map {position:absolute;top:0;bottom:0;left:0;right:0;}
+      #meta {z-index:2;color:white;background:rgba(255,255,255,0.2);position:absolute;top:10;left:20;padding:20;margin:0;width:33%}
+      #meta h1 {margin:0;}
+    </style>
+  </head>
+<body>
+
+  <div id="meta">
+    <h1>{{ .Id }}</h1>
+    {{ if .Description }}
+    <p>{{ .Description }}</p>
+    {{ end }}
+    {{ if .Attributes }}
+    <hr/><p>{{ range $k, $v := .Attributes }}{{ $v.Name }} {{ end }}</p>
+    {{ end }}
+  </div>
+
+  <div id="map"></div>
+
+  <script>
+
+    var map;
+
+    $.getJSON("{{ .Id }}.json", function(layer) {
+      console.log(layer);
+
+      var mapConfig = {
+        'container': 'map',
+        // use 'bounds' or 'center/zoom' but not both at once
+        // 'center': layer['center'],
+        // 'zoom': layer['minzoom'],
+        'bounds': layer['bounds'],
+        'style': {
+          'version': 8,
+          'sources': {
+            'carto-dark': {
+              'type': 'raster',
+              'tiles': [
+                "http://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+                "http://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+                "http://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+                "http://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png"
+              ]
+            },
+            'carto-light': {
+              'type': 'raster',
+              'tiles': [
+                "http://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+                "http://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+                "http://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+                "http://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png"
+              ]
+            },
+            'wikimedia': {
+              'type': 'raster',
+              'tiles': [
+                "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png"
+              ]
+            }
+          },
+          'layers': [{
+            'id': 'carto-dark-layer',
+            'type': 'raster',
+            'source': 'carto-dark',
+            'minzoom': 0,
+            'maxzoom': 22
+          }]
+        }
+      };
+
+      var paints = {
+        "circle":{
+          "circle-color": "red",
+          "circle-radius": 3
+        },
+        "line":{
+          "line-width": 1.5,
+          "line-color": "red"
+        },
+        "fill":{
+          "fill-color": "red",
+          "fill-opacity": 0.1,
+          "fill-outline-color": "red"
+        }
+      };
+
+      var painttypes = {
+        "LineString":"line",
+        "MultiLineString":"line",
+        "Polygon":"fill",
+        "MultiPolygon":"fill",
+        "Point":"circle",
+        "MultiPoint":"circle"
+      };
+
+      function layerSource(tileurl) {
+        return {
+          "type": "vector",
+          "tiles": [tileurl],
+          "minzoom": layer["minzoom"],
+          "maxzoom": layer["maxzoom"]
+        }
+      };
+
+      function layerConfig(id, gtype) {
+        return {
+          "id": id+"."+gtype,
+          "source": id,
+          "source-layer": id,
+          "type": painttypes[gtype],
+          "paint": paints[painttypes[gtype]],
+          "filter": ["match", ["geometry-type"], [gtype, "Multi"+gtype], true, false]
+        }
+      };
+
+      map = new mapboxgl.Map(mapConfig);
+      map.addControl(new mapboxgl.NavigationControl());
+
+      map.on("load", function() {
+
+        map.addSource(layer["id"], layerSource(layer["tileurl"]));
+        map.addLayer(layerConfig(layer["id"], "Point"));
+        map.addLayer(layerConfig(layer["id"], "LineString"));
+        map.addLayer(layerConfig(layer["id"], "Polygon"));
+
+        // Convert feature properties into html
+        function featureHtml(f) {
+          var p = f.properties;
+          var h = "<p>";
+          for (var k in p) {
+            h += "<b>" + k + ":</b> " + p[k] + "<br/>"
+          }
+          h += "</p>";
+          return h
+        }
+
+        // When a click event occurs on a feature in the states layer, open a popup at the
+        // location of the click, with description HTML from its properties.
+        map.on('click', layer["id"], function(e) {
+          new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(featureHtml(e.features[0]))
+          .addTo(map);
+        });
+
+        // // Change the cursor to a pointer when the mouse is over the states layer.
+        map.on('mouseenter', layer["id"], function() {
+          map.getCanvas().style.cursor = 'pointer';
+        });
+
+        // // Change it back to a pointer when it leaves.
+        map.on('mouseleave', layer["id"], function() {
+          map.getCanvas().style.cursor = '';
+        });
+
+      });
+
+    });
+
+  </script>
+
+</body>
+</html>

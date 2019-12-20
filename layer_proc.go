@@ -171,19 +171,20 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 	// function(z integer, x integer, y integer) returns bytea
 	layerSql := `
 		SELECT
-		Format('%s.%s', n.nspname, p.proname) AS id,
-		n.nspname,
-		p.proname,
-		coalesce(d.description, '') AS description,
-		coalesce(p.proargnames, ARRAY[]::text[]) AS argnames,
-		coalesce(string_to_array(oidvectortypes(p.proargtypes),', '), ARRAY[]::text[]) AS argtypes
+			Format('%s.%s', n.nspname, p.proname) AS id,
+			n.nspname,
+			p.proname,
+			coalesce(d.description, '') AS description,
+			coalesce(p.proargnames, ARRAY[]::text[]) AS argnames,
+			coalesce(string_to_array(oidvectortypes(p.proargtypes),', '), ARRAY[]::text[]) AS argtypes,
+			coalesce(string_to_array(regexp_replace(pg_get_expr(p.proargdefaults, 0::Oid), '''([a-zA-Z0-9_]+)''::text', '\1'),', '), ARRAY[]::text[]) AS argdefaults
 		FROM pg_proc p
 		JOIN pg_namespace n ON (p.pronamespace = n.oid)
 		LEFT JOIN pg_description d ON (p.oid = d.objoid)
 		WHERE p.proargtypes[0:2] = ARRAY[23::oid, 23::oid, 23::oid]
 		AND p.proargnames[1:3] = ARRAY['z'::text, 'x'::text, 'y'::text]
 		AND prorettype = 17
-		AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute') ;
+		AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute')
 		`
 
 	db, connerr := DbConnect()
@@ -202,22 +203,28 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 
 		var (
 			id, schema, function, description string
-			argnames, argtypes                []string
+			argnames, argtypes, argdefaults   []string
 		)
 
-		err := rows.Scan(&id, &schema, &function, &description, &argnames, &argtypes)
+		err := rows.Scan(&id, &schema, &function, &description, &argnames, &argtypes, &argdefaults)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		args := make(map[string]FunctionArgument)
+		arglen := len(argnames)
+		defstart := arglen - len(argdefaults)
 		// First three arguments have to be z, x, y
-		for i := 3; i < len(argnames); i++ {
+		for i := 3; i < arglen; i++ {
+			argdef := ""
+			if i-defstart >= 0 {
+				argdef = argdefaults[i-defstart]
+			}
 			args[argnames[i]] = FunctionArgument{
 				order:   i - 3,
 				Name:    argnames[i],
 				Type:    argtypes[i],
-				Default: "", // TODO, add this in
+				Default: argdef,
 			}
 		}
 

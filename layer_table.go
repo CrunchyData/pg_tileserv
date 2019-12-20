@@ -416,8 +416,7 @@ func GetTableLayers() ([]LayerTable, error) {
 			schema, table, description, geometry_column string
 			srid                                        int
 			geometry_type, id_column                    string
-			// props                                       [][]string
-			atts pgtype.TextArray
+			atts                                        pgtype.TextArray
 		)
 
 		err := rows.Scan(&schema, &table, &description, &geometry_column,
