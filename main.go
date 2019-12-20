@@ -3,10 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
-
-	// "text/template"
 	"time"
 
 	// REST routing
@@ -101,32 +100,6 @@ func main() {
 /******************************************************************************/
 
 /*
-func HandleRequestRoot(w http.ResponseWriter, r *http.Request) {
-	log.WithFields(log.Fields{
-		"event": "handlerequest",
-		"topic": "root",
-	}).Trace("HandleRequestRoot")
-	// Update the local copy
-	// LoadLayerTableList()
-	// LoadLayerFunctionList()
-
-	type globalInfo struct {
-		Tables    map[string]LayerTable
-		Functions map[string]LayerFunction
-	}
-	info := globalInfo{
-		globalLayerTables,
-		globalLayerFunctions,
-	}
-
-	t, err := template.ParseFiles("assets/index.html")
-	if err != nil {
-		log.Warn(err)
-	}
-	// t.Execute(w, globalLayerTables)
-	t.Execute(w, info)
-}
-
 func HandleRequestTablePreview(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	lyrname := vars["name"]
@@ -146,11 +119,31 @@ func HandleRequestTablePreview(w http.ResponseWriter, r *http.Request) {
 }
 */
 
+func requestListHtml(w http.ResponseWriter, r *http.Request) error {
+	log.WithFields(log.Fields{
+		"event": "request",
+		"topic": "layerlist",
+	}).Trace("requestListHtml")
+	// Update the global in-memory list from
+	// the database
+	if err := LoadLayers(); err != nil {
+		return err
+	}
+	jsonLayers := GetJsonLayers(r)
+
+	t, err := template.ParseFiles("assets/index.html")
+	if err != nil {
+		log.Warn(err)
+	}
+	t.Execute(w, jsonLayers)
+	return nil
+}
+
 func requestListJson(w http.ResponseWriter, r *http.Request) error {
 	log.WithFields(log.Fields{
 		"event": "request",
 		"topic": "layerlist",
-	}).Trace("RequestLayerList")
+	}).Trace("requestListJson")
 	// Update the global in-memory list from
 	// the database
 	if err := LoadLayers(); err != nil {
@@ -167,7 +160,7 @@ func requestDetailJson(w http.ResponseWriter, r *http.Request) error {
 	log.WithFields(log.Fields{
 		"event": "request",
 		"topic": "layerdetail",
-	}).Tracef("RequestLayerDetail(%s)", lyrId)
+	}).Tracef("requestDetailJson(%s)", lyrId)
 
 	// Refresh the layers list
 	if err := LoadLayers(); err != nil {
@@ -276,8 +269,8 @@ func handleRequests() {
 
 	// creates a new instance of a mux router
 	r := mux.NewRouter().StrictSlash(true)
-	// r.HandleFunc("/", RequestListHtml).Methods("GET")
-	// r.HandleFunc("/index.html", RequestListHtml).Methods("GET")
+	r.Handle("/", tileAppHandler(requestListHtml))
+	r.Handle("/index.html", tileAppHandler(requestListHtml))
 	// r.HandleFunc("/{name}.html", RequestDetailHtml).Methods("GET")
 	r.Handle("/index.json", tileAppHandler(requestListJson))
 	r.Handle("/{name}.json", tileAppHandler(requestDetailJson))

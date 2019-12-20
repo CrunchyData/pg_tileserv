@@ -59,11 +59,10 @@ func serverURLBase(r *http.Request) string {
 var globalTemplates map[string](*template.Template) = make(map[string](*template.Template))
 
 func getSqlTemplate(name string, tmpl string) *template.Template {
-	// TODO, uncomment when SQL works
-	// t, ok := globalTemplates[name]
-	// if ok {
-	// 	return t
-	// }
+	tp, ok := globalTemplates[name]
+	if ok {
+		return tp
+	}
 	t := template.New(name)
 	tp, err := t.Parse(tmpl)
 	if err != nil {

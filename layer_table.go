@@ -269,6 +269,10 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 			"key":   warning,
 		}).Warn(warning)
 	}
+	bounds.Xmin = xmin.Float
+	bounds.Ymin = ymin.Float
+	bounds.Xmax = xmax.Float
+	bounds.Ymax = ymax.Float
 
 	return bounds, nil
 }
