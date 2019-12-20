@@ -15,7 +15,7 @@
   {{ range $key, $value := . }}
   {{ if eq $value.Type "table" }}
   <li>
-    <strong class="layer-name"><a href="{{ $value.Id }}.html">{{ $value.Id }}</a></strong>
+    <strong class="layer-name">{{ $value.Id }}</strong> (<a href="{{ $value.Id }}.html">preview</a> | <a href="{{ $value.Id }}.json">json</a>)
     {{ if $value.Description }}<br/><span class="layer-description">{{ $value.Description }}</span> {{ end }}
   </li>
   {{ end }}
@@ -27,7 +27,7 @@
   {{ range $key, $value := . }}
   {{ if eq $value.Type "function" }}
   <li>
-    <strong class="layer-name"><a href="{{ $value.Id }}.html">{{ $value.Id }}</a></strong class="layer-name">
+    <strong class="layer-name">{{ $value.Id }}</strong> (<a href="{{ $value.Id }}.html">preview</a> | <a href="{{ $value.Id }}.json">json</a>)
     {{ if $value.Description }}<br/><span class="layer-description">{{ $value.Description }}</span> {{ end }}
   </li>
   {{ end }}
