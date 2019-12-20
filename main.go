@@ -100,49 +100,6 @@ func main() {
 
 /******************************************************************************/
 
-/*
-func HandleRequestTablePreview(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	lyrname := vars["name"]
-	log.WithFields(log.Fields{
-		"event": "handlerequest",
-		"topic": "tablepreview",
-		"key":   lyrname,
-	}).Tracef("HandleRequestTablePreview: %s", lyrname)
-
-	if lyr, ok := globalLayerTables[lyrname]; ok {
-		t, err := template.ParseFiles("assets/preview.html")
-		if err != nil {
-			log.Warn(err)
-		}
-		t.Execute(w, lyr)
-	}
-}
-
-	lyrId := mux.Vars(r)["name"]
-	log.WithFields(log.Fields{
-		"event": "request",
-		"topic": "layerdetail",
-	}).Tracef("requestDetailJson(%s)", lyrId)
-
-	// Refresh the layers list
-	if err := LoadLayers(); err != nil {
-		return err
-	}
-
-	lyr, errLyr := GetLayer(lyrId)
-	if errLyr != nil {
-		return errLyr
-	}
-
-	errWrite := lyr.WriteLayerJson(w, r)
-	if errWrite != nil {
-		return errWrite
-	}
-	return nil
-
-*/
-
 func requestPreview(w http.ResponseWriter, r *http.Request) error {
 	lyrId := mux.Vars(r)["name"]
 	log.WithFields(log.Fields{
@@ -299,6 +256,10 @@ type tileAppHandler func(w http.ResponseWriter, r *http.Request) error
 // so clients can see what is going on
 // TODO: return JSON document body for the HTTP error
 func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.WithFields(log.Fields{
+		"method": r.Method,
+		"url":    r.URL,
+	}).Infof("%s %s", r.Method, r.URL)
 	if err := fn(w, r); err != nil {
 		if hdr, ok := r.Header["x-correlation-id"]; ok {
 			log.WithField("correlation-id", hdr[0])
