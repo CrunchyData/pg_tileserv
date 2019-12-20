@@ -219,3 +219,14 @@ WHERE p.proargtypes[0:2] = ARRAY[23::oid, 23::oid, 23::oid]
 AND p.proargnames[1:3] = ARRAY['z'::text, 'x'::text, 'y'::text]
 AND prorettype = 17
 AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute') ;
+
+
+# Testing
+
+* table tile
+  * limit specified
+  * one attribute specified
+  * all attributes specified
+  * non-existing attribute specified
+* geometry only table
+* geometry and pk only table

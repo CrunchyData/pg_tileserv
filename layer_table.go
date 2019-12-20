@@ -323,8 +323,10 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 			       bounds.geom_clip,
 			       {{ .Resolution }},
 			       {{ .Buffer }}
-			     ) AS geom,
-		         {{ .Attributes }}
+				 ) AS geom 
+				 {{ if .Attributes }}
+				 , {{ .Attributes }}
+				 {{ end }}
 		  FROM "{{ .Schema }}"."{{ .Table }}" t, bounds
 		  WHERE ST_Intersects(t.{{ .GeometryColumn }},
 			                  ST_Transform(bounds.geom_query, {{ .Srid }}))
@@ -411,20 +413,22 @@ func GetTableLayers() ([]LayerTable, error) {
 		// really, no fault of pgx
 		attributes := make(map[string]TableAttribute)
 
-		arrLen := atts.Dimensions[0].Length
-		arrStart := atts.Dimensions[0].LowerBound - 1
-		elmLen := atts.Dimensions[1].Length
-		for i := arrStart; i < arrLen; i++ {
-			pos := i * elmLen
-			elmId := atts.Elements[pos].String
-			elm := TableAttribute{
-				Name:        elmId,
-				Type:        atts.Elements[pos+1].String,
-				Description: atts.Elements[pos+2].String,
+		if atts.Status == pgtype.Present {
+			arrLen := atts.Dimensions[0].Length
+			arrStart := atts.Dimensions[0].LowerBound - 1
+			elmLen := atts.Dimensions[1].Length
+			for i := arrStart; i < arrLen; i++ {
+				pos := i * elmLen
+				elmId := atts.Elements[pos].String
+				elm := TableAttribute{
+					Name:        elmId,
+					Type:        atts.Elements[pos+1].String,
+					Description: atts.Elements[pos+2].String,
+				}
+				elm.order, _ = strconv.Atoi(atts.Elements[pos+3].String)
+				log.Debug(atts.Elements[pos])
+				attributes[elmId] = elm
 			}
-			elm.order, _ = strconv.Atoi(atts.Elements[pos+3].String)
-			log.Debug(atts.Elements[pos])
-			attributes[elmId] = elm
 		}
 
 		// "schema.tablename" is our unique key for table layers
