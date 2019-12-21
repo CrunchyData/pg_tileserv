@@ -19,9 +19,7 @@
     {{ if .Description }}
     <p>{{ .Description }}</p>
     {{ end }}
-    {{ if .Attributes }}
-    <hr/><p>{{ range $k, $v := .Attributes }}{{ $v.Name }} {{ end }}</p>
-    {{ end }}
+    <div id="paramters"></div>
   </div>
 
   <div id="map"></div>

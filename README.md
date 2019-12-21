@@ -10,7 +10,7 @@ An experiment in a [PostGIS](https://postgis.net/)-only tile server in [Go](http
 
 ```sql
 CREATE OR REPLACE
-FUNCTION countries_name(z integer, x integer, y integer, name_prefix text)
+FUNCTION lakes(z integer, x integer, y integer, name_prefix text default '')
 RETURNS bytea
 AS $$
     WITH
@@ -18,20 +18,22 @@ AS $$
       SELECT ST_TileEnvelope(z, x, y) AS geom
     ),
     mvtgeom AS (
-      SELECT ST_AsMVTGeom(ST_Transform(t.geom, 3857), bounds.geom) AS geom, t.name
-      FROM ne_50m_admin_0_countries t, bounds
+      SELECT ST_AsMVTGeom(ST_Transform(t.geom, 3857), bounds.geom) AS geom,
+        t.name
+      FROM ne_50m_lakes t, bounds
       WHERE ST_Intersects(t.geom, ST_Transform(bounds.geom, 4326))
       AND t.name like (name_prefix || '%')
       LIMIT 10000
     )
-    SELECT ST_AsMVT(mvtgeom.*, 'ne_50m_admin_0_countries') FROM mvtgeom
+    SELECT ST_AsMVT(mvtgeom.*, 'public.lakes') FROM mvtgeom
 $$
 LANGUAGE 'sql';
 ```
 
+
 ```sql
 CREATE OR REPLACE
-FUNCTION squares(z integer, x integer, y integer, depth integer default 2)
+FUNCTION public.squares(z integer, x integer, y integer, depth integer default 2)
 RETURNS bytea
 AS $$
 DECLARE
@@ -47,18 +49,18 @@ BEGIN
     ymin := ST_YMin(bounds);
     width := (ST_XMax(bounds) - ST_XMin(bounds)) / depth;
     WITH mvtgeom AS (
-        SELECT ST_AsMVTGeom(ST_MakeEnvelope(
+        SELECT ST_AsMVTGeom(ST_ExteriorRing(ST_MakeEnvelope(
             xmin + width * (a-1), ymin + width * (b-1),
-            xmin + width * a, ymin + width * b), bounds),
+            xmin + width * a, ymin + width * b)), bounds),
             Format('(%s.%s,%s.%s)', x, a, y, b) AS tilecoord
         FROM generate_series(1, depth) a, generate_series(1, depth) b
         )
-    SELECT ST_AsMVT(mvtgeom.*, 'tile_grid')
+    SELECT ST_AsMVT(mvtgeom.*, 'public.squares')
     INTO rslt FROM mvtgeom;
     RETURN rslt;
 END;
 $$
-LANGUAGE 'plpgsql' 
+LANGUAGE 'plpgsql'
 IMMUTABLE
 STRICT
 PARALLEL SAFE;

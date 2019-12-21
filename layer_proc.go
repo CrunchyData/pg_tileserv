@@ -129,10 +129,11 @@ func (lyr *LayerFunction) getFunctionArgs(vals url.Values) map[string]string {
 		}
 	}
 	log.WithFields(log.Fields{
-		"event": "tile",
-		"topic": "args",
-		"key":   funcArgs,
-	}).Debug(funcArgs)
+		"event":    "tile",
+		"topic":    "args",
+		"function": "getFunctionArgs",
+		"return":   funcArgs,
+	}).Debugf("getFunctionArgs => %s", funcArgs)
 	return funcArgs
 }
 

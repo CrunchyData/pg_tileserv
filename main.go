@@ -127,7 +127,12 @@ func requestPreview(w http.ResponseWriter, r *http.Request) error {
 		l, _ := lyr.(LayerTable)
 		tmpl.Execute(w, l)
 	case LayerFunction:
-		return errors.New("function preview not yet implemented")
+		tmpl, err := template.ParseFiles("assets/preview-function.html")
+		if err != nil {
+			return err
+		}
+		l, _ := lyr.(LayerFunction)
+		tmpl.Execute(w, l)
 	default:
 		return errors.New("unknown layer type") // never get here
 	}
