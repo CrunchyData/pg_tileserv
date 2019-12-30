@@ -19,17 +19,40 @@
     {{ if .Description }}
     <p>{{ .Description }}</p>
     {{ end }}
-    <div id="paramters"></div>
+    <div id="arguments"></div>
   </div>
 
   <div id="map"></div>
 
   <script>
 
+    // First, checks if it isn't implemented yet.
+    if (!String.prototype.format) {
+      String.prototype.format = function() {
+        var args = arguments;
+        return this.replace(/{(\d+)}/g, function(match, number) {
+          return typeof args[number] != 'undefined'
+            ? args[number]
+            : match
+          ;
+        });
+      };
+    }
+
     var map;
 
     $.getJSON("{{ .Id }}.json", function(layer) {
       console.log(layer);
+
+      layer.arguments.forEach(function (item, i) {
+        var n = item.name;
+        var d = item.default;
+        var lbl = "<label for='{0}'>{1}</label>".format(i, n);
+        var inp = "<input id='{0}' value='{1}' size='10'>".format(i, d);
+        $("#arguments").append("<p>{0} {1}</p>".format(lbl, inp));
+      });
+
+      $("#arguments").append("<p><button id='refresh'>Update</button></p>");
 
       var mapConfig = {
         'container': 'map',
@@ -109,16 +132,24 @@
         }
       };
 
-      function layerConfig(id, gtype) {
+      function layerConfig(id, gtype, paint) {
         return {
-          "id": id+"."+gtype,
+          "id": id+"."+gtype+"."+paint,
           "source": id,
           "source-layer": id,
-          "type": painttypes[gtype],
-          "paint": paints[painttypes[gtype]],
+          "type": paint,
+          "paint": paints[paint],
           "filter": ["match", ["geometry-type"], [gtype, "Multi"+gtype], true, false]
         }
       };
+
+      function addFilteredLayers(id) {
+        map.addSource(layer["id"], layerSource(layer["tileurl"]));
+        map.addLayer(layerConfig(layer["id"], "Point", "circle"));
+        map.addLayer(layerConfig(layer["id"], "LineString", "line"));
+        map.addLayer(layerConfig(layer["id"], "Polygon", "fill"));
+        map.addLayer(layerConfig(layer["id"], "Polygon", "line"));
+      }
 
       map = new mapboxgl.Map(mapConfig);
       map.addControl(new mapboxgl.NavigationControl());
@@ -126,9 +157,10 @@
       map.on("load", function() {
 
         map.addSource(layer["id"], layerSource(layer["tileurl"]));
-        map.addLayer(layerConfig(layer["id"], "Point"));
-        map.addLayer(layerConfig(layer["id"], "LineString"));
-        map.addLayer(layerConfig(layer["id"], "Polygon"));
+        map.addLayer(layerConfig(layer["id"], "Point", "circle"));
+        map.addLayer(layerConfig(layer["id"], "LineString", "line"));
+        map.addLayer(layerConfig(layer["id"], "Polygon", "fill"));
+        map.addLayer(layerConfig(layer["id"], "Polygon", "line"));
 
         // Convert feature properties into html
         function featureHtml(f) {
