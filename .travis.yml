@@ -19,9 +19,10 @@ script:
 
 deploy:
   on:
-    repo: pramsey/pg_tileserv
+    repo: CrunchyData/pg_tileserv
     branch: master
   provider: s3
+  region: us-east-1
   bucket: postgisftw
   local_dir: "./upload"
   overwrite: true
@@ -33,4 +34,4 @@ deploy:
   secret_access_key:
     secure: "MtMyeiqy8QC+OmZANiv7VhfWF7i+FY7uVJxoyyArJe/O6CPsm41p985k/sBcSkHzN7ujDKxU6yhlF+wcz89n9M4rWBZ8XI1SZ07HAVdZO3kUp/QL6dI/q54If+NmaVeGR9DbcLY4I9YbKuhQ0D1UJ4g5BWqycaYSxl+nb9IiNjVVNpTC5RT1aKOLW5Ep2/dDU8E/jfC7Xxhok1iP4/vbHzgKP2WtOHIPo+m+V/jweCKCSjoxe0Efd+oa5xSARc03eqPECQBcTZjAe+PBqt8yRhJBA2Ih0RAc3y4+ng1dMGYK8FiIhQgDnalTd+aJT9KXDIQULwFDtojzWM2VWmbLjCpUtHF//ZUHi6oS5MA/rEOZDmCXFNEfdC5obJPimP1GwXtoXkG2J9Igup9nuhiXti7+RMi0XSrcb9aJrrqerGwB8cNdYswzzcrp1FwlZM2O25tShZ3XI1AR54WRDOGL5f9VoCJmRpohP37pGn2w0lTfp3qEjfBDIDutz4hZbQ2U9MTrPId2rBErc0ezpZvg56cIsV7cMu7r0L3eoX3yFOvR5SnG9EVlpHngHcX610lXnllsJcSSddAKp2uXb8dHae67eRUJOhM66DofU/hy6qnf3H6jTMxWKwfQTKDZ39f1VjKr0ZOcObv8BDXZpG0GtECLqeh702FCQy+cwSAKp8Q="
 
-    
+
