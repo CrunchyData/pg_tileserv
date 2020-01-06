@@ -18,6 +18,6 @@ install:
   - #go get -t -v ./...
 
 script:
-  - go build; ls -l
+  - go build; find .
   - #go test
-  - if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; ls -l; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; find .; fi
