@@ -6,18 +6,18 @@ matrix:
     - go: tip
       os: linux
       env: CROSS_COMPILE=true
-    - go: tip
-      os: osx
+    # - go: tip
+    #   os: osx
 
 before_install:
   - if [ "$CROSS_COMPILE" = "true" ]; then sudo apt update; fi
 
 install:
   - if [ "$CROSS_COMPILE" = "true" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386; fi
-  - #go get github.com/some/go-dependency
-  - #go get -t -v ./...
+  # - go get github.com/some/go-dependency
+  # - go get -t -v ./...
 
 script:
-  - go build; find .
-  - #go test
+  - go build; mkdir upload; zip upload/pg_tileserv_snapshot.zip pg_tileserv README.md; find .
+  # - go test
   - if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; find .; fi
