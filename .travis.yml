@@ -3,21 +3,32 @@ sudo: false
 
 matrix:
   include:
-    - go: tip
-      os: linux
-      env: CROSS_COMPILE=true
-    # - go: tip
-    #   os: osx
+  - go: tip
+    os: linux
+    env: CROSS_COMPILE=true
 
 before_install:
-  - if [ "$CROSS_COMPILE" = "true" ]; then sudo apt update; fi
+- if [ "$CROSS_COMPILE" = "true" ]; then sudo apt update; fi
 
 install:
-  - if [ "$CROSS_COMPILE" = "true" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386; fi
-  # - go get github.com/some/go-dependency
-  # - go get -t -v ./...
+- if [ "$CROSS_COMPILE" = "true" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386; fi
 
 script:
-  - go build; mkdir upload; zip upload/pg_tileserv_snapshot.zip pg_tileserv README.md; find .
-  # - go test
-  - if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; find .; fi
+- go build; mkdir upload; zip upload/pg_tileserv_snapshot_linux.zip pg_tileserv README.md
+- if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; zip upload/pg_tileserv_snapshot_windows.zip pg_tileserv.exe README.md; fi
+
+deploy:
+  on:
+    repo: pramsey/pg_tileserv
+    branch: master
+  provider: s3
+  bucket: postgisftw
+  local_dir: "./upload"
+  overwrite: true
+  verbose: true
+  edge: true
+  cleanup: false
+  access_key_id:
+    secure: xm5ySBrVVPflqwDDTUmiUrEAy3n/RTZdczeGvvLinahOpQTY+w09PHPjWLLF6JEd3WVLVoDXw+teG9IRlhPLc4gWbQtjOYg+O88EPOTkBOXoqaQ/oG0PpeAqTzU8EgqU7L9CP8f6EPIe3Vi8BEzjWdIdp0OOC5vzTNGKlTRx2Z8vrKOLCwD+bSq1OUTDmZ8x05GsVlSCiTev7dm6qT+k7FbyN3j6ChgBwd0mUXP5bRAMih783hwfjAZHpcmC443FDxHhM2c2tx/Uy2yADJ1y/CKQrPyF6CL52DLlCMIPRUdzEI4WgpB8TZMaOUrdoovqMaO3nKSihNNlGSlNjXB6stAYwMLInp68WFgk14/SlAD70JK/mJDlK2UXBggc+5OS2OXiq9t870C8cS5LXqulzG7zJ/E0eaMdAFm4wUVMCgRyYSBuXSAA4s9//VWWouAnnO3uj0WFFCklQopfEPSL1UKJ3LxMR30JPQwjN/KpS6RVUwcRcTznz0wjyh8zbZX3ajrbhP6Kt0XgDVRMHUl8ojWnGY06i8o8Jw4e27ksmNMCqVei3ZkzVAWe+dF4AL2zpPLnMjI1DR5at9ym/3xVEWuyXNFO1GbuSih2rvCw6gI3QB2za4TQysTKOYatQYQzR5CP7klC0e+Wk9NtWouPfsdsplBPftDTB9xYTCITsQY=
+  secret_access_key:
+    secure: lILHWdtm8IBwSfS6O+cjGKvHwk88W7sQtsQKov9a/535zw9Wl4l06cfVWK2pqfTNbLo2G9lb/M+sGhrXHptib6KqSaUc3Kmxh9UI8IDU0gzYGDi3EvkkdR9UM+HzHK/BQEAp4Om817GJidWIE1UUXs4njYU5w9xYXEz1Vjm0XfeRrtu0L7dry03B1Yj7xwaOyDGhCCaFDV525dojMniBXKyGs9ZGqABvDFklASTTv5kupojYspw3HWbNdXgs0A07hJjWvDNcS8Ayc7U0XKH2WhCTxzXjQ4Q87P1ZmMxmk5SrbEDQeLoswTlUfVTaTCCeeu3oyYhRy8qb4aaaUAfEifqqpRiLBZfVCIydv+HalDYjfEB1KT3wG25SxOsCFeOnESaX7OolheibBfOvm6/ZPF3gShGptjc3xFVsOAtgbPz3n8IzPrNvu0VpdA0ALSOdqWPimr8LQUIHe3HUglvIYt+bFVWaRYGO12Mq2J7RtsBCJU2JL9n5gIpFk+2qeOzGRqyrPtdgtOigM0k91f2Atqjp+sHcIE6aBvTqaKMOWJFGyJc2C0VBuI5K2zt3u2dlXfsrjXBhWEL73mktefPkTInS2Sh/hht97IR50vgC5OoKXEJU/aXDJKXXHtSUv3mfntoV5ieZJXTwowDHLyr84ISjo8uYlI904Ubwit6e3Rk=
