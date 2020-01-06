@@ -1,22 +1,20 @@
 language: go
 sudo: false
-
 matrix:
   include:
   - go: tip
     os: linux
     env: CROSS_COMPILE=true
-
 before_install:
 - if [ "$CROSS_COMPILE" = "true" ]; then sudo apt update; fi
-
 install:
-- if [ "$CROSS_COMPILE" = "true" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386; fi
-
+- if [ "$CROSS_COMPILE" = "true" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386;
+  fi
 script:
 - go build; mkdir upload; zip upload/pg_tileserv_snapshot_linux.zip pg_tileserv README.md
-- if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; zip upload/pg_tileserv_snapshot_windows.zip pg_tileserv.exe README.md; fi
-
+- if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1
+  GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; zip upload/pg_tileserv_snapshot_windows.zip
+  pg_tileserv.exe README.md; fi
 deploy:
   on:
     repo: CrunchyData/pg_tileserv
@@ -30,8 +28,6 @@ deploy:
   edge: true
   cleanup: false
   access_key_id:
-    secure: hFxJ4DVA1IzVrjy0igoFRI+Tst7e6zUs+jdS07xK+7VaTkUiHvDjvI7LA3aN2WsFb3QRthEibyQ8IYYcaQpYm0oshV0hlzcdfkcxitenlASFH4PRtNbuD5W2EVbcFYyfy4/R2s136WNzXEE+2N3Z8eX5R3rGOYSYY3pYPDxfYR881zUHvjbiNSdKefYv+wGAPSISH+6MS8zsKvGkiqC1ujQSxKwc7WDhsm7P6KXg9SKK6oSQqGL0CM55TNshaf/HmoNYkaayUEP/bIyDQCA9uuu/yAO6854paxgZh8rD9IjGSqbuVAWIjwEbp+J8EZd2X1tBA/FqQnCjGeQPPIAtcmOuCZ7FBbmHwEWJRrCSkoVOvthZd2lbrFF82YFPOeb2TQkTC0cfjvxkTc1VCTyNjyvLDy6LrXTTDsrGWAtxcm4jWLPW22Qv/TTJ+Qis/2tZ97GhUe58tVwZzWp+J70DceXrs0QxwvnmqIVGneZ9m/+OjEYu6swGktPNL+S+AySG/xggb6s+dJy8eh0UTGC0lPZUj5/3oczYl5qOnxR/7rykrlRqTZrQNQMCWwRO+k4kOWyHBmS8Qy2LBe7VeYyxLfLgicqc+RlDcL4FIkotidymQCFPi3nEIynPPVPD/NbqwFkpNM0A4Vq0q4u4S9Br66559E1CV5PthPGbb6nrPuY=
+    secure: oa1XX9LwYEXoWCpBOmHTsFGZQLcKsE+mCFvvOlLeNHjB5YGxTTktkWyoSFWywkCMDb6KOMmnn0QbHuL/OWi0qKCUMNTW7CeD62CjVHVrlq0NAMbsJP4mHeZFZcySRIvHJCpUH1Ejk2V7jSPcQJt8FB2F8pWytWy7qau0Yjo1suydkwD/ItdVHaOoAs8N5bqoghaFTEDp61PN5CKQvkleim8XYR8GKLmW66iou1ub7fBELy0VAp8h1vC+cEqwsYgi8sSRz9wODA8l6Utipns283TPoZawhwaEEjU6Ko/xJvcT/VSyr3XPukNxc2KtVn8GpwZIobse/G7Bpy7FUiF3SDJ6FS11nxDEG5lH8gSZnPQNzxicdrso71LnJX9SGJAThlb/RDu46ibLkLnpBXeaP/rlTA4wo5MBnXUkTK9jVceEH1rhQ9vrTXeR/JVUY7PjCIfzFyc//MviR/LMRlS9xa3MHOzemKpbdVyNKYWOSgIukaU21zJI2DnhiFjMu/DdUOQTsUX1ktiOLF0p7ROx3dxZ/TxJaxr67hJ0JB2EO+NePW90MgJ6MkFVgwZBSqiEro4fhrZklcdN2gKkMljA94h4sRwgOlRJv4szMaPr7D4NXgKajR55bkF+R3ZtfmyZ3yDie/y2IrTjvEROlJ57aWLpaUH3xiMIziLCIFP//zc=
   secret_access_key:
-    secure: cpObzjn46iCsAKdUq9VMAQr5YqCfvWUSt32nI5+QUn653QzrwyOrob/X/jPtUNXMOMFh5LWJLVFz4Q1EeqD60Vwg4gW4x8FIbw/yCKZupmQqwjy8sQAreRMYOzi0OXXh+GWaloHuK6gOQ+gx6qWmOn5M1f4fKd/LIv0e5xNyW6Bs20WSbQK/nSs2QyPYTMMOeRNdr7QIgY+EtCCZ874tHuI5RsSA4hKcIv6/AGC4k8c6y6xlha/3NPour4BLmyxEHLZh5rmskFFvlamZgggFwcK0UXX7DKlCZzOwm9OIaBBc8vjxAcXcuxGqnxA5UADkV+4DBlf0trT/1OYEq9FQjRn+Ts/9ucRsOF/fkQKtweL7KVLFUsUOzzltHEpIn+StLtRFBGf+o5ENIZ5y/J+ZF43yVvDQ3WMqLNZj9TE9I1t82huE7S/SNZxOf+qhVob1LbRejFJa2rQajymcN9Ksgp9D66pD2H8r4Yd7Ukekx+KCqdeRw7NlRylSpSli+mdYnr4mGcWdgjbVYJu2QgceX+X1RThrlM4AsY3JxmZA6p9Byro9uKyqfI+YHT9Nf1tsqd8dwqX7J03pE0yw8+0yXqCBrG4yuemnkf9qGsSZPtKnELfEMgRai88dY66OP+CzihB0cDj7Uq60BTjIv0O5z4JNi5PPlj6mJ/d+E/17RHQ=
-
-
+    secure: SyBN35h+a+RC5tkujT6yxVF0u0yjbUH7Q8I44c09VQYJ4A3gi6B4IETqo2Pe3xaDxrxjfDhGfQEJXvNjFN8dllLNwLhVHuL/e64FTd7rCva/cHPPckFFTp8oQUE+pRiSzIyWDvVV+6ZeibQOITbnwSsl3zJBw0ChHKi1jiwpyEfuGvha35CsBxhJlko2tCqpX/7O0cIWiCD399yiCABvvZNm7nE48W2jNGrsEWrgIx7LYkJHFMhrtTF5LDOH7imlcbT2sutjqdb27UQ8KA0FUV7eR9GnL1x27w6csnZJfKopJoMb0mJTKC01imdpzKJCZmscSxc9NLGUv0vbHO6ozmIWIfdhS8s3yH4LLn5DuhTIAC8F1i+7Y11figkhx7pl1G/oRja51tacDv6MfDvy1mH7Yk2swsAy68bWW5NASC3utXvfVZ3kAyzvgWLj8y9jwd1Uj64oJPurtlLIHt/my93iHsK7oZbH2mA1zLaz3o6GjtjJBuhHL/c64aN57bLTEs7zAIsJBCf4Y7x85hzMhuXMd5FZpNnzkdIUiz8Qb36gnmaBkABoa/DyWAIybI7aEwGyS6SsxZLyChQFKkG0uWWYjzCpzbQ2tGyjV8ebLsTabuNqnHWeTj1eAZ4wBfGWcVBscNgOoDt5Xwx+DE6j59l7lKbm7Xy275jQfCm+edk=
