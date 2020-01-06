@@ -1,5 +1,9 @@
 # pg_tileserv
 
+[![Travis Build Status][travisbuild]](https://travis-ci.org/CrunchyData/pg_tileserv)
+
+[travisbuild]: https://api.travis-ci.org/CrunchyData/pg_tileserv.svg?branch=master "Travis CI"
+
 An experiment in a [PostGIS](https://postgis.net/)-only tile server in [Go](https://golang.org/). Strip away all the other requirements, it just has to take in HTTP tile requests and form and execute SQL.  In a sincere act of flattery, I have mostly copied the API of the [Martin](https://github.com/urbica/martin) tile server.
 
 ## Table Sources
