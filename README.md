@@ -18,7 +18,7 @@ Snapshot builds of the latest code:
 
 ## Basic Operation
 
-The simplest start-up uses just a [database connection string](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING) in an environment variable, and reads all other information from the database.
+The simplest start-up uses just a [database connection string](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING) in the `DATABASE_URL` environment variable, and reads all other information from the database.
 
 ### Linux/OSX
 
