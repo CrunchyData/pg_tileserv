@@ -4,13 +4,100 @@
 
 [travisbuild]: https://api.travis-ci.org/CrunchyData/pg_tileserv.svg?branch=master "Travis CI"
 
-An experiment in a [PostGIS](https://postgis.net/)-only tile server in [Go](https://golang.org/). Strip away all the other requirements, it just has to take in HTTP tile requests and form and execute SQL.  In a sincere act of flattery, I have mostly copied the API of the [Martin](https://github.com/urbica/martin) tile server.
+An experiment in a [PostGIS](https://postgis.net/)-only tile server in [Go](https://golang.org/). Strip away all the other requirements, it just has to take in HTTP tile requests and form and execute SQL.  In a sincere act of flattery, the API mimics that of the [Martin](https://github.com/urbica/martin) tile server.
 
-## Table Sources
+# Setup and Installation
 
+## Download
 
+Snapshot builds of the latest code:
 
-## Function Sources
+* [Linux](https://postgisftw.s3.amazonaws.com/pg_tileserv_snapshot_linux.zip)
+* [Windows](https://postgisftw.s3.amazonaws.com/pg_tileserv_snapshot_windows.zip)
+* [OSX](https://postgisftw.s3.amazonaws.com/pg_tileserv_snapshot_osx.zip)
+
+## Basic Operation
+
+The simplest start-up uses just a [database connection string](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING) in an environment variable, and reads all other information from the database.
+
+### Linux/OSX
+
+```sh
+export DATABASE_URL=postgresql://username:password@host/dbname
+./pg_tileserv
+```
+
+### Windows
+
+```
+SET DATABASE_URL=postgresql://username:password@host/dbname
+pg_tileserv.exe
+```
+
+## Configuration File
+
+If you want to alter default values other than the database connection, use the `--config` commandline parameter to pass in a configuration file. In general the defaults are fine, and the program autodetects things like the server name.
+
+```toml
+# Database connection
+DbConnection = "user=you host=localhost dbname=yourdb"
+# Accept connections on this default (default all)
+HttpHost = "0.0.0.0"
+# Accept connections on this port
+HttpPort = 7800
+# Advertise URLs relative to this server name
+UrlBase = "http://yourserver.com/"
+# Resolution to quantize vector tiles to
+DefaultResolution = 4096
+# Padding to add to vector tiles
+DefaultBuffer = 256
+# Limit output to this number of features
+MaxFeaturesPerTile = 50000
+# Advertise this minimum zoom level
+DefaultMinZoom = 0
+# Advertise this maximum zoom level
+DefaultMaxZoom = 22
+# Output extra logging information?
+Debug = false
+```
+
+# Operation
+
+The purpose of `pg_tileserv` is to turn a set of spatial records into tiles, on the fly. The tile server reads two different layers of data:
+
+* Table layers are what they sound like: tables in the database that have a spatial column with a spatial reference system defined on it. 
+* Function layers hide the source of data from the server, and allow the HTTP client to send in optional parameters to allow more complex SQL functionality. Any function of the form `function(z integer, x integer, y integer, ...)` that returns an MVT `bytea` result can serve as a function layer.
+
+On start-up you can connect to the server and explore the published tables and functions via a web interface at:
+
+  http://localhost:7800
+
+## Layers List
+
+A list of layers is available in JSON at:
+
+  http://localhost:7800/index.json
+
+Each layer declares information relevant to setting up a map layer for the source: a web client should be able to self-configure using the information in the layer 
+
+## Table Layers
+
+By default, `pg_tileserv` will provide access to **only** those spatial tables:
+
+* that your database connection has `SELECT` privileges for;
+* that include a geometry column
+* that declare a geometry type
+* that declare an SRID (spatial reference ID)
+
+To restrict access to a certain set of tables, use database security principles:
+
+* Create a role with limited privileges
+* Only grant `SELECT` to that role for tables you want to publish
+* Only grant `EXECUTE` to that role for functions you want to publish
+
+## Function Layers
+
+**FROM HERE DOWN IS TO BE DONE**
 
 ```sql
 CREATE OR REPLACE
@@ -76,7 +163,7 @@ PARALLEL SAFE;
 
 
 
-
+```
 CREATE OR REPLACE
 FUNCTION Hexagon(i integer, j integer, edge float8)
 RETURNS geometry
@@ -181,7 +268,7 @@ $$
 LANGUAGE 'sql';
 ```
 
-
+```
 CREATE OR REPLACE
 FUNCTION HexPopulationSummary3(z integer, x integer, y integer, arg1 text default 'arg1', arg2 integer default 101)
 RETURNS bytea
@@ -205,9 +292,9 @@ mvt AS (
 SELECT ST_AsMVT(mvt.*, 'hexes') FROM mvt
 $$
 LANGUAGE 'sql';
+```
 
-
-
+```
 CREATE FUNCTION foobar(integer, b integer default 4, c text default 'ghgh', e geometry default 'Point(0 0)'::geometry(point, 4326)) returns integer as 'select $1 + $2' language 'sql';
 
 
@@ -225,7 +312,7 @@ WHERE p.proargtypes[0:2] = ARRAY[23::oid, 23::oid, 23::oid]
 AND p.proargnames[1:3] = ARRAY['z'::text, 'x'::text, 'y'::text]
 AND prorettype = 17
 AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute') ;
-
+```
 
 # Testing
 
