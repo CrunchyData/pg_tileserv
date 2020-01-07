@@ -65,7 +65,7 @@ Debug = false
 
 The purpose of `pg_tileserv` is to turn a set of spatial records into tiles, on the fly. The tile server reads two different layers of data:
 
-* Table layers are what they sound like: tables in the database that have a spatial column with a spatial reference system defined on it. 
+* Table layers are what they sound like: tables in the database that have a spatial column with a spatial reference system defined on it.
 * Function layers hide the source of data from the server, and allow the HTTP client to send in optional parameters to allow more complex SQL functionality. Any function of the form `function(z integer, x integer, y integer, ...)` that returns an MVT `bytea` result can serve as a function layer.
 
 On start-up you can connect to the server and explore the published tables and functions via a web interface at:
@@ -181,12 +181,12 @@ Most developers will just use the `tileurl` as is, but it possible to some param
 * `limit` controls the number of features to write to a tile, the default is 50000.
 * `resolution` controls the resolution of a tile, the default is 4096 units per side for a tile.
 * `buffer` controls the size of the extra data buffer for a tile, the default is 256 units.
-* `attributes` is a comma-separated list of attributes to include in the tile. For wide tables with large numbers of columns, this allows a slimmer tile to be composd. 
+* `attributes` is a comma-separated list of attributes to include in the tile. For wide tables with large numbers of columns, this allows a slimmer tile to be composd.
 
 For example:
 
     http://localhost:7800/public.ne_50m_admin_0_countries/{z}/{x}/{y}.pbf?limit=100000&attributes=name,long_name
-    
+
 For attribute names that include commas (why did you do that?) [URL encode](https://en.wikipedia.org/wiki/Percent-encoding) the comma in the name string before composing the comma-separated string of all names.
 
 ## Function Layers
@@ -252,12 +252,31 @@ PARALLEL SAFE;
 ```
 
 
-
-
-
-
-
+```sql
+CREATE OR REPLACE
+FUNCTION public.countries_name(z integer, x integer, y integer, prefix text default 'A')
+RETURNS bytea
+AS $$
+    WITH
+    bounds AS (
+        SELECT ST_TileEnvelope(z, x, y) AS geom
+    ),
+    mvtgeom AS (
+        SELECT ST_AsMVTGeom(ST_Transform(t.geom, 3857), bounds.geom) AS geom, t.name
+        FROM ne_50m_admin_0_countries t, bounds
+        WHERE ST_Intersects(t.geom, ST_Transform(bounds.geom, 4326))
+        AND upper(t.name) LIKE (upper(prefix) || '%')
+        LIMIT 10000
+    )
+    SELECT ST_AsMVT(mvtgeom.*, 'public.countries_name') FROM mvtgeom
+$$
+LANGUAGE 'sql';
 ```
+
+
+
+
+```sql
 CREATE OR REPLACE
 FUNCTION Hexagon(i integer, j integer, edge float8)
 RETURNS geometry
@@ -335,8 +354,9 @@ LANGUAGE 'plpgsql'
 IMMUTABLE
 STRICT
 PARALLEL SAFE;
-
 ```
+
+```sql
 CREATE OR REPLACE
 FUNCTION HexPopulationSummary(z integer, x integer, y integer, step integer default 4)
 RETURNS bytea
@@ -362,7 +382,7 @@ $$
 LANGUAGE 'sql';
 ```
 
-```
+```sql
 CREATE OR REPLACE
 FUNCTION HexPopulationSummary3(z integer, x integer, y integer, arg1 text default 'arg1', arg2 integer default 101)
 RETURNS bytea
@@ -388,7 +408,7 @@ $$
 LANGUAGE 'sql';
 ```
 
-```
+```sql
 CREATE FUNCTION foobar(integer, b integer default 4, c text default 'ghgh', e geometry default 'Point(0 0)'::geometry(point, 4326)) returns integer as 'select $1 + $2' language 'sql';
 
 
