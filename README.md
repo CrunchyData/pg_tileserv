@@ -107,6 +107,16 @@ By default, `pg_tileserv` will provide access to **only** those spatial tables:
 * that declare a geometry type; and,
 * that declare an SRID (spatial reference ID)
 
+For example:
+```sql
+CREATE TABLE mytable (
+    geom Geometry(Polygon, 4326),
+    pid text,
+    address text
+);
+GRANT SELECT ON mytable TO myuser;
+```
+
 To restrict access to a certain set of tables, use database security principles:
 
 * Create a role with limited privileges
