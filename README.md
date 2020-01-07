@@ -70,23 +70,41 @@ The purpose of `pg_tileserv` is to turn a set of spatial records into tiles, on 
 
 On start-up you can connect to the server and explore the published tables and functions via a web interface at:
 
-  http://localhost:7800
+* http://localhost:7800
 
 ## Layers List
 
 A list of layers is available in JSON at:
 
-  http://localhost:7800/index.json
+* http://localhost:7800/index.json
 
-Each layer declares information relevant to setting up a map layer for the source: a web client should be able to self-configure using the information in the layer 
+The index JSON just returns the minimum information about each layer.
+```json
+{
+    "public.ne_50m_admin_0_countries" : {
+        "name" : "ne_50m_admin_0_countries",
+        "schema" : "public",
+        "type" : "table",
+        "id" : "public.ne_50m_admin_0_countries",
+        "description" : "Natural Earth country data",
+        "detailurl" : "http://localhost:7800/public.ne_50m_admin_0_countries.json"
+    }
+}
+```
+The `detailurl` provides more detailed metadata for table and function layers.
+
+The `description` field is read from the `comment` value of the table. To set a comment on a table, use the `COMMENT` command.
+```sql
+COMMENT ON TABLE ne_50m_admin_0_countries IS 'This is my comment';
+```
 
 ## Table Layers
 
 By default, `pg_tileserv` will provide access to **only** those spatial tables:
 
 * that your database connection has `SELECT` privileges for;
-* that include a geometry column
-* that declare a geometry type
+* that include a geometry column;
+* that declare a geometry type; and,
 * that declare an SRID (spatial reference ID)
 
 To restrict access to a certain set of tables, use database security principles:
@@ -94,6 +112,72 @@ To restrict access to a certain set of tables, use database security principles:
 * Create a role with limited privileges
 * Only grant `SELECT` to that role for tables you want to publish
 * Only grant `EXECUTE` to that role for functions you want to publish
+
+### Table Detail JSON
+
+In the detail JSON, each layer declares information relevant to setting up a map interface for the layer.
+```json
+{
+   "id" : "public.ne_50m_admin_0_countries",
+   "geometrytype" : "MultiPolygon",
+   "name" : "ne_50m_admin_0_countries",
+   "schema" : "public",
+   "bounds" : [
+      -180,
+      -89.9989318847656,
+      180,
+      83.599609375
+   ],
+   "center" : [
+      0,
+      -3.19966125488281
+   ],
+   "tileurl" : "http://localhost:7800/public.ne_50m_admin_0_countries/{z}/{x}/{y}.pbf",
+   "attributes" : [
+      {
+         "name" : "gid",
+         "type" : "int4",
+         "description" : ""
+      },{
+         "name" : "featurecla",
+         "description" : "",
+         "type" : "varchar"
+      },{
+         "description" : "",
+         "type" : "varchar",
+         "name" : "name"
+      },{
+         "type" : "varchar",
+         "description" : "",
+         "name" : "name_long"
+      }
+   ],
+   "minzoom" : 0,
+   "maxzoom" : 22
+}
+```
+* `id`, `name` and `schema` are the fully qualified, table and schema name of the database table.
+* `bounds` and `center` give the extent and middle of the data collection, in geographic coordinates. The order of coordinates in bounds is [minlon, minlat, maxlon, maxlat]. The order of coordinates in center is [lon, lat].
+* `tileurl` is the standard substitution pattern URL consumed by map clients like [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/api/) and [OpenLayers](https://openlayers.org).
+* `attributes` is a list of attributes in the table, with their data types. The `description` field can be set using the `COMMENT` SQL command:
+  ```sql
+  COMMENT ON COLUMN ne_50m_admin_0_countries.name_long IS 'This is the long name';
+  ```
+
+### Table Tile Request Customization
+
+Most developers will just use the `tileurl` as is, but it possible to some parameters to to the URL to customize behaviour at run time:
+
+* `limit` controls the number of features to write to a tile, the default is 50000.
+* `resolution` controls the resolution of a tile, the default is 4096 units per side for a tile.
+* `buffer` controls the size of the extra data buffer for a tile, the default is 256 units.
+* `attributes` is a comma-separated list of attributes to include in the tile. For wide tables with large numbers of columns, this allows a slimmer tile to be composd. 
+
+For example:
+
+    http://localhost:7800/public.ne_50m_admin_0_countries/{z}/{x}/{y}.pbf?limit=100000&attributes=name,long_name
+    
+For attribute names that include commas (why did you do that?) [URL encode](https://en.wikipedia.org/wiki/Percent-encoding) the comma in the name string before composing the comma-separated string of all names.
 
 ## Function Layers
 

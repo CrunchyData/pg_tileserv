@@ -26,7 +26,6 @@ type LayerFunction struct {
 	MinZoom     int
 	MaxZoom     int
 	Tiles       string
-	SourceLayer string
 }
 
 type FunctionArgument struct {
@@ -45,7 +44,6 @@ type FunctionDetailJson struct {
 	MinZoom     int                `json:"minzoom"`
 	MaxZoom     int                `json:"maxzoom"`
 	TileUrl     string             `json:"tileurl"`
-	SourceLayer string             `json:"sourcelayer"`
 }
 
 /********************************************************************************
@@ -146,7 +144,6 @@ func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDeta
 		Description: lyr.Description,
 		MinZoom:     viper.GetInt("DefaultMinZoom"),
 		MaxZoom:     viper.GetInt("DefaultMaxZoom"),
-		SourceLayer: lyr.Id,
 	}
 	// TileURL is relative to server base
 	td.TileUrl = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.Id)
