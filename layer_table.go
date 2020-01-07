@@ -51,7 +51,6 @@ type TableDetailJson struct {
 	MinZoom      int              `json:"minzoom"`
 	MaxZoom      int              `json:"maxzoom"`
 	TileUrl      string           `json:"tileurl"`
-	SourceLayer  string           `json:"sourcelayer"`
 }
 
 /********************************************************************************
@@ -195,7 +194,6 @@ func (lyr *LayerTable) getTableDetailJson(req *http.Request) (TableDetailJson, e
 		GeometryType: lyr.GeometryType,
 		MinZoom:      viper.GetInt("DefaultMinZoom"),
 		MaxZoom:      viper.GetInt("DefaultMaxZoom"),
-		SourceLayer:  lyr.Id,
 	}
 	// TileURL is relative to server base
 	td.TileUrl = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.Id)
