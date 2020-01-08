@@ -59,7 +59,13 @@ func main() {
 	// Read the commandline
 	flagDebugOn := getopt.BoolLong("debug", 'd', "log debugging information")
 	flagConfigFile := getopt.StringLong("config", 'c', "", "config file name")
+	flagHelpOn := getopt.BoolLong("help", 'h', "display help output")
 	getopt.Parse()
+
+	if *flagHelpOn {
+		getopt.PrintUsage(os.Stdout)
+		os.Exit(1)
+	}
 
 	if *flagConfigFile != "" {
 		viper.SetConfigFile(*flagConfigFile)
@@ -86,6 +92,7 @@ func main() {
 
 	// Report our status
 	log.Infof("%s %s\n", programName, programVersion)
+	log.Info("Run with --help parameter for commandline options\n")
 	log.Infof("Listening on: %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
 
 	// Load the global layer list right away
