@@ -123,7 +123,7 @@ To restrict access to a certain set of tables, use database security principles:
 * Only grant `SELECT` to that role for tables you want to publish
 * Only grant `EXECUTE` to that role for functions you want to publish
 
-### Table Detail JSON
+### Table Layer Detail JSON
 
 In the detail JSON, each layer declares information relevant to setting up a map interface for the layer.
 ```json
@@ -200,6 +200,42 @@ By default, `pg_tileserv` will provide access to **only** those functions:
 In addition, hopefully obviously, for the function to actually be **useful** it does actually have to return an MVT inside the `bytea` return.
 
 Functions can also have additional parameters to control the generation of tiles: in fact, the whole reason for function layers is to allow **novel dynamic behaviour**.
+
+### Function Layer Detail JSON
+
+In the detail JSON, each function declares information relevant to setting up a map interface for the layer. Because functions generate tiles dynamically, the system cannot auto-discover things like extent or center, unfortunately. However, the custom parameters and defaults can be read from the function definition and exposed in the detail JSON.
+```json
+{
+   "name" : "parcels_in_radius",
+   "id" : "public.parcels_in_radius",
+   "schema" : "public",
+   "description" : "Given the click point (click_lon, click_lat) and radius, returns all the parcels in the radius, clipped to the radius circle.",
+   "minzoom" : 0,
+   "arguments" : [
+      {
+         "default" : "-123.13",
+         "name" : "click_lon",
+         "type" : "double precision"
+      },
+      {
+         "default" : "49.25",
+         "name" : "click_lat",
+         "type" : "double precision"
+      },
+      {
+         "default" : "500.0",
+         "type" : "double precision",
+         "name" : "radius"
+      }
+   ],
+   "maxzoom" : 22,
+   "tileurl" : "http://localhost:7800/public.parcels_in_radius/{z}/{x}/{y}.pbf"
+}
+```
+* `description` can be set using `COMMENT ON FUNCTION` SQL command.
+* `id`, `schema` and `name` are the fully qualified name, schema and function name, respectively.
+* `minzoom` and `maxzoom` are just the defaults, as set in the configuration file.
+* `arguments` is a list of argument names, with the data type and default value.
 
 ### Function Layer Examples
 
