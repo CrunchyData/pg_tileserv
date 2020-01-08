@@ -176,7 +176,7 @@ In the detail JSON, each layer declares information relevant to setting up a map
 
 ### Table Tile Request Customization
 
-Most developers will just use the `tileurl` as is, but it possible to some parameters to to the URL to customize behaviour at run time:
+Most developers will just use the `tileurl` as is, but it possible to add some parameters to the URL to customize behaviour at run time:
 
 * `limit` controls the number of features to write to a tile, the default is 50000.
 * `resolution` controls the resolution of a tile, the default is 4096 units per side for a tile.
