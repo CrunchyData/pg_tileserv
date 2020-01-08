@@ -191,6 +191,14 @@ For attribute names that include commas (why did you do that?) [URL encode](http
 
 ## Function Layers
 
+By default, `pg_tileserv` will provide access to **only** those functions:
+
+* that have `z integer, x integer, y integer` as the first three parameters;
+* that return a `bytea`, and
+* that your database connection has `EXECUTE` privileges for.
+
+In addition
+
 **FROM HERE DOWN IS TO BE DONE**
 
 ```sql
