@@ -430,15 +430,17 @@ RETURNS geometry
 AS $$
 DECLARE
 h float8 := edge*cos(pi()/6.0);
+cx float8 := 1.5*i*edge;
+cy float8 := h*(2*j+(i%2));
 BEGIN
 RETURN ST_MakePolygon(ST_MakeLine(ARRAY[
-            ST_MakePoint(1.5*i*edge - 1.0*edge, h*(2*j+(i%2)) + 0),
-            ST_MakePoint(1.5*i*edge - 0.5*edge, h*(2*j+(i%2)) + -1*h),
-            ST_MakePoint(1.5*i*edge + 0.5*edge, h*(2*j+(i%2)) + -1*h),
-            ST_MakePoint(1.5*i*edge + 1.0*edge, h*(2*j+(i%2)) + 0),
-            ST_MakePoint(1.5*i*edge + 0.5*edge, h*(2*j+(i%2)) + h),
-            ST_MakePoint(1.5*i*edge - 0.5*edge, h*(2*j+(i%2)) + h),
-            ST_MakePoint(1.5*i*edge - 1.0*edge, h*(2*j+(i%2)) + 0)
+            ST_MakePoint(cx - 1.0*edge, cy + 0),
+            ST_MakePoint(cx - 0.5*edge, cy + -1*h),
+            ST_MakePoint(cx + 0.5*edge, cy + -1*h),
+            ST_MakePoint(cx + 1.0*edge, cy + 0),
+            ST_MakePoint(cx + 0.5*edge, cy + h),
+            ST_MakePoint(cx - 0.5*edge, cy + h),
+            ST_MakePoint(cx - 1.0*edge, cy + 0)
         ]));
 END;
 $$
