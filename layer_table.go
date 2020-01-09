@@ -226,6 +226,45 @@ func (lyr *LayerTable) getTableDetailJson(req *http.Request) (TableDetailJson, e
 	return td, nil
 }
 
+func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
+	bounds := Bounds{}
+	extentSql := fmt.Sprintf(`
+	WITH ext AS (
+		SELECT ST_Transform(ST_SetSRID(ST_Extent(%s), %d), 4326) AS geom
+		FROM "%s"."%s"
+	)
+	SELECT
+		ST_XMin(ext.geom) AS xmin,
+		ST_YMin(ext.geom) AS ymin,
+		ST_XMax(ext.geom) AS xmax,
+		ST_YMax(ext.geom) AS ymax
+	FROM ext
+	`, lyr.GeometryColumn, lyr.Srid, lyr.Schema, lyr.Table)
+
+	db, err := DbConnect()
+	if err != nil {
+		return bounds, err
+	}
+	var (
+		xmin pgtype.Float8
+		xmax pgtype.Float8
+		ymin pgtype.Float8
+		ymax pgtype.Float8
+	)
+	err = db.QueryRow(context.Background(), extentSql).Scan(&xmin, &ymin, &xmax, &ymax)
+	if err != nil || xmin.Status == pgtype.Null {
+		return bounds, tileAppError{
+			SrcErr:  err,
+			Message: "Unable to calculate table bounds",
+		}
+	}
+	bounds.Xmin = xmin.Float
+	bounds.Ymin = ymin.Float
+	bounds.Xmax = xmax.Float
+	bounds.Ymax = ymax.Float
+	return bounds, nil
+}
+
 func (lyr *LayerTable) GetBounds() (Bounds, error) {
 	bounds := Bounds{}
 	extentSql := fmt.Sprintf(`
@@ -251,7 +290,6 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 		ymin pgtype.Float8
 		ymax pgtype.Float8
 	)
-
 	err = db.QueryRow(context.Background(), extentSql).Scan(&xmin, &ymin, &xmax, &ymax)
 	if err != nil {
 		return bounds, tileAppError{
@@ -259,19 +297,22 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 			Message: "Unable to calculate table bounds",
 		}
 	}
+
+	// Failed to get estimate? Get the exact bounds.
 	if xmin.Status == pgtype.Null {
-		warning := fmt.Sprintf("GetBounds failed, ANALYZE %s", lyr.Table)
+		warning := fmt.Sprintf("Estimated extent query failed, ANALYZE %s.%s", lyr.Schema, lyr.Table)
 		log.WithFields(log.Fields{
 			"event": "request",
 			"topic": "detail",
 			"key":   warning,
 		}).Warn(warning)
+		return lyr.GetBoundsExact()
 	}
+
 	bounds.Xmin = xmin.Float
 	bounds.Ymin = ymin.Float
 	bounds.Xmax = xmax.Float
 	bounds.Ymax = ymax.Float
-
 	return bounds, nil
 }
 
