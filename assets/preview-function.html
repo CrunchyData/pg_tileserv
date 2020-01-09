@@ -165,20 +165,59 @@
         }
       };
 
+      // Convert feature properties into html
+      function featureHtml(f) {
+        var p = f.properties;
+        var h = "<p>";
+        for (var k in p) {
+          h += "<b>" + k + ":</b> " + p[k] + "<br/>"
+        }
+        h += "</p>";
+        return h
+      }
+
+      function addLayerBehavior(id) {
+        // When a click event occurs on a feature in the states layer, open a popup at the
+        // location of the click, with description HTML from its properties.
+        console.log("id = " + id);
+        map.on('click', id, function(e) {
+          new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(featureHtml(e.features[0]))
+          .addTo(map);
+        });
+
+        // // Change the cursor to a pointer when the mouse is over the states layer.
+        map.on('mouseenter', id, function() {
+          map.getCanvas().style.cursor = 'pointer';
+        });
+
+        // // Change it back to a pointer when it leaves.
+        map.on('mouseleave', id, function() {
+          map.getCanvas().style.cursor = '';
+        });
+      }
+
       function addFilteredLayers(id, url) {
-        map.addSource(layer["id"], layerSource(url));
-        map.addLayer(layerConfig(layer["id"], "Point", "circle"));
-        map.addLayer(layerConfig(layer["id"], "LineString", "line"));
-        map.addLayer(layerConfig(layer["id"], "Polygon", "fill"));
-        map.addLayer(layerConfig(layer["id"], "Polygon", "line"));
+        map.addSource(id, layerSource(url));
+        // Render as point if point
+        map.addLayer(layerConfig(id, "Point", "circle"));
+        addLayerBehavior(layerId(id, "Point", "circle"));
+        // Render as line if line
+        map.addLayer(layerConfig(id, "LineString", "line"));
+        addLayerBehavior(layerId(id, "LineString", "line"));
+        // Render as area (fill) and line (outline) if polygon
+        map.addLayer(layerConfig(id, "Polygon", "fill"));
+        addLayerBehavior(layerId(id, "Polygon", "fill"));
+        map.addLayer(layerConfig(id, "Polygon", "line"));
       }
 
       function removeFilteredLayers(id) {
-        map.removeLayer(layerId(layer["id"], "Point", "circle"));
-        map.removeLayer(layerId(layer["id"], "LineString", "line"));
-        map.removeLayer(layerId(layer["id"], "Polygon", "fill"));
-        map.removeLayer(layerId(layer["id"], "Polygon", "line"));
-        map.removeSource(layer["id"]);
+        map.removeLayer(layerId(id, "Point", "circle"));
+        map.removeLayer(layerId(id, "LineString", "line"));
+        map.removeLayer(layerId(id, "Polygon", "fill"));
+        map.removeLayer(layerId(id, "Polygon", "line"));
+        map.removeSource(id);
       }
 
       map = new mapboxgl.Map(mapConfig);
@@ -188,35 +227,8 @@
 
         addFilteredLayers(layer["id"], layer["tileurl"]);
 
-        // Convert feature properties into html
-        function featureHtml(f) {
-          var p = f.properties;
-          var h = "<p>";
-          for (var k in p) {
-            h += "<b>" + k + ":</b> " + p[k] + "<br/>"
-          }
-          h += "</p>";
-          return h
-        }
 
-        // When a click event occurs on a feature in the states layer, open a popup at the
-        // location of the click, with description HTML from its properties.
-        map.on('click', layer["id"], function(e) {
-          new mapboxgl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML(featureHtml(e.features[0]))
-          .addTo(map);
-        });
 
-        // // Change the cursor to a pointer when the mouse is over the states layer.
-        map.on('mouseenter', layer["id"], function() {
-          map.getCanvas().style.cursor = 'pointer';
-        });
-
-        // // Change it back to a pointer when it leaves.
-        map.on('mouseleave', layer["id"], function() {
-          map.getCanvas().style.cursor = '';
-        });
 
       });
 
