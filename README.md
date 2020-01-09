@@ -68,7 +68,9 @@ The purpose of `pg_tileserv` is to turn a set of spatial records into tiles, on 
 * Table layers are what they sound like: tables in the database that have a spatial column with a spatial reference system defined on it.
 * Function layers hide the source of data from the server, and allow the HTTP client to send in optional parameters to allow more complex SQL functionality. Any function of the form `function(z integer, x integer, y integer, ...)` that returns an MVT `bytea` result can serve as a function layer.
 
-On start-up you can connect to the server and explore the published tables and functions via a web interface at:
+## Web Interface
+
+After start-up you can connect to the server and explore the published tables and functions in the database via a web interface at:
 
 * http://localhost:7800
 
@@ -122,6 +124,7 @@ To restrict access to a certain set of tables, use database security principles:
 * Create a role with limited privileges
 * Only grant `SELECT` to that role for tables you want to publish
 * Only grant `EXECUTE` to that role for functions you want to publish
+* Connect `pg_tileserv` to the database using that role
 
 ### Table Layer Detail JSON
 
@@ -131,6 +134,7 @@ In the detail JSON, each layer declares information relevant to setting up a map
    "id" : "public.ne_50m_admin_0_countries",
    "geometrytype" : "MultiPolygon",
    "name" : "ne_50m_admin_0_countries",
+   "description" : "Natural Earth countries",
    "schema" : "public",
    "bounds" : [
       -180,
@@ -169,7 +173,7 @@ In the detail JSON, each layer declares information relevant to setting up a map
 * `id`, `name` and `schema` are the fully qualified, table and schema name of the database table.
 * `bounds` and `center` give the extent and middle of the data collection, in geographic coordinates. The order of coordinates in bounds is [minlon, minlat, maxlon, maxlat]. The order of coordinates in center is [lon, lat].
 * `tileurl` is the standard substitution pattern URL consumed by map clients like [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/api/) and [OpenLayers](https://openlayers.org).
-* `attributes` is a list of attributes in the table, with their data types. The `description` field can be set using the `COMMENT` SQL command:
+* `attributes` is a list of attributes in the table, with their data types and descriptions. The column `description` field can be set using the `COMMENT` SQL command, for example:
   ```sql
   COMMENT ON COLUMN ne_50m_admin_0_countries.name_long IS 'This is the long name';
   ```
@@ -279,8 +283,7 @@ Some notes about this function:
   CREATE OR REPLACE
   FUNCTION TS_TileEnvelope(z integer, x integer, y integer)
   RETURNS geometry
-  AS
-  $$
+  AS $$
     DECLARE
       size float8;
       zp integer = pow(2, z);
@@ -407,13 +410,21 @@ PARALLEL SAFE;
 COMMENT ON FUNCTION public.squares IS 'For each tile requested, generate and return depth*depth polygons covering the tile. The effect is one of always having a grid coverage at the appropriate current scale.';
 ```
 
-#### Dynamic Geometry with Spatial Join Example
+#### Dynamic Hexagons with Spatial Join Example
 
-**TO BE DONE**
+Hexagonal tilings are popular with data visualization experts because they can be used to summarize point data without adding a visual bias to the output via different summary area sizes. They also have a nice "non-pointy" shape, while still providing a complete tiling of the plane.
+
+When you want to provide a hexagonal summary of a data set at multiple scales, you have an implementation problem: do you need to create a pile of hexagon tables, solely for the purpose of summary visualization?
+
+No, you don't have to, you can generate your hexagons dynamically based on the scale of the requested map tiles.
+
+The first challenge is that a hexagon tile set cannot be perfectly incribed into a powers-of-two square tile set. That means that any given tile will contain some odd combination of full and partial hexagons. In order for the tile boundaries to match up, we need a hexagon tiling that is uniform over the whole plane, so the first function takes a "hexagon grid coordinate" and generates a hexagon for that coordinate. The size and location of that hexagon are controlled by the hexagon edge length for this particular tiling.
 
 ```sql
+-- Given coordinates in the hexagon tiling that has this
+-- edge size, return the built-out hexagon
 CREATE OR REPLACE
-FUNCTION Hexagon(i integer, j integer, edge float8)
+FUNCTION hexagon(i integer, j integer, edge float8)
 RETURNS geometry
 AS $$
     WITH t AS (SELECT edge AS e, edge*cos(pi()/6) AS h)
@@ -434,8 +445,21 @@ IMMUTABLE
 STRICT
 PARALLEL SAFE;
 
+SELECT ST_AsText(hexagon(2, 2, 10.0));
+```
+```
+ POLYGON((20 34.6410161513775,25 25.9807621135332,
+          35 25.9807621135332,40 34.6410161513775,
+          35 43.3012701892219,25 43.3012701892219,
+          20 34.6410161513775))
+```
+Now we need a function that, given a square input (a map tile) can figure out all the hexagon coordinates that fall within the tile. Again, the edge size of the hexagon tiling determines the overall geometry of the hex tiling. More than one hexagon will be required, most times, so this is a set-returning function.
+```sql
+-- Given a square bounds, find all the hexagonal cells
+-- of a hex tiling (determined by edge size)
+-- that might cover that square (slightly over-determined)
 CREATE OR REPLACE
-FUNCTION HexagonCoordinates(bounds geometry, edge float8, OUT i integer, OUT j integer)
+FUNCTION hexagoncoordinates(bounds geometry, edge float8, OUT i integer, OUT j integer)
 RETURNS SETOF record
 AS $$
     DECLARE
@@ -463,8 +487,24 @@ IMMUTABLE
 STRICT
 PARALLEL SAFE;
 
+SELECT * FROM hexagoncoordinates(ST_TileEnvelope(15, 1, 1), 1000.0);
+```
+```
+   i    |   j
+--------+-------
+ -13358 | 11567
+ -13358 | 11568
+ -13357 | 11567
+ -13357 | 11568
+ -13356 | 11567
+ -13356 | 11568
+```
+Next, a function that puts the two parts together. With tile coordinates and edge size as input, generate the set of all the hexagons that cover the tile. The output here is basically a spatial table: a set of rows, each row containing a geometry (hexagon) and some attributes (hexagon coordinates). Just the input we need for a spatial join.
+```sql
+-- Given an input ZXY tile coordinate, output a set of hexagons
+-- (and hexagon coordinates) in web mercator that cover that tile
 CREATE OR REPLACE
-FUNCTION TileHexagons(z integer, x integer, y integer, step integer,
+FUNCTION tilehexagons(z integer, x integer, y integer, step integer,
                       OUT geom geometry(Polygon, 3857), OUT i integer, OUT j integer)
 RETURNS SETOF record
 AS $$
@@ -476,8 +516,8 @@ AS $$
     bounds := ST_TileEnvelope(z, x, y);
     edge := (ST_XMax(bounds) - ST_XMin(bounds)) / pow(2, step);
     FOR geom, i, j IN
-    SELECT ST_SetSRID(Hexagon(h.i, h.j, edge), 3857), h.i, h.j
-    FROM HexagonCoordinates(bounds, edge) h
+    SELECT ST_SetSRID(hexagon(h.i, h.j, edge), 3857), h.i, h.j
+    FROM hexagoncoordinates(bounds, edge) h
     LOOP
         IF maxbounds ~ geom AND bounds && geom THEN
             RETURN NEXT;
@@ -490,58 +530,51 @@ IMMUTABLE
 STRICT
 PARALLEL SAFE;
 ```
-
+The function that the tile server actually calls looks like all other tile server functions: tile coordinates and optional parameter input; `bytea` MVT output.
 ```sql
+-- Given an input tile, generate the covering hexagons,
+-- spatially join to population table, summarize
+-- population in each hexagon, and generate MVT
+-- output of the result. Step parameter determines
+-- how many hexagons to generate per tile.
 CREATE OR REPLACE
-FUNCTION HexPopulationSummary(z integer, x integer, y integer, step integer default 4)
+FUNCTION public.hexpopulationsummary(z integer, x integer, y integer, step integer default 4)
 RETURNS bytea
 AS $$
 WITH
 bounds AS (
+    -- Convert tile coordinates to web mercator tile bounds
     SELECT ST_TileEnvelope(z, x, y) AS geom
 ),
 rows AS (
+    -- Summary of populated places grouped by hex
     SELECT Sum(pop_max) AS pop_max, Sum(pop_min) AS pop_min, h.i, h.j, h.geom
+    -- All the hexes that interact with this tile
     FROM TileHexagons(z, x, y, step) h
+    -- All the populated places
     JOIN ne_50m_populated_places n
     ON ST_Intersects(n.geom, ST_Transform(h.geom, 4326))
     GROUP BY h.i, h.j, h.geom
 ),
 mvt AS (
+    -- Usual tile processing, ST_AsMVTGeom simplifies, quantizes,
+    -- and clips to tile boundary
     SELECT ST_AsMVTGeom(rows.geom, bounds.geom) AS geom,
            rows.pop_max, rows.pop_min, rows.i, rows.j
     FROM rows, bounds
 )
-SELECT ST_AsMVT(mvt.*, 'hexes') FROM mvt
+-- Generate MVT encoding of final input record
+SELECT ST_AsMVT(mvt, 'public.hexpopulationsummary') FROM mvt
 $$
 LANGUAGE 'sql';
+
+COMMENT ON FUNCTION public.hexpopulationsummary IS 'Hex summary of the ne_50m_populated_places table. Step parameter determines how many hexes to generate per tile.';
 ```
 
-```sql
-CREATE OR REPLACE
-FUNCTION HexPopulationSummary3(z integer, x integer, y integer, arg1 text default 'arg1', arg2 integer default 101)
-RETURNS bytea
-AS $$
-WITH
-bounds AS (
-    SELECT ST_TileEnvelope(z, x, y) AS geom
-),
-rows AS (
-    SELECT Sum(pop_max) AS pop_max, Sum(pop_min) AS pop_min, h.i, h.j, h.geom
-    FROM TileHexagons(z, x, y, 4) h
-    JOIN ne_50m_populated_places n
-    ON ST_Intersects(n.geom, ST_Transform(h.geom, 4326))
-    GROUP BY h.i, h.j, h.geom
-),
-mvt AS (
-    SELECT ST_AsMVTGeom(rows.geom, bounds.geom) AS geom,
-           rows.pop_max, rows.pop_min, rows.i, rows.j
-    FROM rows, bounds
-)
-SELECT ST_AsMVT(mvt.*, 'hexes') FROM mvt
-$$
-LANGUAGE 'sql';
-```
+
+### TO BE DONE
+
+
 
 ```sql
 CREATE FUNCTION foobar(integer, b integer default 4, c text default 'ghgh', e geometry default 'Point(0 0)'::geometry(point, 4326)) returns integer as 'select $1 + $2' language 'sql';
