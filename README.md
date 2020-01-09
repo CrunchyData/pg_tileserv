@@ -418,8 +418,9 @@ When you want to provide a hexagonal summary of a data set at multiple scales, y
 
 No, you don't have to, you can generate your hexagons dynamically based on the scale of the requested map tiles.
 
-The first challenge is that a hexagon tile set cannot be perfectly incribed into a powers-of-two square tile set. That means that any given tile will contain some odd combination of full and partial hexagons. In order for the tile boundaries to match up, we need a hexagon tiling that is uniform over the whole plane, so the first function takes a "hexagon grid coordinate" and generates a hexagon for that coordinate. The size and location of that hexagon are controlled by the hexagon edge length for this particular tiling.
+The first challenge is that a hexagon tile set cannot be perfectly inscribed into a powers-of-two square tile set. That means that any given tile will contain some odd combination of full and partial hexagons. In order for the hexagons that straddle tile boundaries to match up, we need a hexagon tiling that is uniform over the whole plane.
 
+So, our first function takes a "hexagon grid coordinate" and generates a hexagon for that coordinate. The size and location of that hexagon are controlled by the hexagon edge length for this particular tiling.
 ```sql
 -- Given coordinates in the hexagon tiling that has this
 -- edge size, return the built-out hexagon
@@ -459,7 +460,8 @@ Now we need a function that, given a square input (a map tile) can figure out al
 -- of a hex tiling (determined by edge size)
 -- that might cover that square (slightly over-determined)
 CREATE OR REPLACE
-FUNCTION hexagoncoordinates(bounds geometry, edge float8, OUT i integer, OUT j integer)
+FUNCTION hexagoncoordinates(bounds geometry, edge float8,
+                            OUT i integer, OUT j integer)
 RETURNS SETOF record
 AS $$
     DECLARE
@@ -566,9 +568,12 @@ mvt AS (
 -- Generate MVT encoding of final input record
 SELECT ST_AsMVT(mvt, 'public.hexpopulationsummary') FROM mvt
 $$
-LANGUAGE 'sql';
+LANGUAGE 'sql'
+STABLE
+STRICT
+PARALLEL SAFE;
 
-COMMENT ON FUNCTION public.hexpopulationsummary IS 'Hex summary of the ne_50m_populated_places table. Step parameter determines how many hexes to generate per tile.';
+COMMENT ON FUNCTION public.hexpopulationsummary IS 'Hex summary of the ne_50m_populated_places table. Step parameter determines how approximately many hexes (2^step) to generate per tile.';
 ```
 
 
