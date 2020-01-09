@@ -31,6 +31,8 @@
     var map;
 
     $.getJSON("{{ .Id }}.json", function(layer) {
+      // A little info for explorers
+      console.log("{{ .Id }}.json");
       console.log(layer);
 
       var mapConfig = {

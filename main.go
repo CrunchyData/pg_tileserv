@@ -38,6 +38,10 @@ var globalDb *pgxpool.Pool = nil
 
 /******************************************************************************/
 
+func Calculate(i int) int {
+	return 3
+}
+
 func main() {
 
 	viper.SetDefault("DbConnection", "sslmode=disable")
@@ -50,6 +54,7 @@ func main() {
 	viper.SetDefault("DefaultMinZoom", 0)
 	viper.SetDefault("DefaultMaxZoom", 22)
 	viper.SetDefault("Debug", false)
+	viper.SetDefault("AssetsPath", "./assets")
 
 	// Read environment configuration first
 	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
@@ -127,14 +132,14 @@ func requestPreview(w http.ResponseWriter, r *http.Request) error {
 
 	switch lyr.(type) {
 	case LayerTable:
-		tmpl, err := template.ParseFiles("assets/preview-table.html")
+		tmpl, err := template.ParseFiles(fmt.Sprintf("%s/preview-table.html", viper.GetString("AssetsPath")))
 		if err != nil {
 			return err
 		}
 		l, _ := lyr.(LayerTable)
 		tmpl.Execute(w, l)
 	case LayerFunction:
-		tmpl, err := template.ParseFiles("assets/preview-function.html")
+		tmpl, err := template.ParseFiles(fmt.Sprintf("%s/preview-function.html", viper.GetString("AssetsPath")))
 		if err != nil {
 			return err
 		}
@@ -157,8 +162,7 @@ func requestListHtml(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	jsonLayers := GetJsonLayers(r)
-
-	t, err := template.ParseFiles("assets/index.html")
+	t, err := template.ParseFiles(fmt.Sprintf("%s/index.html", viper.GetString("AssetsPath")))
 	if err != nil {
 		log.Warn(err)
 	}

@@ -44,6 +44,8 @@
     var map;
 
     $.getJSON("{{ .Id }}.json", function(layer) {
+      // A little info for explorers
+      console.log("{{ .Id }}.json");
       console.log(layer);
 
       layer["arguments"].forEach(function (item, i) {
@@ -65,7 +67,7 @@
         });
         var argstr = jQuery.param(args);
         var tileurl = layer["tileurl"] + "?" + argstr;
-        console.log(tileurl);
+        console.log("Tile URL = " + tileurl);
         removeFilteredLayers(layer.id);
         addFilteredLayers(layer.id, tileurl);
       });
@@ -179,7 +181,6 @@
       function addLayerBehavior(id) {
         // When a click event occurs on a feature in the states layer, open a popup at the
         // location of the click, with description HTML from its properties.
-        console.log("id = " + id);
         map.on('click', id, function(e) {
           new mapboxgl.Popup()
           .setLngLat(e.lngLat)
