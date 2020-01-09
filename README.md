@@ -428,20 +428,21 @@ CREATE OR REPLACE
 FUNCTION hexagon(i integer, j integer, edge float8)
 RETURNS geometry
 AS $$
-    WITH t AS (SELECT edge AS e, edge*cos(pi()/6) AS h)
-    SELECT
-        ST_MakePolygon(ST_MakeLine(ARRAY[
-            ST_MakePoint(1.5*i*e - 1.0*e, h*(2*j+(i%2)) + 0),
-            ST_MakePoint(1.5*i*e - 0.5*e, h*(2*j+(i%2)) + -1*h),
-            ST_MakePoint(1.5*i*e + 0.5*e, h*(2*j+(i%2)) + -1*h),
-            ST_MakePoint(1.5*i*e + 1.0*e, h*(2*j+(i%2)) + 0),
-            ST_MakePoint(1.5*i*e + 0.5*e, h*(2*j+(i%2)) + h),
-            ST_MakePoint(1.5*i*e - 0.5*e, h*(2*j+(i%2)) + h),
-            ST_MakePoint(1.5*i*e - 1.0*e, h*(2*j+(i%2)) + 0)
-        ]))
-    FROM t
+DECLARE
+h float8 := edge*cos(pi()/6.0);
+BEGIN
+RETURN ST_MakePolygon(ST_MakeLine(ARRAY[
+            ST_MakePoint(1.5*i*edge - 1.0*edge, h*(2*j+(i%2)) + 0),
+            ST_MakePoint(1.5*i*edge - 0.5*edge, h*(2*j+(i%2)) + -1*h),
+            ST_MakePoint(1.5*i*edge + 0.5*edge, h*(2*j+(i%2)) + -1*h),
+            ST_MakePoint(1.5*i*edge + 1.0*edge, h*(2*j+(i%2)) + 0),
+            ST_MakePoint(1.5*i*edge + 0.5*edge, h*(2*j+(i%2)) + h),
+            ST_MakePoint(1.5*i*edge - 0.5*edge, h*(2*j+(i%2)) + h),
+            ST_MakePoint(1.5*i*edge - 1.0*edge, h*(2*j+(i%2)) + 0)
+        ]));
+END;
 $$
-LANGUAGE 'sql'
+LANGUAGE 'plpgsql'
 IMMUTABLE
 STRICT
 PARALLEL SAFE;
@@ -465,16 +466,12 @@ FUNCTION hexagoncoordinates(bounds geometry, edge float8,
 RETURNS SETOF record
 AS $$
     DECLARE
-        mini integer;
-        maxi integer;
-        minj integer;
-        maxj integer;
         h float8 := edge*cos(pi()/6);
+        mini integer := floor(st_xmin(bounds) / (1.5*edge));
+        minj integer := floor(st_ymin(bounds) / (2*h));
+        maxi integer := ceil(st_xmax(bounds) / (1.5*edge));
+        maxj integer := ceil(st_ymax(bounds) / (2*h));
     BEGIN
-    mini := floor(st_xmin(bounds) / (1.5*edge));
-    minj := floor(st_ymin(bounds) / (2*h));
-    maxi := ceil(st_xmax(bounds) / (1.5*edge));
-    maxj := ceil(st_ymax(bounds) / (2*h));
     FOR i, j IN
     SELECT a, b
     FROM generate_series(mini, maxi) a,
@@ -555,6 +552,8 @@ rows AS (
     FROM TileHexagons(z, x, y, step) h
     -- All the populated places
     JOIN ne_50m_populated_places n
+    -- Transform the hex into the SRS (4326 in this case)
+    -- of the table of interest
     ON ST_Intersects(n.geom, ST_Transform(h.geom, 4326))
     GROUP BY h.i, h.j, h.geom
 ),
