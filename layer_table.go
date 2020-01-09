@@ -342,7 +342,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 			       bounds.geom_clip,
 			       {{ .Resolution }},
 			       {{ .Buffer }}
-				 ) AS geom
+				 ) AS {{ .GeometryColumn }}
 				 {{ if .Attributes }}
 				 , {{ .Attributes }}
 				 {{ end }}

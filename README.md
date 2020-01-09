@@ -585,20 +585,8 @@ COMMENT ON FUNCTION public.hexpopulationsummary IS 'Hex summary of the ne_50m_po
 CREATE FUNCTION foobar(integer, b integer default 4, c text default 'ghgh', e geometry default 'Point(0 0)'::geometry(point, 4326)) returns integer as 'select $1 + $2' language 'sql';
 
 
-SELECT
-Format('%s.%s', n.nspname, p.proname) AS id,
-n.nspname,
-p.proname,
-d.description,
-p.proargnames AS argnames,
-string_to_array(oidvectortypes(p.proargtypes),', ') AS argtypes
-FROM pg_proc p
-JOIN pg_namespace n ON (p.pronamespace = n.oid)
-LEFT JOIN pg_description d ON (p.oid = d.objoid)
-WHERE p.proargtypes[0:2] = ARRAY[23::oid, 23::oid, 23::oid]
-AND p.proargnames[1:3] = ARRAY['z'::text, 'x'::text, 'y'::text]
-AND prorettype = 17
-AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute') ;
+
+
 ```
 
 # Testing
