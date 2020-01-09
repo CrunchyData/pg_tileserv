@@ -577,24 +577,16 @@ COMMENT ON FUNCTION public.hexpopulationsummary IS 'Hex summary of the ne_50m_po
 ```
 
 
-### TO BE DONE
-
-
-
-```sql
-CREATE FUNCTION foobar(integer, b integer default 4, c text default 'ghgh', e geometry default 'Point(0 0)'::geometry(point, 4326)) returns integer as 'select $1 + $2' language 'sql';
-
-
-
-
-```
-
 # Testing
+
+Notes on integration tests that need to be added still
 
 * table tile
   * limit specified
   * one attribute specified
   * all attributes specified
   * non-existing attribute specified
+  * non-standard geometry column name
+    * with non-geometry attribute using standard 'geom' name
 * geometry only table
 * geometry and pk only table
