@@ -38,10 +38,6 @@ var globalDb *pgxpool.Pool = nil
 
 /******************************************************************************/
 
-func Calculate(i int) int {
-	return 3
-}
-
 func main() {
 
 	viper.SetDefault("DbConnection", "sslmode=disable")
@@ -300,16 +296,25 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 /******************************************************************************/
 
-func handleRequests() {
-
+func TileRouter() *mux.Router {
 	// creates a new instance of a mux router
 	r := mux.NewRouter().StrictSlash(true)
+	// Front page and layer list
 	r.Handle("/", tileAppHandler(requestListHtml))
 	r.Handle("/index.html", tileAppHandler(requestListHtml))
-	r.Handle("/{name}.html", tileAppHandler(requestPreview))
 	r.Handle("/index.json", tileAppHandler(requestListJson))
+	// Layer detail and demo pages
+	r.Handle("/{name}.html", tileAppHandler(requestPreview))
 	r.Handle("/{name}.json", tileAppHandler(requestDetailJson))
+	// Tile requests
 	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileAppHandler(requestTile))
+	return r
+}
+
+func handleRequests() {
+
+	// Get a configured router
+	r := TileRouter()
 
 	// Allow CORS from anywhere
 	corsOpt := handlers.AllowedOrigins([]string{"*"})
