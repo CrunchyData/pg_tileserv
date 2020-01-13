@@ -50,7 +50,7 @@ func main() {
 	viper.SetDefault("UrlBase", "")
 	viper.SetDefault("DefaultResolution", 4096)
 	viper.SetDefault("DefaultBuffer", 256)
-	viper.SetDefault("MaxFeaturesPerTile", 50000)
+	viper.SetDefault("MaxFeaturesPerTile", -1)
 	viper.SetDefault("DefaultMinZoom", 0)
 	viper.SetDefault("DefaultMaxZoom", 22)
 	viper.SetDefault("Debug", false)
@@ -247,10 +247,11 @@ func requestTile(w http.ResponseWriter, r *http.Request) error {
 		return errMvt
 	}
 
+	w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
+
 	if _, errWrite := w.Write(mvt); errWrite != nil {
 		return errWrite
 	}
-	w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
 
 	return nil
 }

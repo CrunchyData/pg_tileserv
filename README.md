@@ -65,8 +65,8 @@ UrlBase = "http://yourserver.com/"
 DefaultResolution = 4096
 # Padding to add to vector tiles
 DefaultBuffer = 256
-# Limit output to this number of features
-MaxFeaturesPerTile = 50000
+# Limit number of features requested (-1 = no limit)
+MaxFeaturesPerTile = -1
 # Advertise this minimum zoom level
 DefaultMinZoom = 0
 # Advertise this maximum zoom level

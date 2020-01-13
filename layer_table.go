@@ -325,7 +325,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 		Buffer         int
 		Attributes     string
 		MvtParams      string
-		Limit          int
+		Limit          string
 		Schema         string
 		Table          string
 		GeometryColumn string
@@ -365,36 +365,36 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 		Buffer:         qp.Buffer,
 		Attributes:     strings.Join(attrNames, ", "),
 		MvtParams:      strings.Join(mvtParams, ", "),
-		Limit:          qp.Limit,
 		Schema:         lyr.Schema,
 		Table:          lyr.Table,
 		GeometryColumn: lyr.GeometryColumn,
 		Srid:           lyr.Srid,
 	}
 
+	if qp.Limit > 0 {
+		sp.Limit = fmt.Sprintf("LIMIT %d", qp.Limit)
+	}
+
 	tmplSql := `
-		WITH
-		bounds AS (
-		  SELECT {{ .TileSql }}  AS geom_clip,
-		         {{ .QuerySql }} AS geom_query
-		),
-		mvtgeom AS (
-		  SELECT ST_AsMVTGeom(
-			       ST_Transform(t.{{ .GeometryColumn }}, 3857),
-			       bounds.geom_clip,
-			       {{ .Resolution }},
-			       {{ .Buffer }}
-				 ) AS {{ .GeometryColumn }}
-				 {{ if .Attributes }}
-				 , {{ .Attributes }}
-				 {{ end }}
-		  FROM "{{ .Schema }}"."{{ .Table }}" t, bounds
-		  WHERE ST_Intersects(t.{{ .GeometryColumn }},
-			                  ST_Transform(bounds.geom_query, {{ .Srid }}))
-		  LIMIT {{ .Limit }}
-		)
-		SELECT ST_AsMVT(mvtgeom.*, {{ .MvtParams }}) FROM mvtgeom
-		`
+	SELECT ST_AsMVT(mvtgeom, {{ .MvtParams }}) FROM (
+		SELECT ST_AsMVTGeom(
+			ST_Transform(t.{{ .GeometryColumn }}, 3857),
+			bounds.geom_clip,
+			{{ .Resolution }},
+			{{ .Buffer }}
+		  ) AS {{ .GeometryColumn }}
+		  {{ if .Attributes }}
+		  , {{ .Attributes }}
+		  {{ end }}
+		FROM "{{ .Schema }}"."{{ .Table }}" t, (
+			SELECT {{ .TileSql }}  AS geom_clip,
+					{{ .QuerySql }} AS geom_query
+			) bounds
+		WHERE ST_Intersects(t.{{ .GeometryColumn }},
+							ST_Transform(bounds.geom_query, {{ .Srid }}))
+		{{ .Limit }}
+	) mvtgeom
+	`
 
 	sql, err := renderSqlTemplate("tableTileSql", tmplSql, sp)
 	if err != nil {
