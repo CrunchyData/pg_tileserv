@@ -41,6 +41,13 @@ SET DATABASE_URL=postgresql://username:password@host/dbname
 pg_tileserv.exe
 ```
 
+## Trouble-shooting
+
+To get more information about what is going on behind the scenes, run with the `--debug` commandline parameter on, or turn on debugging in the configuration file:
+```sh
+./pg_tileserv --debug
+```
+
 ## Configuration File
 
 If you want to alter default values other than the database connection, use the `--config` commandline parameter to pass in a configuration file. In general the defaults are fine, and the program autodetects things like the server name.
