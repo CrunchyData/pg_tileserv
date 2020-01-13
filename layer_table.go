@@ -353,9 +353,10 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	if lyr.GeometryColumn != "" {
 		mvtParams = append(mvtParams, fmt.Sprintf("'%s'", lyr.GeometryColumn))
 	}
-	// if lyr.IdColumn != "" {
-	// 	mvtParams = append(mvtParams, fmt.Sprintf("'%s'", lyr.IdColumn))
-	// }
+	// The idColumn parameter is PostGIS3+ only
+	if globalPostGISVersion >= 3000000 && lyr.IdColumn != "" {
+		mvtParams = append(mvtParams, fmt.Sprintf("'%s'", lyr.IdColumn))
+	}
 
 	sp := sqlParameters{
 		TileSql:        tileSql,

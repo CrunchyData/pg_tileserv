@@ -36,6 +36,10 @@ const worldMercWidth float64 = 40075016.6855784
 // globalDb is a global database connection pointer
 var globalDb *pgxpool.Pool = nil
 
+// Key is of the form: schemaname.tablename
+var globalVersions map[string]string = nil
+var globalPostGISVersion int = 0
+
 /******************************************************************************/
 
 func main() {
@@ -101,6 +105,20 @@ func main() {
 	if err := LoadLayers(); err != nil {
 		log.Fatal(err)
 	}
+
+	// Read the postgis_full_version string and store
+	// in a global for version testing
+	if errv := LoadVersions(); errv != nil {
+		log.Fatal(errv)
+	}
+	log.WithFields(log.Fields{
+		"event":       "connect",
+		"topic":       "versions",
+		"postgis":     globalVersions["POSTGIS"],
+		"geos":        globalVersions["GEOS"],
+		"pgsql":       globalVersions["PGSQL"],
+		"libprotobuf": globalVersions["LIBPROTOBUF"],
+	}).Debugf("Connected to PostGIS version %s\n", globalVersions["POSTGIS"])
 
 	// Get to work
 	handleRequests()
