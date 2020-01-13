@@ -435,6 +435,7 @@ func GetTableLayers() ([]LayerTable, error) {
 	WHERE c.relkind = 'r'
 		AND t.typname = 'geometry'
 		AND has_table_privilege(c.oid, 'select')
+		AND has_schema_privilege(n.oid, 'usage')
 		AND postgis_typmod_srid(a.atttypmod) > 0
 	`
 
