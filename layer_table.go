@@ -407,6 +407,7 @@ func GetTableLayers() ([]LayerTable, error) {
 
 	layerSql := `
 	SELECT
+		Format('%s.%s', n.nspname, c.relname) AS id,
 		n.nspname AS schema,
 		c.relname AS table,
 		coalesce(d.description, '') AS description,
@@ -437,6 +438,7 @@ func GetTableLayers() ([]LayerTable, error) {
 		AND has_table_privilege(c.oid, 'select')
 		AND has_schema_privilege(n.oid, 'usage')
 		AND postgis_typmod_srid(a.atttypmod) > 0
+	ORDER BY 1
 	`
 
 	db, connerr := DbConnect()
@@ -454,13 +456,13 @@ func GetTableLayers() ([]LayerTable, error) {
 	for rows.Next() {
 
 		var (
-			schema, table, description, geometry_column string
-			srid                                        int
-			geometry_type, id_column                    string
-			atts                                        pgtype.TextArray
+			id, schema, table, description, geometry_column string
+			srid                                            int
+			geometry_type, id_column                        string
+			atts                                            pgtype.TextArray
 		)
 
-		err := rows.Scan(&schema, &table, &description, &geometry_column,
+		err := rows.Scan(&id, &schema, &table, &description, &geometry_column,
 			&srid, &geometry_type, &id_column, &atts)
 		if err != nil {
 			return nil, err
@@ -492,7 +494,6 @@ func GetTableLayers() ([]LayerTable, error) {
 		}
 
 		// "schema.tablename" is our unique key for table layers
-		id := fmt.Sprintf("%s.%s", schema, table)
 		lyr := LayerTable{
 			Id:             id,
 			Schema:         schema,

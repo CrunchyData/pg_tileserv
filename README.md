@@ -55,12 +55,19 @@ If you want to alter default values other than the database connection, use the 
 ```toml
 # Database connection
 DbConnection = "user=you host=localhost dbname=yourdb"
-# Accept connections on this default (default all)
+# Close pooled connections after this interval
+DbPoolMaxConnLifeTime = "1h"
+# Hold no more than this number of connections in the database pool
+DbPoolMaxConns = 4
+# Look to read html templates from this directory
+AssetsPath = "./assets"
+# Accept connections on this subnet (default accepts on all)
 HttpHost = "0.0.0.0"
 # Accept connections on this port
 HttpPort = 7800
 # Advertise URLs relative to this server name
-UrlBase = "http://yourserver.com/"
+# default is to looke this up from incoming request headers
+# UrlBase = "http://yourserver.com/"
 # Resolution to quantize vector tiles to
 DefaultResolution = 4096
 # Padding to add to vector tiles
@@ -199,7 +206,7 @@ Most developers will just use the `tileurl` as is, but it possible to add some p
 * `limit` controls the number of features to write to a tile, the default is 50000.
 * `resolution` controls the resolution of a tile, the default is 4096 units per side for a tile.
 * `buffer` controls the size of the extra data buffer for a tile, the default is 256 units.
-* `attributes` is a comma-separated list of attributes to include in the tile. For wide tables with large numbers of columns, this allows a slimmer tile to be composd.
+* `attributes` is a comma-separated list of attributes to include in the tile. For wide tables with large numbers of columns, this allows a slimmer tile to be composed.
 
 For example:
 
@@ -277,12 +284,11 @@ AS $$
       FROM ne_50m_admin_0_countries t, bounds
       WHERE ST_Intersects(t.geom, ST_Transform(bounds.geom, 4326))
       AND upper(t.name) LIKE (upper(name_prefix) || '%')
-      LIMIT 10000
     )
-    SELECT ST_AsMVT(mvtgeom.*, 'public.countries_name') FROM mvtgeom
+    SELECT ST_AsMVT(mvtgeom, 'public.countries_name') FROM mvtgeom;
 $$
 LANGUAGE 'sql'
-STABLE
+VOLATILE
 PARALLEL SAFE;
 
 COMMENT ON FUNCTION public.countries_name IS 'Filters the countries table by the initial letters of the name using the "name_prefix" parameter.';
@@ -355,7 +361,7 @@ AS $$
       AND ST_DWithin(p.geom, args.click, radius)
       LIMIT 10000
     )
-    SELECT ST_AsMVT(mvtgeom.*, 'public.parcels_in_radius') FROM mvtgeom
+    SELECT ST_AsMVT(mvtgeom, 'public.parcels_in_radius') FROM mvtgeom
 $$
 LANGUAGE 'sql'
 STABLE

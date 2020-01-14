@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	// Database
 	"github.com/jackc/pgx/v4"
@@ -27,6 +28,19 @@ func DbConnect() (*pgxpool.Pool, error) {
 		config, err = pgxpool.ParseConfig(dbConnection)
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		// Read and parse connection lifetime
+		dbPoolMaxLifeTime, errt := time.ParseDuration(viper.GetString("DbPoolMaxConnLifeTime"))
+		if errt != nil {
+			log.Fatal(errt)
+		}
+		config.MaxConnLifetime = dbPoolMaxLifeTime
+
+		// Read and parse max connections
+		dbPoolMaxConns := viper.GetInt32("DbPoolMaxConns")
+		if dbPoolMaxConns > 0 {
+			config.MaxConns = dbPoolMaxConns
 		}
 
 		// Read current log level and use one less-fine level

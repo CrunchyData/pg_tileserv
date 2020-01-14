@@ -57,6 +57,9 @@ func main() {
 	viper.SetDefault("DefaultMaxZoom", 22)
 	viper.SetDefault("Debug", false)
 	viper.SetDefault("AssetsPath", "./assets")
+	// 1d, 1h, 1m, 1s, see https://golang.org/pkg/time/#ParseDuration
+	viper.SetDefault("DbPoolMaxConnLifeTime", "1h")
+	viper.SetDefault("DbPoolMaxConns", 4)
 
 	// Read environment configuration first
 	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {

@@ -183,6 +183,7 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 		AND p.proargnames[1:3] = ARRAY['z'::text, 'x'::text, 'y'::text]
 		AND prorettype = 17
 		AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute')
+		ORDER BY 1
 		`
 
 	db, connerr := DbConnect()
