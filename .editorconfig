@@ -24,6 +24,11 @@ indent_style = tab
 indent_style = space
 indent_size = 2
 
+# YAML files want narrow space
+[*.yml]
+indent_style = space
+indent_size = 2
+
 # SQL files want tab indentation
 [*.sql]
 indent_style = space
