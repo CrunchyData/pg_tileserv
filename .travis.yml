@@ -26,8 +26,8 @@ script:
 deploy:
   - provider: s3
     on:
-        repo: CrunchyData/pg_tileserv
-        branch: master
+      repo: CrunchyData/pg_tileserv
+      branch: master
     region: us-east-1
     bucket: postgisftw
     local_dir: "./upload"
@@ -39,7 +39,8 @@ deploy:
     cleanup: false
   - provider: s3
     on:
-        tags: true
+      repo: CrunchyData/pg_tileserv
+      tags: true
     region: us-east-1
     bucket: postgisftw
     local_dir: "./upload"
