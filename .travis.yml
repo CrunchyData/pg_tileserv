@@ -3,19 +3,19 @@ sudo: false
 
 matrix:
   include:
-  - os: linux # cross-compile windows
-    go: tip
+  - go: tip
+    os: linux # cross-compile windows
     env:
     - WINDOWS=true
     - CGO_ENABLED=1
     - GOOS=windows
     - GOARCH=amd64
     - CC=x86_64-w64-mingw32-gcc
-  # - os: linux
-  #   go: tip
+  # - go: tip
+  #   os: linux
   #   env: WINDOWS=false
-  # - os: osx
-  #   go: tip
+  # - go: tip
+  #   os: osx
   #   env: WINDOWS=false
 
 before_install:
