@@ -19,8 +19,9 @@ install:
 script:
 - mkdir upload
 - go build
-- zip -r upload/pg_tileserv_snapshot_${TRAVIS_OS_NAME}.zip pg_tileserv README.md LICENSE.md assets/
-- if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; zip -r upload/pg_tileserv_snapshot_windows.zip pg_tileserv.exe README.md assets/ LICENSE.md; fi
+- if [ "$TRAVIS_TAG" = "" ]; then REL=snapshot; else REL=$TRAVIS_TAG; fi
+- zip -r upload/pg_tileserv_${REL}_${TRAVIS_OS_NAME}.zip pg_tileserv README.md LICENSE.md assets/
+- if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; zip -r upload/pg_tileserv_${REL}_windows.zip pg_tileserv.exe README.md assets/ LICENSE.md; fi
 
 deploy:
     provider: s3
