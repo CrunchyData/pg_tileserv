@@ -634,16 +634,3 @@ REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM public;
 REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM tileserver;
 ```
 
-# Testing (TBD)
-
-Notes on integration tests that need to be added still
-
-* table tile
-  * limit specified
-  * one attribute specified
-  * all attributes specified
-  * non-existing attribute specified
-  * non-standard geometry column name
-    * with non-geometry attribute using standard 'geom' name
-* geometry only table
-* geometry and pk only table
