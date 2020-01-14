@@ -4,32 +4,24 @@ sudo: false
 matrix:
   include:
   - go: tip
-    os: linux # cross-compile windows
-    env:
-    - WINDOWS=true
-    - CGO_ENABLED=1
-    - GOOS=windows
-    - GOARCH=amd64
-    - CC=x86_64-w64-mingw32-gcc
-  # - go: tip
-  #   os: linux
-  #   env: WINDOWS=false
-  # - go: tip
-  #   os: osx
-  #   env: WINDOWS=false
+    os: linux
+    env: CROSS_COMPILE=true
+  - go: tip
+    os: osx
+    env: CROSS_COMPILE=false
 
 before_install:
-- if [ "$WINDOWS" = "true" ]; then sudo apt update; fi
+- if [ "$CROSS_COMPILE" = "true" ]; then sudo apt update; fi
 
 install:
-- if [ "$WINDOWS" = "true" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386; fi
+- if [ "$CROSS_COMPILE" = "true" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386; fi
 
 script:
-- go build -v
-- if [ "$TRAVIS_TAG" = "" ]; then REL=snapshot; else REL=$TRAVIS_TAG; fi
-- if [ "$WINDOWS" = "true" ]; then RELOS=windows; else RELOS=$TRAVIS_OS_NAME; fi
 - mkdir upload
-- zip -r upload/pg_tileserv_${REL}_${RELOS}.zip pg_tileserv* README.md LICENSE.md assets/
+- go build
+- if [ "$TRAVIS_TAG" = "" ]; then REL=snapshot; else REL=$TRAVIS_TAG; fi
+- zip -r upload/pg_tileserv_${REL}_${TRAVIS_OS_NAME}.zip pg_tileserv README.md LICENSE.md assets/
+- if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; zip -r upload/pg_tileserv_${REL}_windows.zip pg_tileserv.exe README.md assets/ LICENSE.md; fi
 
 deploy:
   - provider: s3
