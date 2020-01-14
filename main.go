@@ -36,8 +36,10 @@ const worldMercWidth float64 = 40075016.6855784
 // globalDb is a global database connection pointer
 var globalDb *pgxpool.Pool = nil
 
-// Key is of the form: schemaname.tablename
+// globalVersions holds the parsed output of postgis_full_version()
 var globalVersions map[string]string = nil
+
+// globalPostGISVersion is numeric, sortable postgis version (3.2.1 => 3002001)
 var globalPostGISVersion int = 0
 
 /******************************************************************************/
