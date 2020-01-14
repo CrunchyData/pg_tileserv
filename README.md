@@ -314,7 +314,8 @@ Some notes about this function:
     END;
   $$
   LANGUAGE 'plpgsql'
-  STABLE
+  IMMUTABLE
+  STRICT
   PARALLEL SAFE;
   ```
 * The `LIMIT` is hard-coded in this example. If you want a user-defined limit you need to add another parameter to your function definition.
