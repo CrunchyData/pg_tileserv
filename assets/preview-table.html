@@ -6,9 +6,9 @@
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.css' rel='stylesheet' />
     <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
     <style type="text/css">
-      body {margin:0;padding:0;}
+      body {margin:0;padding:0;font-family:sans-serif;}
       #map {position:absolute;top:0;bottom:0;left:0;right:0;}
-      #meta {z-index:2;color:white;background:rgba(255,255,255,0.2);position:absolute;top:10;left:20;padding:10 20;margin:0;width:min-content;}
+      #meta {z-index:2;color:black;background:rgba(255,255,255,0.6);position:absolute;top:10;left:20;padding:10 20;margin:0;width:min-content;}
       #meta h1 {margin:0;}
       #meta .attributes {font-size:90%; width:auto;}
     </style>
@@ -30,6 +30,7 @@
   <script>
 
     var map;
+    var mapcolor = "blue";
 
     $.getJSON("{{ .Id }}.json", function(layer) {
       // A little info for explorers
@@ -71,9 +72,11 @@
             }
           },
           'layers': [{
-            'id': 'carto-dark-layer',
             'type': 'raster',
-            'source': 'carto-dark',
+            'id': 'wikimedia-layer',
+            'source': 'wikimedia',
+            // 'id': 'carto-dark-layer',
+            // 'source': 'carto-dark',
             'minzoom': 0,
             'maxzoom': 22
           }]
@@ -82,17 +85,17 @@
 
       var paints = {
         "circle":{
-          "circle-color": "red",
+          "circle-color": mapcolor,
           "circle-radius": 3
         },
         "line":{
           "line-width": 1.5,
-          "line-color": "red"
+          "line-color": mapcolor
         },
         "fill":{
-          "fill-color": "red",
+          "fill-color": mapcolor,
           "fill-opacity": 0.1,
-          "fill-outline-color": "red"
+          "fill-outline-color": mapcolor
         }
       };
 
