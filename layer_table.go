@@ -93,9 +93,10 @@ func (lyr LayerTable) GetTileRequest(tile Tile, r *http.Request) TileRequest {
 	sql, _ := lyr.requestSql(&tile, &rp)
 
 	tr := TileRequest{
-		Tile: tile,
-		Sql:  sql,
-		Args: nil,
+		LayerId: lyr.Id,
+		Tile:    tile,
+		Sql:     sql,
+		Args:    nil,
 	}
 	return tr
 }
@@ -262,6 +263,7 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 	bounds.Ymin = ymin.Float
 	bounds.Xmax = xmax.Float
 	bounds.Ymax = ymax.Float
+	bounds.sanitize()
 	return bounds, nil
 }
 
@@ -313,6 +315,7 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 	bounds.Ymin = ymin.Float
 	bounds.Xmax = xmax.Float
 	bounds.Ymax = ymax.Float
+	bounds.sanitize()
 	return bounds, nil
 }
 

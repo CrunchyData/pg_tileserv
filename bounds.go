@@ -37,6 +37,22 @@ func (b *Bounds) Expand(size float64) {
 	return
 }
 
+func (b *Bounds) sanitize() {
+	if b.Ymin < -90 {
+		b.Ymin = 90
+	}
+	if b.Ymax > 90 {
+		b.Ymax = 90
+	}
+	if b.Xmin < -180 {
+		b.Xmin = -180
+	}
+	if b.Xmax > 180 {
+		b.Xmax = 180
+	}
+	return
+}
+
 func fromMercator(x float64, y float64) (lng float64, lat float64) {
 	mercSize := worldMercWidth / 2.0
 	lng = x * 180.0 / mercSize

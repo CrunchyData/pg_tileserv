@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -114,7 +115,10 @@ func DBTileRequest(tr *TileRequest) ([]byte, error) {
 	err = row.Scan(&mvtTile)
 	if err != nil {
 		log.Warn(err)
-		return nil, err
+		return nil, tileAppError{
+			SrcErr:  err,
+			Message: fmt.Sprintf("SQL error on %s/%s", tr.LayerId, tr.Tile.String()),
+		}
 	} else {
 		return mvtTile, nil
 	}

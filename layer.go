@@ -40,9 +40,10 @@ type Layer interface {
 }
 
 type TileRequest struct {
-	Tile Tile
-	Sql  string
-	Args []interface{}
+	LayerId string
+	Tile    Tile
+	Sql     string
+	Args    []interface{}
 }
 
 // A global array of Layer where the state is held for performance

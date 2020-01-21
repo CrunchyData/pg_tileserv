@@ -44,8 +44,7 @@ func TestDBNoTables(t *testing.T) {
 	r.ServeHTTP(response, request)
 	assert.Equal(t, 200, response.Code, "OK response is expected")
 
-	json_result := response.Body.String()
-	json_result = strings.TrimSpace(json_result)
+	json_result := strings.TrimSpace(response.Body.String())
 	json_expect := "{}"
 	assert.Equal(t, json_expect, json_result, "empty json response is expected")
 }

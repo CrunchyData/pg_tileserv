@@ -76,9 +76,10 @@ func (lyr LayerFunction) GetTileRequest(tile Tile, r *http.Request) TileRequest 
 	sql, data, _ := lyr.requestSql(tile, procArgs)
 
 	tr := TileRequest{
-		Tile: tile,
-		Sql:  sql,
-		Args: data,
+		LayerId: lyr.Id,
+		Tile:    tile,
+		Sql:     sql,
+		Args:    data,
 	}
 	return tr
 }
