@@ -68,7 +68,7 @@ func main() {
 
 	// Read the commandline
 	flagDebugOn := getopt.BoolLong("debug", 'd', "log debugging information")
-	flagConfigFile := getopt.StringLong("config", 'c', "", "config file name")
+	flagConfigFile := getopt.StringLong("config", 'c', "", "full path to config file", "config.toml")
 	flagHelpOn := getopt.BoolLong("help", 'h', "display help output")
 	getopt.Parse()
 

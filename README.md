@@ -20,9 +20,9 @@ Snapshot builds of the latest code:
 
 The simplest start-up uses just a [database connection string](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING) in the `DATABASE_URL` environment variable, and reads all other information from the database.
 ```
-Usage: pg_tileserv [-dh] [-c value] [parameters ...]
- -c, --config=value
-              config file name
+Usage: pg_tileserv [-dh] [-c config.toml] [parameters ...]
+ -c, --config=config.toml
+              full path to config file
  -d, --debug  log debugging information
  -h, --help   display help output
 ```
@@ -626,7 +626,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA myschema TO tileserver;
 As noted above, functions that access table data effectively are restricted by the access levels the user has to the tables the function reads. However, if you want to completely restrict access to the function, including visibility in the user interface, you can strip execution privileges from the function.
 
 ```sql
--- All functions grant execute to 'public' and all roles are 
+-- All functions grant execute to 'public' and all roles are
 -- part of the 'public' group, so public has to be removed
 -- from the executors of the function
 REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM public;
