@@ -2,7 +2,7 @@
 PROGRAM := pg_tileserv
 CONTAINER := pramsey/pg_tileserv
 
-.PHONY: all check clean test docker-container
+.PHONY: all check clean test docker
 
 GOFILES := $(wildcard *.go)
 
@@ -19,8 +19,8 @@ clean:
 $(PROGRAM): $(GOFILES)
 	go build -v
 
-docker-container: $(PROGRAM)
-	docker build --build-arg VERSION=`./$(PROGRAM) --version | cut -f2 -d' '` -f Dockerfile -t pramsey/pg_tileserv .
+docker: $(PROGRAM) Dockerfile
+	docker build -f Dockerfile --build-arg VERSION=`./$(PROGRAM) --version | cut -f2 -d' '` -t pramsey/pg_tileserv:latest .
 
 test:
 	go test -v

@@ -189,7 +189,7 @@ func requestListHtml(w http.ResponseWriter, r *http.Request) error {
 	jsonLayers := GetJsonLayers(r)
 	t, err := template.ParseFiles(fmt.Sprintf("%s/index.html", viper.GetString("AssetsPath")))
 	if err != nil {
-		log.Warn(err)
+		return err
 	}
 	t.Execute(w, jsonLayers)
 	return nil
