@@ -1,33 +1,42 @@
 language: go
-sudo: false
+sudo: required
+
+services:
+  - docker
 
 matrix:
   include:
   - go: tip
     os: linux
-    env: CROSS_COMPILE=true
+    env: TARGET=linux
+  - go: tip
+    os: linux
+    env: TARGET=windows
+  - go: tip
+    os: linux
+    env: TARGET=docker
   - go: tip
     os: osx
-    env: CROSS_COMPILE=false
+    env: TARGET=osx
 
 before_install:
-- if [ "$CROSS_COMPILE" = "true" ]; then sudo apt update; fi
+- if [ "$TARGET" = "windows" ]; then sudo apt update; fi
 
 install:
-- if [ "$CROSS_COMPILE" = "true" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386; fi
+- if [ "$TARGET" = "windows" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386; fi
 
 script:
-- mkdir upload
-- go build
-- if [ "$TRAVIS_TAG" = "" ]; then REL=snapshot; else REL=$TRAVIS_TAG; fi
-- zip -r upload/pg_tileserv_${REL}_${TRAVIS_OS_NAME}.zip pg_tileserv README.md LICENSE.md assets/
-- if [ "$TRAVIS_OS_NAME" = "linux" -a "$CROSS_COMPILE" = "true" ]; then env CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -v; zip -r upload/pg_tileserv_${REL}_windows.zip pg_tileserv.exe README.md assets/ LICENSE.md; fi
+- ./ci/travis-build.sh
+
+after_success:
+- ./ci/travis-after-success.sh
 
 deploy:
   - provider: s3
     on:
       repo: CrunchyData/pg_tileserv
       branch: master
+      condition: $TARGET != docker
     region: us-east-1
     bucket: postgisftw
     local_dir: "./upload"
@@ -41,6 +50,7 @@ deploy:
     on:
       repo: CrunchyData/pg_tileserv
       tags: true
+      condition: $TARGET != docker
     region: us-east-1
     bucket: postgisftw
     local_dir: "./upload"

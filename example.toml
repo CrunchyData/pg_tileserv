@@ -1,14 +1,44 @@
 
 # pg_tileserv
 
-DbConnection       "host=localhost"
-HttpHost           "localhost"
-HttpPort           7800
-DefaultResolution  4096
-DefaultBuffer      256
-MaxFeaturesPerTile 10000
-Attribution        "Copyright (c) The Universe"
-UrlBase            http://localhost:7800
-DefaultMinZoom     0
-DefaultMaxZoom"    22
-Debug              false
+# Database connection
+# postgresql://username:password@host/dbname
+# DbConnection = "postgresql://username:password@host/dbname"
+
+# Close pooled connections after this interval
+# 1d, 1h, 1m, 1s, see https://golang.org/pkg/time/#ParseDuration
+# DbPoolMaxConnLifeTime = "1h"
+
+# Hold no more than this number of connections in the database pool
+# DbPoolMaxConns = 4
+
+# Look to read html templates from this directory
+# AssetsPath = "./assets"
+
+# Accept connections on this subnet (default accepts on all)
+# HttpHost = "0.0.0.0"
+
+# Accept connections on this port
+# HttpPort = 7800
+
+# Advertise URLs relative to this server name
+# default is to look this up from incoming request headers
+# UrlBase = "http://localhost/"
+
+# Resolution to quantize vector tiles to
+# DefaultResolution = 4096
+
+# Padding to add to vector tiles
+# DefaultBuffer = 256
+
+# Limit number of features requested (-1 = no limit)
+# MaxFeaturesPerTile = 10000
+
+# Advertise this minimum zoom level
+# DefaultMinZoom = 0
+
+# Advertise this maximum zoom level
+# DefaultMaxZoom = 22
+
+# Output extra logging information?
+# Debug = false

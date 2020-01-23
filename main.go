@@ -70,11 +70,17 @@ func main() {
 	flagDebugOn := getopt.BoolLong("debug", 'd', "log debugging information")
 	flagConfigFile := getopt.StringLong("config", 'c', "", "full path to config file", "config.toml")
 	flagHelpOn := getopt.BoolLong("help", 'h', "display help output")
+	flagVersionOn := getopt.BoolLong("version", 'v', "display version number")
 	getopt.Parse()
 
 	if *flagHelpOn {
 		getopt.PrintUsage(os.Stdout)
 		os.Exit(1)
+	}
+
+	if *flagVersionOn {
+		fmt.Printf("%s %s\n", programName, programVersion)
+		os.Exit(0)
 	}
 
 	if *flagConfigFile != "" {
