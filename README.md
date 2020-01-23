@@ -12,9 +12,9 @@ An experiment in a [PostGIS](https://postgis.net/)-only tile server in [Go](http
 
 Snapshot builds of the latest code:
 
-* [Linux](https://postgisftw.s3.amazonaws.com/pg_tileserv_snapshot_linux.zip)
-* [Windows](https://postgisftw.s3.amazonaws.com/pg_tileserv_snapshot_windows.zip)
-* [OSX](https://postgisftw.s3.amazonaws.com/pg_tileserv_snapshot_osx.zip)
+* [Linux](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_linux.zip)
+* [Windows](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_windows.zip)
+* [OSX](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_osx.zip)
 
 ## Basic Operation
 
