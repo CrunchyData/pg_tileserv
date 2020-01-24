@@ -4,7 +4,7 @@
 
 [travisbuild]: https://api.travis-ci.org/CrunchyData/pg_tileserv.svg?branch=master "Travis CI"
 
-An experiment in a [PostGIS](https://postgis.net/)-only tile server in [Go](https://golang.org/). Strip away all the other requirements, it just has to take in HTTP tile requests and form and execute SQL.  In a sincere act of flattery, the API mimics that of the [Martin](https://github.com/urbica/martin) tile server.
+A [PostGIS](https://postgis.net/)-only tile server in [Go](https://golang.org/). Strip away all the other requirements, it just has to take in HTTP tile requests and form and execute SQL.  In a sincere act of flattery, the API looks a lot like that of the [Martin](https://github.com/urbica/martin) tile server.
 
 # Setup and Installation
 
@@ -18,15 +18,6 @@ Builds of the latest code:
 * [Docker](https://hub.docker.com/repository/docker/pramsey/pg_tileserv)
 
 ## Basic Operation
-
-The simplest start-up uses just a [database connection string](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING) in the `DATABASE_URL` environment variable, and reads all other information from the database.
-```
-Usage: pg_tileserv [-dh] [-c config.toml] [parameters ...]
- -c, --config=config.toml
-              full path to config file
- -d, --debug  log debugging information
- -h, --help   display help output
-```
 
 ### Linux/OSX
 
@@ -51,7 +42,13 @@ To get more information about what is going on behind the scenes, run with the `
 
 ## Configuration File
 
-If you want to alter default values other than the database connection, use the `--config` commandline parameter to pass in a configuration file. In general the defaults are fine, and the program autodetects things like the server name.
+If you want to alter default values other than the database connection, use the `--config` commandline parameter to pass in a configuration file.
+
+```sh
+./pg_tileserv --config /etc/pg_tileserv.toml
+```
+
+In general the defaults are fine, and the program autodetects things like the server name.
 
 ```toml
 # Database connection
