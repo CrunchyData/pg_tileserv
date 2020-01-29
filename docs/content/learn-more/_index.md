@@ -5,8 +5,6 @@ draft: false
 weight: 50
 ---
 
-# Where to Learn More
-
 ## GIS
 
 - [QGIS Training Manual](https://docs.qgis.org/3.4/en/docs/training_manual/index.html)

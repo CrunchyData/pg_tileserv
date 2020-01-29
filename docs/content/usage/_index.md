@@ -5,8 +5,6 @@ draft: false
 weight: 30
 ---
 
-# Basics
-
 The purpose of `pg_tileserv` is to turn a set of spatial records into tiles, on the fly. The tile server reads two different layers of data:
 
 * **Table layers** are what they sound like: tables in the database that have a spatial column with a spatial reference system defined on it.

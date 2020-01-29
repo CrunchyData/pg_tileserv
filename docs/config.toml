@@ -9,7 +9,7 @@ pygmentsCodeFences = true
 pygmentsStyle = "monokailight"
 relativeURLs = true
 theme = "crunchy-hugo-theme"
-title = "Your Project Name"
+title = "pg_tileserv"
 
 [params]
 editURL = "https://github.com/CrunchyData/path/to/project"

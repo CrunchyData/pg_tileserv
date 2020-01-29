@@ -4,7 +4,8 @@ date:
 draft: false
 weight: 400
 ---
-#### Dynamic Geometry Example
+
+## Dynamic Geometry Example
 
 So far all our examples have used simple SQL functions, but using the more [procedural PL/PgSQL language](https://www.postgresql.org/docs/current/plpgsql.html) we can create much more interactive examples.
 
@@ -60,7 +61,7 @@ PARALLEL SAFE;
 
 COMMENT ON FUNCTION public.squares IS 'For each tile requested, generate and return depth*depth polygons covering the tile. The effect is one of always having a grid coverage at the appropriate current scale.';
 ```
-#### Dynamic Hexagons with Spatial Join Example
+## Dynamic Hexagons with Spatial Join Example
 
 Hexagonal tilings are popular with data visualization experts because they can be used to summarize point data without adding a visual bias to the output via different summary area sizes. They also have a nice "non-pointy" shape, while still providing a complete tiling of the plane.
 

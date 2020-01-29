@@ -5,8 +5,6 @@ draft: false
 weight: 100
 ---
 
-# Service Metadata
-
 You can explore the contents of the tile server using:
 
 * an HTML web interface for humans; and

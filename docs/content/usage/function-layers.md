@@ -4,7 +4,8 @@ date:
 draft: false
 weight: 300
 ---
-### Function Layer Detail JSON
+
+## Function Layer Detail JSON
 
 In the detail JSON, each function declares information relevant to setting up a map interface for the layer. Because functions generate tiles dynamically, the system cannot auto-discover things like extent or center, unfortunately. However, the custom parameters and defaults can be read from the function definition and exposed in the detail JSON.
 ```json
@@ -40,9 +41,9 @@ In the detail JSON, each function declares information relevant to setting up a 
 * `minzoom` and `maxzoom` are just the defaults, as set in the configuration file.
 * `arguments` is a list of argument names, with the data type and default value.
 
-### Function Layer Examples
+## Function Layer Examples
 
-#### Filtering Example
+### Filtering Example
 
 This simple example returns just a filtered subset of a table ([ne_50m_admin_0_countries](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip) [EPSG:4326](https://epsg.io/4326)). The filter in this case is the first letters of the name. Note that the `name_prefix` parameter includes a **default value**: this is useful for clients (like the preview interface for this server) that read arbitrary function definitions and need a default value to fill into interface fields.
 ```sql
@@ -104,7 +105,8 @@ Some notes about this function:
 * The `LIMIT` is hard-coded in this example. If you want a user-defined limit you need to add another parameter to your function definition.
 * The function "[volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html)" is declared as `STABLE` because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as `IMMUTABLE` because changes in the base table can change the outputs over time, even for the same inputs.
 * The function is declared as `PARALLEL SAFE` because it doesn't depend on any global state that might get confused by running multiple copies of the function at once.
-#### Spatial Processing Example
+
+### Spatial Processing Example
 
 This example clips a layer of [parcels](https://data.vancouver.ca/datacatalogue/propertyInformation.htm) [EPSG:26910](https://epsg.io/26910) using a radius and center point, returning only the parcels in the radius, with the boundary parcels clipped to the center.
 ```sql

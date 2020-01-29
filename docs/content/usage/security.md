@@ -5,8 +5,6 @@ draft: false
 weight: 500
 ---
 
-# Security
-
 The basic principle of security is to connect your tile server to the database with a user that has just the access you want it to have, and no more. To support different access patterns, create different users with access to different tables/functions, and run multiple services, connecting with those different users.
 ```sql
 CREATE USER tileserver;

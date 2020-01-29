@@ -5,8 +5,6 @@ draft: false
 weight: 200
 ---
 
-# Table Layers
-
 By default, `pg_tileserv` will provide access to **only** those spatial tables:
 
 * that your database connection has `SELECT` privileges for;
@@ -31,7 +29,7 @@ To restrict access to a certain set of tables, use database security principles:
 * Only grant `EXECUTE` to that role for functions you want to publish
 * Connect `pg_tileserv` to the database using that role
 
-### Table Layer Detail JSON
+## Table Layer Detail JSON
 
 In the detail JSON, each layer declares information relevant to setting up a map interface for the layer.
 
@@ -84,7 +82,7 @@ In the detail JSON, each layer declares information relevant to setting up a map
   COMMENT ON COLUMN ne_50m_admin_0_countries.name_long IS 'This is the long name';
   ```
 
-### Table Tile Request Customization
+## Table Tile Request Customization
 
 Most developers will just use the `tileurl` as is, but it possible to add some parameters to the URL to customize behaviour at run time:
 

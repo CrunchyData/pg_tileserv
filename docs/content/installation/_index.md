@@ -5,9 +5,8 @@ draft: false
 weight: 20
 ---
 
-This is just a short little page saying - hey we are about to cover installation
 
-# Requirements
+## Requirements
 
 * **PostgreSQL 9.5** or later
 * **PostGIS 2.4** or later
@@ -23,9 +22,9 @@ PROJ="6.1.0" LIBXML="2.9.4" LIBJSON="0.13"
 LIBPROTOBUF="1.3.2" WAGYU="0.4.3 (Internal)"
 ```
 
-# Installation
+## Installation
 
-## Download Binaries
+### Download Binaries
 
 Builds of the latest code:
 
@@ -35,7 +34,7 @@ Builds of the latest code:
 
 Unzip the file, copy the `pg_tileserv` binary wherever you wish, or use it in place. If you move the binary, remember to move the `assets/` directory to the same location, or start the server using the `AssetsDir` configuration option.
 
-## Container
+### Run Container
 
 There is a docker image available on DockerHub.
 
@@ -47,7 +46,7 @@ Run the container, provide database connection information in the `DATABASE_URL`
 docker run -e DATABASE_URL=postgres://user:pass@host/dbname -p 7800:7800 pramsey/pg_tileserv
 ```
 
-## Build From Source
+### Build From Source
 
 Install the [Go software development environment](https://golang.org/doc/install).
 
@@ -68,32 +67,32 @@ export DATABASE_URL=postgres://user:pass@host/dbname
 $GOPATH/bin/pg_tileserv
 ```
 
-# Deployment
+## Deployment
 
-## Basic Operation
+### Basic Operation
 
-### Linux/OSX
+#### Linux/OSX
 
 ```sh
 export DATABASE_URL=postgresql://username:password@host/dbname
 ./pg_tileserv
 ```
 
-### Windows
+#### Windows
 
 ```
 SET DATABASE_URL=postgresql://username:password@host/dbname
 pg_tileserv.exe
 ```
 
-## Trouble-shooting
+### Trouble-shooting
 
 To get more information about what is going on behind the scenes, run with the `--debug` commandline parameter on, or turn on debugging in the configuration file:
 ```sh
 ./pg_tileserv --debug
 ```
 
-## Configuration File
+### Configuration File
 
 If you want to alter default values other than the database connection, use the `--config` commandline parameter to pass in a configuration file.
 
