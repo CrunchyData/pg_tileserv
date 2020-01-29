@@ -149,8 +149,6 @@ func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDeta
 	// TileURL is relative to server base
 	td.TileUrl = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.Id)
 
-	// Want to add the attributes to the Json representation
-	// in table order, which is fiddly
 	tmpMap := make(map[int]FunctionArgument)
 	tmpKeys := make([]int, 0, len(lyr.Arguments))
 	for _, v := range lyr.Arguments {

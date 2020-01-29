@@ -5,14 +5,20 @@ draft: false
 weight: 50
 ---
 
-Add product name here  
-Add version number here
+# Where to Learn More
 
-# Where to Learn More (or Next Steps)
+## GIS
 
-- Point to the reference documentation.
-- Point to the relevant parts of the community documentation.
-- Mention our award winning support.
-- Point to Katacoda scenarios, if available.
-- Point to a relevant blog post, if it exists.
-- Try not to repeat the exact same links provided in earlier sections (e.g. Definitions).  
+- [QGIS Training Manual](https://docs.qgis.org/3.4/en/docs/training_manual/index.html)
+- [Introduction to PostGIS Workshop](https://postgis.net/workshops/postgis-intro)
+- [PostGIS Day Talks](https://info.crunchydata.com/stl-postgis-day-2019-presentations)
+
+## Web Mapping
+
+- [OpenLayers](https://openlayers.org)
+- [Leaflet](https://leafletjs.com/)
+- [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/api/)
+
+## Source Code
+
+- [GitHub](https://github.com/crunchydata/pg_tileserv/)

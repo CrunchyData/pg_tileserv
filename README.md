@@ -166,7 +166,7 @@ In the detail JSON, each layer declares information relevant to setting up a map
       -3.19966125488281
    ],
    "tileurl" : "http://localhost:7800/public.ne_50m_admin_0_countries/{z}/{x}/{y}.pbf",
-   "attributes" : [
+   "properties" : [
       {
          "name" : "gid",
          "type" : "int4",
@@ -192,7 +192,7 @@ In the detail JSON, each layer declares information relevant to setting up a map
 * `id`, `name` and `schema` are the fully qualified, table and schema name of the database table.
 * `bounds` and `center` give the extent and middle of the data collection, in geographic coordinates. The order of coordinates in bounds is [minlon, minlat, maxlon, maxlat]. The order of coordinates in center is [lon, lat].
 * `tileurl` is the standard substitution pattern URL consumed by map clients like [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/api/) and [OpenLayers](https://openlayers.org).
-* `attributes` is a list of attributes in the table, with their data types and descriptions. The column `description` field can be set using the `COMMENT` SQL command, for example:
+* `properties` is a list of columns in the table, with their data types and descriptions. The column `description` field can be set using the `COMMENT` SQL command, for example:
   ```sql
   COMMENT ON COLUMN ne_50m_admin_0_countries.name_long IS 'This is the long name';
   ```
@@ -204,13 +204,13 @@ Most developers will just use the `tileurl` as is, but it possible to add some p
 * `limit` controls the number of features to write to a tile, the default is 50000.
 * `resolution` controls the resolution of a tile, the default is 4096 units per side for a tile.
 * `buffer` controls the size of the extra data buffer for a tile, the default is 256 units.
-* `attributes` is a comma-separated list of attributes to include in the tile. For wide tables with large numbers of columns, this allows a slimmer tile to be composed.
+* `properties` is a comma-separated list of properties to include in the tile. For wide tables with large numbers of columns, this allows a slimmer tile to be composed.
 
 For example:
 
-    http://localhost:7800/public.ne_50m_admin_0_countries/{z}/{x}/{y}.pbf?limit=100000&attributes=name,long_name
+    http://localhost:7800/public.ne_50m_admin_0_countries/{z}/{x}/{y}.pbf?limit=100000&properties=name,long_name
 
-For attribute names that include commas (why did you do that?) [URL encode](https://en.wikipedia.org/wiki/Percent-encoding) the comma in the name string before composing the comma-separated string of all names.
+For property names that include commas (why did you do that?) [URL encode](https://en.wikipedia.org/wiki/Percent-encoding) the comma in the name string before composing the comma-separated string of all names.
 
 ## Function Layers
 
@@ -405,7 +405,7 @@ BEGIN
                 tile_ymin + sq_width * (b-1),
                 tile_xmin + sq_width * a,
                 tile_ymin + sq_width * b), bounds),
-            -- Each square gets an attribute that shows
+            -- Each square gets a property that shows
             -- what tile it is a part of and what its sub-address
             -- in that tile is
             Format('(%s.%s,%s.%s)', x, a, y, b) AS tilecoord
@@ -519,7 +519,7 @@ SELECT * FROM hexagoncoordinates(ST_TileEnvelope(15, 1, 1), 1000.0);
  -13356 | 11567
  -13356 | 11568
 ```
-Next, a function that puts the two parts together. With tile coordinates and edge size as input, generate the set of all the hexagons that cover the tile. The output here is basically a spatial table: a set of rows, each row containing a geometry (hexagon) and some attributes (hexagon coordinates). Just the input we need for a spatial join.
+Next, a function that puts the two parts together. With tile coordinates and edge size as input, generate the set of all the hexagons that cover the tile. The output here is basically a spatial table: a set of rows, each row containing a geometry (hexagon) and some properties (hexagon coordinates). Just the input we need for a spatial join.
 ```sql
 -- Given an input ZXY tile coordinate, output a set of hexagons
 -- (and hexagon coordinates) in web mercator that cover that tile
