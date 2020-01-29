@@ -25,14 +25,14 @@ type LayerTable struct {
 	Schema         string
 	Table          string
 	Description    string
-	Attributes     map[string]TableAttribute
+	Properties     map[string]TableProperty
 	GeometryType   string
 	IdColumn       string
 	GeometryColumn string
 	Srid           int
 }
 
-type TableAttribute struct {
+type TableProperty struct {
 	Name        string `json:"name"`
 	Type        string `json:"type"`
 	Description string `json:"description"`
@@ -40,17 +40,17 @@ type TableAttribute struct {
 }
 
 type TableDetailJson struct {
-	Id           string           `json:"id"`
-	Schema       string           `json:"schema"`
-	Name         string           `json:"name"`
-	Description  string           `json:"description,omitempty"`
-	Attributes   []TableAttribute `json:"attributes,omitempty"`
-	GeometryType string           `json:"geometrytype,omitempty"`
-	Center       [2]float64       `json:"center"`
-	Bounds       [4]float64       `json:"bounds"`
-	MinZoom      int              `json:"minzoom"`
-	MaxZoom      int              `json:"maxzoom"`
-	TileUrl      string           `json:"tileurl"`
+	Id           string          `json:"id"`
+	Schema       string          `json:"schema"`
+	Name         string          `json:"name"`
+	Description  string          `json:"description,omitempty"`
+	Properties   []TableProperty `json:"properties,omitempty"`
+	GeometryType string          `json:"geometrytype,omitempty"`
+	Center       [2]float64      `json:"center"`
+	Bounds       [4]float64      `json:"bounds"`
+	MinZoom      int             `json:"minzoom"`
+	MaxZoom      int             `json:"maxzoom"`
+	TileUrl      string          `json:"tileurl"`
 }
 
 /********************************************************************************
@@ -105,7 +105,7 @@ func (lyr LayerTable) GetTileRequest(tile Tile, r *http.Request) TileRequest {
 
 type queryParameters struct {
 	Limit      int
-	Attributes []string
+	Properties []string
 	Resolution int
 	Buffer     int
 }
@@ -123,17 +123,17 @@ func getQueryIntParameter(q url.Values, param string) int {
 	return -1
 }
 
-// getRequestAttributesParameter compares the attributes in the request
-// with the attributes in the table layer, and returns a slice of
-// just those that occur in both, or a slice of all table attributes
+// getRequestPropertiesParameter compares the properties in the request
+// with the properties in the table layer, and returns a slice of
+// just those that occur in both, or a slice of all table properties
 // if there is not query parameter, or no matches
-func (lyr *LayerTable) getQueryAttributesParameter(q url.Values) []string {
-	sAtts, haveAttributes := q["attributes"]
-	lyrAtts := (*lyr).Attributes
+func (lyr *LayerTable) getQueryPropertiesParameter(q url.Values) []string {
+	sAtts, haveProperties := q["properties"]
+	lyrAtts := (*lyr).Properties
 	queryAtts := make([]string, 0, len(lyrAtts))
 	haveIdColumn := false
 
-	if haveAttributes {
+	if haveProperties {
 		aAtts := strings.Split(sAtts[0], ",")
 		for _, att := range aAtts {
 			decAtt, err := url.QueryUnescape(att)
@@ -150,7 +150,7 @@ func (lyr *LayerTable) getQueryAttributesParameter(q url.Values) []string {
 		}
 	}
 	// No request parameter or no matches, so we want to
-	// return all the attributes in the table layer
+	// return all the properties in the table layer
 	if len(queryAtts) == 0 {
 		for _, v := range lyrAtts {
 			queryAtts = append(queryAtts, v.Name)
@@ -170,7 +170,7 @@ func (lyr *LayerTable) getQueryParameters(q url.Values) queryParameters {
 		Limit:      getQueryIntParameter(q, "limit"),
 		Resolution: getQueryIntParameter(q, "resolution"),
 		Buffer:     getQueryIntParameter(q, "buffer"),
-		Attributes: lyr.getQueryAttributesParameter(q),
+		Properties: lyr.getQueryPropertiesParameter(q),
 	}
 	if rp.Limit < 0 {
 		rp.Limit = viper.GetInt("MaxFeaturesPerTile")
@@ -199,17 +199,17 @@ func (lyr *LayerTable) getTableDetailJson(req *http.Request) (TableDetailJson, e
 	// TileURL is relative to server base
 	td.TileUrl = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.Id)
 
-	// Want to add the attributes to the Json representation
+	// Want to add the properties to the Json representation
 	// in table order, which is fiddly
-	tmpMap := make(map[int]TableAttribute)
-	tmpKeys := make([]int, 0, len(lyr.Attributes))
-	for _, v := range lyr.Attributes {
+	tmpMap := make(map[int]TableProperty)
+	tmpKeys := make([]int, 0, len(lyr.Properties))
+	for _, v := range lyr.Properties {
 		tmpMap[v.order] = v
 		tmpKeys = append(tmpKeys, v.order)
 	}
 	sort.Ints(tmpKeys)
 	for _, v := range tmpKeys {
-		td.Attributes = append(td.Attributes, tmpMap[v])
+		td.Properties = append(td.Properties, tmpMap[v])
 	}
 
 	// Read table bounds and convert to Json
@@ -326,7 +326,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 		QuerySql       string
 		Resolution     int
 		Buffer         int
-		Attributes     string
+		Properties     string
 		MvtParams      string
 		Limit          string
 		Schema         string
@@ -345,8 +345,8 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 
 	// preserve case and special characters in column names
 	// of SQL query by double quoting names
-	attrNames := make([]string, 0, len(qp.Attributes))
-	for _, a := range qp.Attributes {
+	attrNames := make([]string, 0, len(qp.Properties))
+	for _, a := range qp.Properties {
 		attrNames = append(attrNames, fmt.Sprintf("\"%s\"", a))
 	}
 
@@ -366,7 +366,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 		QuerySql:       tileQuerySql,
 		Resolution:     qp.Resolution,
 		Buffer:         qp.Buffer,
-		Attributes:     strings.Join(attrNames, ", "),
+		Properties:     strings.Join(attrNames, ", "),
 		MvtParams:      strings.Join(mvtParams, ", "),
 		Schema:         lyr.Schema,
 		Table:          lyr.Table,
@@ -386,8 +386,8 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 			{{ .Resolution }},
 			{{ .Buffer }}
 		  ) AS {{ .GeometryColumn }}
-		  {{ if .Attributes }}
-		  , {{ .Attributes }}
+		  {{ if .Properties }}
+		  , {{ .Properties }}
 		  {{ end }}
 		FROM "{{ .Schema }}"."{{ .Table }}" t, (
 			SELECT {{ .TileSql }}  AS geom_clip,
@@ -472,12 +472,12 @@ func GetTableLayers() ([]LayerTable, error) {
 		}
 
 		// We use https://godoc.org/github.com/jackc/pgtype#TextArray
-		// here to scan the text[][] map of attribute name/type
+		// here to scan the text[][] map of property name/type
 		// created in the query. It gets a little ugly demapping the
 		// pgx TextArray type, but it is at least native handling of
 		// the array. It's complex because of PgSQL ARRAY generality
 		// really, no fault of pgx
-		attributes := make(map[string]TableAttribute)
+		properties := make(map[string]TableProperty)
 
 		if atts.Status == pgtype.Present {
 			arrLen := atts.Dimensions[0].Length
@@ -486,13 +486,13 @@ func GetTableLayers() ([]LayerTable, error) {
 			for i := arrStart; i < arrLen; i++ {
 				pos := i * elmLen
 				elmId := atts.Elements[pos].String
-				elm := TableAttribute{
+				elm := TableProperty{
 					Name:        elmId,
 					Type:        atts.Elements[pos+1].String,
 					Description: atts.Elements[pos+2].String,
 				}
 				elm.order, _ = strconv.Atoi(atts.Elements[pos+3].String)
-				attributes[elmId] = elm
+				properties[elmId] = elm
 			}
 		}
 
@@ -506,7 +506,7 @@ func GetTableLayers() ([]LayerTable, error) {
 			Srid:           srid,
 			GeometryType:   geometry_type,
 			IdColumn:       id_column,
-			Attributes:     attributes,
+			Properties:     properties,
 		}
 
 		layerTables = append(layerTables, lyr)

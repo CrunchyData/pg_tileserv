@@ -1,0 +1,39 @@
+baseURL = ""
+canonifyurls = true
+defaultContentLanguage = "en"
+defaultContentLanguageInSubdir= false
+enableMissingTranslationPlaceholders = false
+languageCode = "en-us"
+publishDir = "../docs"
+pygmentsCodeFences = true
+pygmentsStyle = "monokailight"
+relativeURLs = true
+theme = "crunchy-hugo-theme"
+title = "pg_tileserv"
+
+[params]
+editURL = "https://github.com/CrunchyData/path/to/project"
+showVisitedLinks = false # default is false
+ordersectionsby = "weight" # ordersectionsby = "title"
+disableHomeIcon = false # default is false
+disableSearch = false # default is false
+disableNavChevron = false # set true to hide next/prev chevron, default is false
+highlightClientSide = false # set true to use highlight.pack.js instead of the default hugo chroma highlighter
+menushortcutsnewtab = false # set true to open shortcuts links to a new tab/window
+enableGitInfo = true
+
+[outputs]
+home = [ "HTML", "RSS", "JSON"]
+
+# Add additional URLs to the side nav here
+# [[menu.shortcuts]]
+# pre = "<h3>More</h3>"
+# name = "<i class='fa fa-github'></i> <label>Github repo</label>"
+# identifier = "ds"
+# url = "https://github.com/CrunchyData/your-repo"
+# weight = 10
+#
+# [[menu.shortcuts]]
+# name = "<i class='fa fa-cloud-download'></i> <label>Download</label>"
+# url = "https://github.com/CrunchyData/your-repo/releases/download/version/your-repo.2.6.tar.gz"
+# weight = 11

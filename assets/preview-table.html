@@ -10,7 +10,7 @@
       #map {position:absolute;top:0;bottom:0;left:0;right:0;}
       #meta {z-index:2;color:black;background:rgba(255,255,255,0.6);position:absolute;top:10;left:20;padding:10 20;margin:0;width:min-content;}
       #meta h1 {margin:0;}
-      #meta .attributes {font-size:90%; width:auto;}
+      #meta .properties {font-size:90%; width:auto;}
     </style>
   </head>
 <body>
@@ -20,8 +20,8 @@
     {{ if .Description }}
     <p>{{ .Description }}</p>
     {{ end }}
-    {{ if .Attributes }}
-    <hr/><p class="attributes">{{ range $k, $v := .Attributes }}{{ $v.Name }} {{ end }}</p>
+    {{ if .Properties }}
+    <hr/><p class="properties">{{ range $k, $v := .Properties }}{{ $v.Name }} {{ end }}</p>
     {{ end }}
   </div>
 
