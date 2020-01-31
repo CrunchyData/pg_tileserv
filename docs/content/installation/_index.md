@@ -94,10 +94,15 @@ To get more information about what is going on behind the scenes, run with the `
 
 ### Configuration File
 
-If you want to alter default values other than the database connection, use the `--config` commandline parameter to pass in a configuration file.
+The configuration file will be automatically read from the following locations, if it exists:
+
+* In the system configuration directory, at `/etc/pg_tileserv.toml`
+* Relative to the directory from which the program is run, `./pg_tileserv.toml`
+
+If you want to pass a path directly to the configuration file, use the `--config` commandline parameter to pass in a pull path to configuration file. When using the `--config` option, configuration files in other locations will be ignored.
 
 ```sh
-./pg_tileserv --config /etc/pg_tileserv.toml
+./pg_tileserv --config /opt/pg_tileserv/pg_tileserv.toml
 ```
 
 In general the defaults are fine, and the program autodetects things like the server name.

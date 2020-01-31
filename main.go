@@ -88,9 +88,8 @@ func main() {
 	if *flagConfigFile != "" {
 		viper.SetConfigFile(*flagConfigFile)
 	} else {
-		viper.SetConfigName("config")
-		viper.AddConfigPath(fmt.Sprintf("/etc/%s", programName))
-		viper.AddConfigPath(fmt.Sprintf("$HOME/.%s", programName))
+		viper.SetConfigName(programName)
+		viper.AddConfigPath(fmt.Sprintf("/etc/", programName))
 		viper.AddConfigPath(".")
 	}
 
