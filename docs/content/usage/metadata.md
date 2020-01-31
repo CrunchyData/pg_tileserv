@@ -10,11 +10,11 @@ You can explore the contents of the tile server using:
 * an HTML web interface for humans; and
 * a JSON API for computers.
 
-The JSON API is useful for clients that auto-configure based on the service metadata, and in fact the HTML web interface is an example of just such an auto-configuring interface: it reads the JSON and uses that to set up the web map visualization and interface elements.
+The JSON API is useful for clients that auto-configure based on the service metadata. In fact, the HTML web interface is an example of such an auto-configuring interface: it reads the JSON and uses that to set up the web map visualization and interface elements.
 
 ## Web Interface
 
-After start-up you can connect to the server and explore the published tables and functions in the database via a web interface at:
+After start-up, you can connect to the server and explore the published tables and functions in the database via a web interface at:
 
 * http://localhost:7800
 
