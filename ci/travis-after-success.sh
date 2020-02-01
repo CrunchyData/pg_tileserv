@@ -23,7 +23,7 @@ if [ "$TARGET" = "docker" ]; then
     fi
     #docker tag $DOCKER_REPO $DOCKER_REPO:$TRAVIS_COMMIT
     #docker tag $DOCKER_REPO $DOCKER_REPO:travis-$TRAVIS_BUILD_NUMBER
-    if [ "$TRAVIS_BRANCH" = "master" ]; then
+    if [ "$TRAVIS_BRANCH" = "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
         docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
         docker push $DOCKER_REPO
     fi
