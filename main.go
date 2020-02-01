@@ -46,8 +46,7 @@ var globalPostGISVersion int = 0
 
 /******************************************************************************/
 
-func main() {
-
+func init() {
 	viper.SetDefault("DbConnection", "sslmode=disable")
 	viper.SetDefault("HttpHost", "0.0.0.0")
 	viper.SetDefault("HttpPort", 7800)
@@ -62,6 +61,9 @@ func main() {
 	// 1d, 1h, 1m, 1s, see https://golang.org/pkg/time/#ParseDuration
 	viper.SetDefault("DbPoolMaxConnLifeTime", "1h")
 	viper.SetDefault("DbPoolMaxConns", 4)
+}
+
+func main() {
 
 	// Read environment configuration first
 	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
