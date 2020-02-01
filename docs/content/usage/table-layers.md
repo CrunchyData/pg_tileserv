@@ -5,12 +5,12 @@ draft: false
 weight: 200
 ---
 
-By default, `pg_tileserv` will provide access to **only** those spatial tables:
+By default, `pg_tileserv` will provide access to **only** those spatial tables that:
 
-* that your database connection has `SELECT` privileges for;
-* that include a geometry column;
-* that declare a geometry type; and,
-* that declare an SRID (spatial reference ID)
+* your database connection has `SELECT` privileges for;
+* include a geometry column;
+* declare a geometry type; and,
+* declare an SRID (spatial reference ID)
 
 For example:
 ```sql

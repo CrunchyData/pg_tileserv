@@ -24,7 +24,9 @@ LIBPROTOBUF="1.3.2" WAGYU="0.4.3 (Internal)"
 
 ## Installation
 
-### Download Binaries
+To install `pg_tileserv`, download the binary file. Alternatively, you may run a container, or build the executable from source.
+
+### A. Download Binaries
 
 Builds of the latest code:
 
@@ -34,21 +36,21 @@ Builds of the latest code:
 
 Unzip the file, copy the `pg_tileserv` binary wherever you wish, or use it in place. If you move the binary, remember to move the `assets/` directory to the same location, or start the server using the `AssetsDir` configuration option.
 
-### Run Container
+### B. Run Container
 
 There is a docker image available on DockerHub.
 
 * [Docker](https://hub.docker.com/repository/docker/pramsey/pg_tileserv)
 
-Run the container, provide database connection information in the `DATABASE_URL` and map the default service port (7800).
+Run the container, provide database connection information in the `DATABASE_URL` environment variable and map the default service port (7800).
 
 ```sh
 docker run -e DATABASE_URL=postgres://user:pass@host/dbname -p 7800:7800 pramsey/pg_tileserv
 ```
 
-### Build From Source
+### C. Build From Source
 
-Install the [Go software development environment](https://golang.org/doc/install).
+Install the [Go software development environment](https://golang.org/doc/install). Make sure that the [`GOPATH` environment variable](https://github.com/golang/go/wiki/SettingGOPATH) is also set.
 
 ```sh
 SRC=$GOPATH/src/github.com/CrunchyData
@@ -60,7 +62,7 @@ go build
 go install
 ```
 
-To run the build, set the `DATABASE_URL` to the database you want to connect to, and run the binary.
+To run the build, set the `DATABASE_URL` environment variable to the database you want to connect to, and run the binary.
 
 ```sh
 export DATABASE_URL=postgres://user:pass@host/dbname
@@ -83,13 +85,6 @@ export DATABASE_URL=postgresql://username:password@host/dbname
 ```
 SET DATABASE_URL=postgresql://username:password@host/dbname
 pg_tileserv.exe
-```
-
-### Trouble-shooting
-
-To get more information about what is going on behind the scenes, run with the `--debug` commandline parameter on, or turn on debugging in the configuration file:
-```sh
-./pg_tileserv --debug
 ```
 
 ### Configuration File
@@ -136,5 +131,3 @@ DefaultMaxZoom = 22
 # Output extra logging information?
 Debug = false
 ```
-
-

@@ -7,7 +7,7 @@ weight: 50
 
 ## Tile Server
 
-To get more information about what is going on behind the scenes, run with the `--debug` commandline parameter on, or turn on debugging in the configuration file:
+To get more information about what is going on behind the scenes, run the server with the `--debug` commandline parameter on, or turn on debugging in the configuration file:
 ```sh
 ./pg_tileserv --debug
 ```
