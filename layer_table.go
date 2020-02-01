@@ -381,11 +381,11 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	tmplSql := `
 	SELECT ST_AsMVT(mvtgeom, {{ .MvtParams }}) FROM (
 		SELECT ST_AsMVTGeom(
-			ST_Transform(t.{{ .GeometryColumn }}, 3857),
+			ST_Transform(t."{{ .GeometryColumn }}", 3857),
 			bounds.geom_clip,
 			{{ .Resolution }},
 			{{ .Buffer }}
-		  ) AS {{ .GeometryColumn }}
+		  ) AS "{{ .GeometryColumn }}"
 		  {{ if .Properties }}
 		  , {{ .Properties }}
 		  {{ end }}
@@ -393,7 +393,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 			SELECT {{ .TileSql }}  AS geom_clip,
 					{{ .QuerySql }} AS geom_query
 			) bounds
-		WHERE ST_Intersects(t.{{ .GeometryColumn }},
+		WHERE ST_Intersects(t."{{ .GeometryColumn }}",
 							ST_Transform(bounds.geom_query, {{ .Srid }}))
 		{{ .Limit }}
 	) mvtgeom
