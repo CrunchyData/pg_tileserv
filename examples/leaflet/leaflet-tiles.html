@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leaflet Vector Tiles</title>
+
+  <!-- CSS for Leaflet map  -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"
+   integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+   crossorigin=""/>
+
+  <!-- JS for Leaflet map  -->
+  <!-- Make sure you put this AFTER Leaflet's CSS -->
+  <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
+   integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
+   crossorigin=""></script>
+
+  <!-- Leaflet plugin for vector tiles support -->
+  <script type="text/javascript"  src="https://unpkg.com/leaflet.vectorgrid@1.2.0"></script>
+
+  <style>
+    html, body, #map {
+      font-family: sans-serif;
+      height: 100%;
+      width: 100%;
+    }
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    #map {
+      z-index: 1;
+    }
+    #meta {
+      background-color: rgba(255,255,255,0.75);
+      color: black;
+      z-index: 2;
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      padding: 10px 20px;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="meta">
+  <h2>Leaflet Tile Map</h2>
+  <ul>
+    <li><a href="https://leafletjs.com/">Leaflet</a></li>
+    <li><a href="https://github.com/Leaflet/Leaflet.VectorGrid">Leaflet Vector Grid</a></li>
+  </ul>
+</div>
+
+<div id="map"></div>
+
+<script>
+
+  var map = L.map('map').setView([0, 0], 2);
+
+  // Add a base map layer to the map
+  var baseUrl = "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png";
+  var baseLayer = L.tileLayer(baseUrl, {
+    "maxZoom": 18
+  });
+  baseLayer.addTo(map);
+
+  // Add the tile layer to the map
+  // https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip
+  var vectorServer = "http://localhost:7800/";
+  var vectorLayerId = "public.ne_50m_admin_0_countries";
+  var vectorUrl = vectorServer + vectorLayerId + "/{z}/{x}/{y}.pbf";
+  console.log("Reading tiles from " + vectorUrl);
+  var vectorTileStyling = {};
+  var vectorTileColor = "green";
+  vectorTileStyling[vectorLayerId] = {
+    "fill": true,
+    "fillColor": vectorTileColor,
+    "fillOpacity": 0.1,
+    "color": vectorTileColor,
+    "opacity": 0.7,
+    "weight": 2
+  };
+  var vectorTileOptions = {
+    "rendererFactory": L.canvas.tile,
+    "attribution": "&copy; <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors, made with Natural Earth",
+    "vectorTileLayerStyles": vectorTileStyling
+  };
+  var vectorLayer = L.vectorGrid.protobuf(vectorUrl, vectorTileOptions).addTo(map);
+
+</script>
+
+</body>
+</html>
