@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
 
 	// REST routing
@@ -86,9 +88,8 @@ func main() {
 	if *flagConfigFile != "" {
 		viper.SetConfigFile(*flagConfigFile)
 	} else {
-		viper.SetConfigName("config")
-		viper.AddConfigPath(fmt.Sprintf("/etc/%s", programName))
-		viper.AddConfigPath(fmt.Sprintf("$HOME/.%s", programName))
+		viper.SetConfigName(programName)
+		viper.AddConfigPath(fmt.Sprintf("/etc/", programName))
 		viper.AddConfigPath(".")
 	}
 
@@ -358,9 +359,32 @@ func handleRequests() {
 		Handler:      handlers.CompressHandler(handlers.CORS(corsOpt)(r)),
 	}
 
-	// TODO figure out how to gracefully shut down on ^C
-	// and shut down all the database connections / statements
-	log.Fatal(s.ListenAndServe())
+	// start http service
+	go func() {
+		// ListenAndServe returns http.ErrServerClosed when the server receives
+		// a call to Shutdown(). Other errors are unexpected.
+		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	// wait here for interrupt signal
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	<-sig
+
+	// Interrupt signal received:  Start shutting down
+	log.Infoln("Shutting down...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	s.Shutdown(ctx)
+
+	if globalDb != nil {
+		log.Debugln("Closing DB connections")
+		globalDb.Close()
+	}
+	log.Infoln("Server stopped.")
 }
 
 /******************************************************************************/

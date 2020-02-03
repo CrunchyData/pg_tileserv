@@ -7,7 +7,7 @@ weight: 300
 
 ## Function Layer Detail JSON
 
-In the detail JSON, each function declares information relevant to setting up a map interface for the layer. Because functions generate tiles dynamically, the system cannot auto-discover things like extent or center, unfortunately. However, the custom parameters and defaults can be read from the function definition and exposed in the detail JSON.
+In the detail JSON, each function declares information relevant to setting up a map interface for the layer. Because functions generate tiles dynamically, the system cannot auto-discover things like extent or center. However, the custom parameters and defaults can be read from the function definition and exposed in the detail JSON.
 ```json
 {
    "name" : "parcels_in_radius",
@@ -73,6 +73,7 @@ PARALLEL SAFE;
 COMMENT ON FUNCTION public.countries_name IS 'Filters the countries table by the initial letters of the name using the "name_prefix" parameter.';
 ```
 Some notes about this function:
+
 * The `ST_AsMVT()` function uses the function name ("public.countries_name") as the MVT layer name. This is not required, but for clients that self-configure, it allows them to use the function name as the layer source name.
 * In the filter portion of the query (in the `WHERE` clause) the bounds are transformed to the spatial reference of the table data (4326) so that the spatial index on the table geometry can be used.
 * In the `ST_AsMVTGeom()` portion of the query, the table geometry is transformed into web mercator ([3857](https://epsg.io/3857)) to match the bounds, and the _de facto_ expectation that MVT tiles are delivered in web mercator projection.
@@ -102,7 +103,7 @@ Some notes about this function:
   STRICT
   PARALLEL SAFE;
   ```
-* The `LIMIT` is hard-coded in this example. If you want a user-defined limit you need to add another parameter to your function definition.
+* The `LIMIT` is hard-coded in this example. If you want a user-defined limit, you need to add another parameter to your function definition.
 * The function "[volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html)" is declared as `STABLE` because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as `IMMUTABLE` because changes in the base table can change the outputs over time, even for the same inputs.
 * The function is declared as `PARALLEL SAFE` because it doesn't depend on any global state that might get confused by running multiple copies of the function at once.
 
@@ -148,6 +149,7 @@ PARALLEL SAFE;
 COMMENT ON FUNCTION public.parcels_in_radius IS 'Given the click point (click_lon, click_lat) and radius, returns all the parcels in the radius, clipped to the radius circle.';
 ```
 Notes:
+
 * The parcels are stored in a table with spatial reference system [3005](https://epsg.io/3005), a planar projection.
 * The click parameters are longitude/latitude, so in building a click geometry (`ST_MakePoint()`) to use for querying, we transform the geometry to the table spatial reference.
 * To get the parcel boundaries clipped to the radius, we build a circle in the native spatial reference (26910) using the `ST_Buffer()` function on the click point, then intersect that circle with the parcels.
