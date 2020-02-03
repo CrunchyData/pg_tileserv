@@ -20,34 +20,51 @@
   <script type="text/javascript"  src="https://unpkg.com/leaflet.vectorgrid@1.2.0"></script>
 
   <style>
-    body {
-        padding: 0;
-        margin: 0;
-    }
     html, body, #map {
-        height: 100%;
-        width: 100%;
+      font-family: sans-serif;
+      height: 100%;
+      width: 100%;
+    }
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    #map {
+      z-index: 1;
+    }
+    #meta {
+      background-color: rgba(255,255,255,0.75);
+      color: black;
+      z-index: 2;
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      padding: 10px 20px;
+      margin: 0;
     }
   </style>
 </head>
 
 <body>
 
-<div id="query">
-  <h2>Vector Tiles in Leaflet</h2>
-  <p></p>
+<div id="meta">
+  <h2>Leaflet Tile Map</h2>
+  <ul>
+    <li><a href="https://leafletjs.com/">Leaflet</a></li>
+    <li><a href="https://github.com/Leaflet/Leaflet.VectorGrid">Leaflet Vector Grid</a></li>
+  </ul>
 </div>
 
 <div id="map"></div>
 
 <script>
 
-  var map = L.map('mapid').setView([0, 0], 2);
+  var map = L.map('map').setView([0, 0], 2);
 
   // Add a base map layer to the map
-  var baseUrl = 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png';
+  var baseUrl = "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png";
   var baseLayer = L.tileLayer(baseUrl, {
-    maxZoom: 18
+    "maxZoom": 18
   });
   baseLayer.addTo(map);
 
@@ -57,24 +74,22 @@
   var vectorLayerId = "public.ne_50m_admin_0_countries";
   var vectorUrl = vectorServer + vectorLayerId + "/{z}/{x}/{y}.pbf";
   console.log("Reading tiles from " + vectorUrl);
-  var vectorTileStyling = {
-    vectorLayerId: {
-      fill: true,
-      weight: 1,
-      fillColor: 'pink',
-      color: 'pink',
-      fillOpacity: 0.2,
-      opacity: 0.4,
-    }
+  var vectorTileStyling = {};
+  var vectorTileColor = "green";
+  vectorTileStyling[vectorLayerId] = {
+    "fill": true,
+    "fillColor": vectorTileColor,
+    "fillOpacity": 0.1,
+    "color": vectorTileColor,
+    "opacity": 0.7,
+    "weight": 2
   };
   var vectorTileOptions = {
-    rendererFactory: L.canvas.tile,
-    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    vectorTileLayerStyles: vectorTileStyling
+    "rendererFactory": L.canvas.tile,
+    "attribution": "&copy; <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors, made with Natural Earth",
+    "vectorTileLayerStyles": vectorTileStyling
   };
-  var vectorLayer = L.vectorGrid.protobuf(vectorUrl, vectorTileOptions);
-  vectorLayer.addTo(map);
-
+  var vectorLayer = L.vectorGrid.protobuf(vectorUrl, vectorTileOptions).addTo(map);
 
 </script>
 

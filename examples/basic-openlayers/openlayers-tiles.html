@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenLayers Vector Tiles</title>
+
+  <!-- CSS/JS for OpenLayers map  -->
+  <link rel="stylesheet" href="https://openlayers.org/en/v6.1.1/css/ol.css" type="text/css">
+  <script src="https://openlayers.org/en/v6.1.1/build/ol.js"></script>
+
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    html, body, #map {
+      height: 100%;
+      width: 100%;
+      font-family: sans-serif;
+    }
+    #meta {
+      background-color: rgba(255,255,255,0.75);
+      color: black;
+      z-index: 2;
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      padding: 10px 20px;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="meta">
+  <h2>OpenLayers Tile Map</h2>
+  <ul>
+    <li><a href="https://openlayers.org/">OpenLayers</a></li>
+  </ul>
+</div>
+
+<div id="map"></div>
+
+<script>
+
+var vectorServer = "http://localhost:7800/";
+var vectorSourceLayer = "public.ne_50m_admin_0_countries";
+var vectorProps = "?properties=name,type,pop_est"
+var vectorUrl = vectorServer + vectorSourceLayer + "/{z}/{x}/{y}.pbf" + vectorProps;
+
+var vectorStyle = new ol.style.Style({
+  stroke: new ol.style.Stroke({
+    width: 2,
+    color: "#ff00ff99"
+  }),
+  fill: new ol.style.Fill({
+    color: "#ff00ff33"
+  })
+});
+
+var vectorLayer = new ol.layer.VectorTile({
+    source: new ol.source.VectorTile({
+      format: new ol.format.MVT(),
+      url: vectorUrl
+    }),
+    style: vectorStyle
+  });
+
+var baseLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    url: "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png"
+  })
+});
+
+var map = new ol.Map({
+  target: 'map',
+  view: new ol.View({
+    center: [0, 0],
+    zoom: 2
+  }),
+  layers: [baseLayer, vectorLayer]
+});
+
+
+
+</script>
+
+</body>
+</html>
