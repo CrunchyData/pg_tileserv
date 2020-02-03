@@ -85,26 +85,35 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Commandline over-rides config file for debugging
+	if *flagDebugOn {
+		viper.Set("Debug", true)
+		log.SetLevel(log.TraceLevel)
+	}
+
 	if *flagConfigFile != "" {
 		viper.SetConfigFile(*flagConfigFile)
 	} else {
 		viper.SetConfigName(programName)
-		viper.AddConfigPath(fmt.Sprintf("/etc/", programName))
+		viper.AddConfigPath("/etc/")
+		viper.AddConfigPath("/usr/local/etc/")
 		viper.AddConfigPath(".")
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Debug(err)
+			log.Debugf("viper.ConfigFileNotFoundError: %s", err)
 		} else {
-			log.Fatal(err)
+			if _, ok := err.(viper.UnsupportedConfigError); ok {
+				log.Debugf("viper.UnsupportedConfigError: %s", err)
+			} else {
+				log.Fatalf("Configuration file error: %s", err)
+			}
 		}
-	}
-
-	// Commandline over-rides config file for debugging
-	if *flagDebugOn {
-		viper.Set("Debug", true)
-		log.SetLevel(log.TraceLevel)
+	} else {
+		// Really would like to log location of filename we found...
+		// 	log.Infof("Reading configuration file %s", cf)
+		log.Info("ReadInConfig returned no err")
 	}
 
 	// Report our status
