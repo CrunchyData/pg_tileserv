@@ -1,0 +1,129 @@
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <title>Vector Tiles in MapBox GL JS</title>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.css' rel='stylesheet' />
+
+    <style>
+      body {
+          padding: 0;
+          margin: 0;
+      }
+      html, body, #map {
+          height: 100%;
+          width: 100%;
+      }
+    </style>
+  </head>
+<body>
+
+  <div id="map"></div>
+
+  <script>
+
+  var mapConfig = {
+    'container': 'map',
+    'center': [0,0],
+    'zoom': 1,
+    'style': {
+      'version': 8,
+      'sources': {
+        'wikimedia': {
+          'type': 'raster',
+          'tiles': [
+            "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png"
+          ]
+        }
+      },
+      'layers': [{
+        'type': 'raster',
+        'id': 'wikimedia-layer',
+        'source': 'wikimedia',
+        'minzoom': 0,
+        'maxzoom': 22
+      }]
+    }
+  };
+
+    var map = new mapboxgl.Map(mapConfig);
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // Add the tile layer to the map
+    // https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip
+
+    var vectorServer = "http://localhost:7800/";
+    var vectorLayerId = "public.ne_50m_admin_0_countries";
+    var vectorUrl = vectorServer + vectorLayerId + "/{z}/{x}/{y}.pbf";
+
+    map.on("load", function() {
+
+      map.addSource("ne-source", {
+        "type": "vector",
+        "tiles": [vectorUrl],
+        "minzoom": 0,
+        "maxzoom": 22
+      });
+
+      var vectorLayerColor = "blue";
+      // var vectorLayerOutline = {
+      //   "id": "ne-layer-outline",
+      //   "source": "ne-source",
+      //   "source-layer": vectorLayerId,
+      //   "type": "line",
+      //   "paint":  {
+      //     "line-width": 1.5,
+      //     "line-color": vectorLayerColor
+      //   }
+      // };
+      // map.addLayer(vectorLayerOutline);
+
+      var vectorLayerFill = {
+        "id": "ne-layer",
+        "source": "ne-source",
+        "source-layer": vectorLayerId,
+        "type": "fill",
+        "paint":  {
+          "fill-color": vectorLayerColor,
+          "fill-opacity": 0.1,
+          "fill-outline-color": "red"
+        }
+      };
+      map.addLayer(vectorLayerFill);
+
+      // Convert feature properties into html
+      function featureHtml(f) {
+        var p = f.properties;
+        var h = "<p>";
+        for (var k in p) {
+          h += "<b>" + k + ":</b> " + p[k] + "<br/>"
+        }
+        h += "</p>";
+        return h
+      }
+
+      // // When a click event occurs on a feature in the states layer, open a popup at the
+      // // location of the click, with description HTML from its properties.
+      // map.on('click', layer["id"], function(e) {
+      //   new mapboxgl.Popup()
+      //   .setLngLat(e.lngLat)
+      //   .setHTML(featureHtml(e.features[0]))
+      //   .addTo(map);
+      // });
+
+      // // // Change the cursor to a pointer when the mouse is over the states layer.
+      // map.on('mouseenter', layer["id"], function() {
+      //   map.getCanvas().style.cursor = 'pointer';
+      // });
+
+      // // // Change it back to a pointer when it leaves.
+      // map.on('mouseleave', layer["id"], function() {
+      //   map.getCanvas().style.cursor = '';
+      // });
+
+    });
+
+  </script>
+
+</body>
+</html>
