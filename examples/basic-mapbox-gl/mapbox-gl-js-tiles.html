@@ -21,7 +21,9 @@
   <div id="map"></div>
 
   <script>
-
+  // Basic map configuration, and a raster base map
+  // layer from wikimedia. Can add stores/layers at run-time
+  // or here at configuration time.
   var mapConfig = {
     'container': 'map',
     'center': [0,0],
@@ -46,82 +48,94 @@
     }
   };
 
-    var map = new mapboxgl.Map(mapConfig);
-    map.addControl(new mapboxgl.NavigationControl());
+  var map = new mapboxgl.Map(mapConfig);
+  // Zoom control
+  map.addControl(new mapboxgl.NavigationControl());
 
-    // Add the tile layer to the map
-    // https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip
+  // Add the tile layer to the map
+  // https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip
 
-    var vectorServer = "http://localhost:7800/";
-    var vectorLayerId = "public.ne_50m_admin_0_countries";
-    var vectorUrl = vectorServer + vectorLayerId + "/{z}/{x}/{y}.pbf";
+  var vectorSource = "ne-source";
+  var vectorId = "ne-layer";
 
-    map.on("load", function() {
+  // Build the tile URL
+  var vectorServer = "http://localhost:7800/";
+  var vectorSourceLayer = "public.ne_50m_admin_0_countries";
+  // The data table has a lot of columns, we retrieve just three
+  var vectorProps = "?properties=name,type,pop_est"
+  var vectorUrl = vectorServer + vectorSourceLayer + "/{z}/{x}/{y}.pbf" + vectorProps;
 
-      map.addSource("ne-source", {
-        "type": "vector",
-        "tiles": [vectorUrl],
-        "minzoom": 0,
-        "maxzoom": 22
-      });
+  map.on("load", function() {
 
-      var vectorLayerColor = "blue";
-      // var vectorLayerOutline = {
-      //   "id": "ne-layer-outline",
-      //   "source": "ne-source",
-      //   "source-layer": vectorLayerId,
-      //   "type": "line",
-      //   "paint":  {
-      //     "line-width": 1.5,
-      //     "line-color": vectorLayerColor
-      //   }
-      // };
-      // map.addLayer(vectorLayerOutline);
-
-      var vectorLayerFill = {
-        "id": "ne-layer",
-        "source": "ne-source",
-        "source-layer": vectorLayerId,
-        "type": "fill",
-        "paint":  {
-          "fill-color": vectorLayerColor,
-          "fill-opacity": 0.1,
-          "fill-outline-color": "red"
-        }
-      };
-      map.addLayer(vectorLayerFill);
-
-      // Convert feature properties into html
-      function featureHtml(f) {
-        var p = f.properties;
-        var h = "<p>";
-        for (var k in p) {
-          h += "<b>" + k + ":</b> " + p[k] + "<br/>"
-        }
-        h += "</p>";
-        return h
-      }
-
-      // // When a click event occurs on a feature in the states layer, open a popup at the
-      // // location of the click, with description HTML from its properties.
-      // map.on('click', layer["id"], function(e) {
-      //   new mapboxgl.Popup()
-      //   .setLngLat(e.lngLat)
-      //   .setHTML(featureHtml(e.features[0]))
-      //   .addTo(map);
-      // });
-
-      // // // Change the cursor to a pointer when the mouse is over the states layer.
-      // map.on('mouseenter', layer["id"], function() {
-      //   map.getCanvas().style.cursor = 'pointer';
-      // });
-
-      // // // Change it back to a pointer when it leaves.
-      // map.on('mouseleave', layer["id"], function() {
-      //   map.getCanvas().style.cursor = '';
-      // });
-
+    // Layers read from sources
+    map.addSource(vectorSource, {
+      "type": "vector",
+      "tiles": [vectorUrl],
+      "minzoom": 0,
+      "maxzoom": 22
     });
+
+    // To get wide rendered boundaries we
+    // need two layers, one for the boundaries
+    // and one for the fill
+    var vectorLayerColor = "blue";
+    var vectorLayerOutline = {
+      "id": vectorId + "-outline",
+      "source": vectorSource,
+      "source-layer": vectorSourceLayer,
+      "type": "line",
+      "paint":  {
+        "line-width": 1.5,
+        "line-color": vectorLayerColor
+      }
+    };
+    map.addLayer(vectorLayerOutline);
+
+    // The fill layer has a unique id and
+    // we can tie the click action to it below
+    var vectorLayerFill = {
+      "id": vectorId,
+      "source": vectorSource,
+      "source-layer": vectorSourceLayer,
+      "type": "fill",
+      "paint":  {
+        "fill-color": vectorLayerColor,
+        "fill-opacity": 0.1,
+        "fill-outline-color": vectorLayerColor
+      }
+    };
+    map.addLayer(vectorLayerFill);
+
+    // Utility ot convert feature properties into html
+    function featureHtml(f) {
+      var h = "";
+      var p = f.properties;
+      for (var k in p) {
+        h += "<b>" + k + ":</b> " + p[k] + "<br/>";
+      }
+      return "<p>" + h + "</p>";
+    };
+
+    // When a click event occurs on a feature in the layer, open a popup at the
+    // location of the click, with description HTML from its properties.
+    map.on('click', vectorId, function(e) {
+      new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(featureHtml(e.features[0]))
+        .addTo(map);
+    });
+
+    // Change the cursor to a pointer when the mouse is over the fil layer.
+    map.on('mouseenter', vectorId, function() {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    // Change it back to a pointer when it leaves.
+    map.on('mouseleave', vectorId, function() {
+      map.getCanvas().style.cursor = '';
+    });
+
+  });
 
   </script>
 
