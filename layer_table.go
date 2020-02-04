@@ -231,7 +231,11 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 	bounds := Bounds{}
 	extentSql := fmt.Sprintf(`
 	WITH ext AS (
-		SELECT ST_Transform(ST_SetSRID(ST_Extent(%s), %d), 4326) AS geom
+		SELECT
+			coalesce(
+				ST_Transform(ST_SetSRID(ST_Extent("%s"), %d), 4326),
+				ST_MakeEnvelope(0, 0, 0, 0, 4326)
+			) AS geom
 		FROM "%s"."%s"
 	)
 	SELECT
@@ -253,12 +257,13 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 		ymax pgtype.Float8
 	)
 	err = db.QueryRow(context.Background(), extentSql).Scan(&xmin, &ymin, &xmax, &ymax)
-	if err != nil || xmin.Status == pgtype.Null {
+	if err != nil {
 		return bounds, tileAppError{
 			SrcErr:  err,
 			Message: "Unable to calculate table bounds",
 		}
 	}
+
 	bounds.Xmin = xmin.Float
 	bounds.Ymin = ymin.Float
 	bounds.Xmax = xmax.Float
