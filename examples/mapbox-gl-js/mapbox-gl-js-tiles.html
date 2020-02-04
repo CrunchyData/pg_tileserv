@@ -1,0 +1,166 @@
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <title>Vector Tiles in MapBox GL JS</title>
+
+    <!-- CSS/JS for Mapbox map  -->
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.css' rel='stylesheet' />
+
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      html, body, #map {
+        font-family: sans-serif;
+        height: 100%;
+        width: 100%;
+      }
+      #meta {
+        background-color: rgba(255,255,255,0.75);
+        color: black;
+        z-index: 2;
+        position: absolute;
+        top: 10px;
+        left: 20px;
+        padding: 10px 20px;
+        margin: 0;
+      }
+    </style>
+  </head>
+<body>
+
+  <div id="meta">
+    <h2>Mapbox GL JS Tile Map</h2>
+    <ul>
+      <li><a href="https://docs.mapbox.com/mapbox-gl-js/api/">Mapbox GL JS</a></li>
+    </ul>
+  </div>
+
+  <div id="map"></div>
+
+  <script>
+  // Basic map configuration, and a raster base map
+  // layer from wikimedia. Can add stores/layers at run-time
+  // or here at configuration time.
+  var mapConfig = {
+    'container': 'map',
+    'center': [0,0],
+    'zoom': 1,
+    'style': {
+      'version': 8,
+      'sources': {
+        'wikimedia': {
+          'type': 'raster',
+          'tiles': [
+            "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png"
+          ]
+        }
+      },
+      'layers': [{
+        'type': 'raster',
+        'id': 'wikimedia-layer',
+        'source': 'wikimedia',
+        'minzoom': 0,
+        'maxzoom': 22
+      }]
+    }
+  };
+
+  var map = new mapboxgl.Map(mapConfig);
+  // Zoom control
+  map.addControl(new mapboxgl.NavigationControl());
+  map.addControl(new mapboxgl.AttributionControl({
+    compact: true,
+    customAttribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, made with Natural Earth'
+  }));
+  // Add the tile layer to the map
+  // https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip
+
+  var vectorSource = "ne-source";
+  var vectorId = "ne-layer";
+
+  // Build the tile URL
+  var vectorServer = "http://localhost:7800/";
+  var vectorSourceLayer = "public.ne_50m_admin_0_countries";
+  // The data table has a lot of columns, we retrieve just three
+  var vectorProps = "?properties=name,type,pop_est"
+  var vectorUrl = vectorServer + vectorSourceLayer + "/{z}/{x}/{y}.pbf" + vectorProps;
+
+  map.on("load", function() {
+
+    // Layers read from sources
+    map.addSource(vectorSource, {
+      "type": "vector",
+      "tiles": [vectorUrl],
+      "minzoom": 0,
+      "maxzoom": 22
+    });
+
+    // To get wide rendered boundaries we
+    // need two layers, one for the boundaries
+    // and one for the fill
+    var vectorLayerColor = "blue";
+    var vectorLayerOutline = {
+      "id": vectorId + "-outline",
+      "source": vectorSource,
+      "source-layer": vectorSourceLayer,
+      "type": "line",
+      "paint":  {
+        "line-width": 1.5,
+        "line-color": vectorLayerColor
+      }
+    };
+    map.addLayer(vectorLayerOutline);
+
+    // The fill layer has a unique id and
+    // we can tie the click action to it below
+    var vectorLayerFill = {
+      "id": vectorId,
+      "source": vectorSource,
+      "source-layer": vectorSourceLayer,
+      "type": "fill",
+      "paint":  {
+        "fill-color": vectorLayerColor,
+        "fill-opacity": 0.1,
+        "fill-outline-color": vectorLayerColor
+      }
+    };
+    map.addLayer(vectorLayerFill);
+
+    // Utility ot convert feature properties into html
+    function featureHtml(f) {
+      var h = "";
+      var p = f.properties;
+      for (var k in p) {
+        h += "<b>" + k + ":</b> " + p[k] + "<br/>";
+      }
+      return "<p>" + h + "</p>";
+    };
+
+    // When a click event occurs on a feature in the layer, open a popup at the
+    // location of the click, with description HTML from its properties.
+    map.on('click', vectorId, function(e) {
+      new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(featureHtml(e.features[0]))
+        .addTo(map);
+    });
+
+    // Change the cursor to a pointer when the mouse is over the fil layer.
+    map.on('mouseenter', vectorId, function() {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    // Change it back to a pointer when it leaves.
+    map.on('mouseleave', vectorId, function() {
+      map.getCanvas().style.cursor = '';
+    });
+
+  });
+
+  </script>
+
+</body>
+</html>
