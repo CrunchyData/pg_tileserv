@@ -12,6 +12,7 @@ else
     TAG=$TRAVIS_TAG
 fi
 
+# docker deploy
 if [ "$TARGET" = "docker" ]; then
     DOCKER_REPO=pramsey/pg_tileserv
     VERSION=`./pg_tileserv --version | cut -f2 -d' '`
@@ -27,7 +28,8 @@ if [ "$TARGET" = "docker" ]; then
         docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
         docker push $DOCKER_REPO
     fi
-else
+# windows, linux, osx pre-deploy
+elif [ "$TARGET" != "docs" ]
     mkdir upload
     zip -r upload/pg_tileserv_${TAG}_${TARGET}.zip ${BINARY} README.md LICENSE.md assets/
 fi
