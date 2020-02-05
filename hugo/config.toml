@@ -1,4 +1,4 @@
-baseURL = ""
+baseURL = "https://pramsey.github.io/pg_tileserv"
 canonifyurls = true
 defaultContentLanguage = "en"
 defaultContentLanguageInSubdir= false
@@ -12,7 +12,7 @@ theme = "crunchy-hugo-theme"
 title = "pg_tileserv"
 
 [params]
-editURL = "https://github.com/CrunchyData/path/to/project"
+editURL = "https://github.com/CrunchyData/pg_tileserv"
 showVisitedLinks = false # default is false
 ordersectionsby = "weight" # ordersectionsby = "title"
 disableHomeIcon = false # default is false

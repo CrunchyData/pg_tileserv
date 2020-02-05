@@ -4,6 +4,7 @@ sudo: required
 services:
   - docker
 
+
 matrix:
   include:
   - go: tip
@@ -12,6 +13,9 @@ matrix:
   - go: tip
     os: linux
     env: TARGET=windows
+  - go: tip
+    os: linux
+    env: TARGET=docs
   - go: tip
     os: linux
     env: TARGET=docker
@@ -23,7 +27,7 @@ before_install:
 - if [ "$TARGET" = "windows" ]; then sudo apt update; fi
 
 install:
-- if [ "$TARGET" = "windows" ]; then sudo apt install gcc-mingw-w64 libc6-dev-i386; fi
+- ./ci/travis-install.sh
 
 script:
 - ./ci/travis-build.sh
@@ -60,3 +64,25 @@ deploy:
     access_key_id: ${AWS_ACCESS_KEY_ID}
     secret_access_key: ${AWS_SECRET_ACCESS_KEY}
     cleanup: false
+  - provider: pages:git
+    on:
+      repo: pramsey/pg_tileserv
+      branch: docbuild
+      condition: $TARGET = docs
+    token: ${GITHUB_TOKEN}
+    edge: true
+    repo: pramsey/pg_tileserv
+    target_branch: docbuild
+    cleanup: false
+    keep_history: false
+    project_name: pg_tileserv
+    local_dir: docs
+    committer_from_gh: true
+    verbose: true
+
+
+
+
+
+
+

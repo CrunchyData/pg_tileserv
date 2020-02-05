@@ -2,7 +2,7 @@
 PROGRAM := pg_tileserv
 CONTAINER := pramsey/$(PROGRAM)
 
-.PHONY: all check clean test docker
+.PHONY: all check clean test docker docs
 
 GOFILES := $(wildcard *.go)
 
@@ -14,6 +14,12 @@ check:
 clean:
 	$(info Cleaning project...)
 	@rm -f $(PROGRAM)
+	@rm -rf docs/*
+
+docs:
+	cd hugo
+	hugo  
+	cd ..
 
 $(PROGRAM): $(GOFILES)
 	go build -v

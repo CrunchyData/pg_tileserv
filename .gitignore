@@ -1,3 +1,5 @@
 pg_tileserv
 pg_tileserv.exe
 *.code-workspace
+docs/
+public/
