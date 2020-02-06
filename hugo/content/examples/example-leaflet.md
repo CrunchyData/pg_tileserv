@@ -5,6 +5,6 @@ draft: false
 weight: 300
 ---
 
-## Data
+![Mapbox GL JS map](/example-leaflet.PNG)
 
-## Web 
+[Source](https://github.com/CrunchyData/pg_tileserv/blob/master/examples/leaflet/leaflet-tiles.html)

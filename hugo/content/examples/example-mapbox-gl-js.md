@@ -5,6 +5,7 @@ draft: false
 weight: 200
 ---
 
-## Data
+![Mapbox GL JS map](/example-mapbox.PNG)
 
-## Web 
+[Source](https://github.com/CrunchyData/pg_tileserv/blob/master/examples/mapbox-gl-js/mapbox-gl-js-tiles.html)
+
