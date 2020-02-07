@@ -234,7 +234,7 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 		SELECT
 			coalesce(
 				ST_Transform(ST_SetSRID(ST_Extent("%s"), %d), 4326),
-				ST_MakeEnvelope(0, 0, 0, 0, 4326)
+				ST_MakeEnvelope(-180, -90, 180, 90, 4326)
 			) AS geom
 		FROM "%s"."%s"
 	)
