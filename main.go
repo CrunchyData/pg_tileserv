@@ -61,6 +61,7 @@ func init() {
 	// 1d, 1h, 1m, 1s, see https://golang.org/pkg/time/#ParseDuration
 	viper.SetDefault("DbPoolMaxConnLifeTime", "1h")
 	viper.SetDefault("DbPoolMaxConns", 4)
+	viper.SetDefault("DbTimeout", 10)
 }
 
 func main() {
@@ -264,8 +265,11 @@ func requestTile(w http.ResponseWriter, r *http.Request) error {
 		"key":   tile.String(),
 	}).Tracef("RequestLayerTile: %s", tile.String())
 
+	ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("DbTimeout")*time.Second)
+	defer cancel()
+
 	tilerequest := lyr.GetTileRequest(tile, r)
-	mvt, errMvt := DBTileRequest(&tilerequest)
+	mvt, errMvt := DBTileRequest(ctx, &tilerequest)
 	if errMvt != nil {
 		return errMvt
 	}

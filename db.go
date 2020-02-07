@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -104,22 +105,33 @@ func LoadVersions() error {
 	return nil
 }
 
-func DBTileRequest(tr *TileRequest) ([]byte, error) {
+func DBTileRequest(ctx context.Context, tr *TileRequest) ([]byte, error) {
 	db, err := DbConnect()
 	if err != nil {
 		log.Error(err)
 		return nil, err
 	}
-	row := db.QueryRow(context.Background(), tr.Sql, tr.Args...)
+	row := db.QueryRow(ctx, tr.Sql, tr.Args...)
 	var mvtTile []byte
 	err = row.Scan(&mvtTile)
 	if err != nil {
 		log.Warn(err)
+
+		// error handling
+		switch err := err.(type) {
+		// handle timeout errors, including context cancellation during database operations.
+		case net.Error:
+			if err.Timeout() {
+				return nil, tileAppError{
+					SrcErr:  err,
+					Message: fmt.Sprintf("Timeout: deadline exceeded on %s/%s", tr.LayerId, tr.Tile.String()),
+				}
+			}
+		}
 		return nil, tileAppError{
 			SrcErr:  err,
 			Message: fmt.Sprintf("SQL error on %s/%s", tr.LayerId, tr.Tile.String()),
 		}
-	} else {
-		return mvtTile, nil
 	}
+	return mvtTile, nil
 }
