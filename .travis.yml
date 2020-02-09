@@ -71,6 +71,7 @@ deploy:
       condition: $TARGET = docs
     script: ./ci/travis-docs-deploy.sh
     cleanup: false
+    edge: true
     verbose: true
 
 
