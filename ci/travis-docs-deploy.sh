@@ -7,6 +7,7 @@ if [ "$TARGET" = "docs" ]; then
     git add -f docs
     git status
     git commit -m 'travis doc build'
-    git push pramsey $TRAVIS_BRANCH --force
+    echo branch: $TRAVIS_BRANCH
+    git push docbuild --force
 fi
 
