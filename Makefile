@@ -17,9 +17,7 @@ clean:
 	@rm -rf docs/*
 
 docs:
-	cd hugo
-	hugo  
-	cd ..
+	@rm -rf docs/* && cd hugo && hugo && cd .. 
 
 $(PROGRAM): $(GOFILES)
 	go build -v

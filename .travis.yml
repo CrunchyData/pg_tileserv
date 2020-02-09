@@ -64,20 +64,13 @@ deploy:
     access_key_id: ${AWS_ACCESS_KEY_ID}
     secret_access_key: ${AWS_SECRET_ACCESS_KEY}
     cleanup: false
-  - provider: pages:git
+  - provider: script
     on:
       repo: pramsey/pg_tileserv
       branch: docbuild
       condition: $TARGET = docs
-    token: ${GITHUB_TOKEN}
-    edge: true
-    repo: pramsey/pg_tileserv
-    target_branch: docbuild
+    script: ./ci/travis-docs-deploy.sh
     cleanup: false
-    keep_history: false
-    project_name: pg_tileserv
-    local_dir: docs
-    committer_from_gh: true
     verbose: true
 
 
