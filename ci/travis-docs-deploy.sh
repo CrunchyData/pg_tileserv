@@ -16,6 +16,5 @@ if [ "$GITHUB_TOKEN" != "" ]; then
     git status
     git log | head
     git push deploy $LOCAL_BRANCH:docbuild
-    git push origin $LOCAL_BRANCH:docbuild
 fi
 
