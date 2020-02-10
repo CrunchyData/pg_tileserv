@@ -18,10 +18,10 @@ matrix:
     env: TARGET=osx
   - go: tip
     os: linux
-    env: TARGET=docs
-  - go: tip
-    os: linux
     env: TARGET=docker
+#  - go: tip
+#    os: linux
+#    env: TARGET=docs
 
 before_install:
 - if [ "$TARGET" = "windows" ]; then sudo apt update; fi
@@ -72,10 +72,5 @@ deploy:
     script: ./ci/travis-docs-deploy.sh
     cleanup: false
     edge: true
-
-
-
-
-
 
 
