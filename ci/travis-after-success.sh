@@ -29,7 +29,7 @@ if [ "$TARGET" = "docker" ]; then
         docker push $DOCKER_REPO
     fi
 # windows, linux, osx pre-deploy
-elif [ "$TARGET" != "docs" ]
+elif [ "$TARGET" != "docs" ]; then
     mkdir upload
     zip -r upload/pg_tileserv_${TAG}_${TARGET}.zip ${BINARY} README.md LICENSE.md assets/
 fi
