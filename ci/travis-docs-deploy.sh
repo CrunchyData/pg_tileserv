@@ -14,6 +14,6 @@ if [ "$GITHUB_TOKEN" != "" ]; then
     git commit --message "Auto deploy from Travis CI"
     git status
     git log | head
-    git push deploy docbuild
+    git push --set-upstream deploy docbuild
 fi
 
