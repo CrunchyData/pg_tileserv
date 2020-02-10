@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Examples on pg_tileserv</title>
+    <link>https://pramsey.github.io/pg_tileserv/examples/</link>
+    <description>Recent content in Examples on pg_tileserv</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://pramsey.github.io/pg_tileserv/examples/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>OpenLayers Example</title>
+      <link>https://pramsey.github.io/pg_tileserv/examples/example-openlayers/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/examples/example-openlayers/</guid>
+      <description>Data Web </description>
+    </item>
+    
+    <item>
+      <title>Mapbox GL JS Example</title>
+      <link>https://pramsey.github.io/pg_tileserv/examples/example-mapbox-gl-js/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/examples/example-mapbox-gl-js/</guid>
+      <description>Data Web </description>
+    </item>
+    
+    <item>
+      <title>Leaflet Example</title>
+      <link>https://pramsey.github.io/pg_tileserv/examples/example-leaflet/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/examples/example-leaflet/</guid>
+      <description>Data Web </description>
+    </item>
+    
+  </channel>
+</rss>

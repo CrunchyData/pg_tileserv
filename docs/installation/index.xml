@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Installation on pg_tileserv</title>
+    <link>https://pramsey.github.io/pg_tileserv/installation/</link>
+    <description>Recent content in Installation on pg_tileserv</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://pramsey.github.io/pg_tileserv/installation/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+  </channel>
+</rss>

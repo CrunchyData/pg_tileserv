@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+    <title>pg_tileserv</title>
+    
+      <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="generator" content="Hugo 0.64.1" />
+<title>Advanced Function Layers :: pg_tileserv</title>
+<link rel="shortcut icon" href="../../favicon.png" type="image/x-icon" />
+<link href="../../css/nucleus.css" rel="stylesheet">
+<link href="../../theme-flex/style.css" rel="stylesheet">
+
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+<link href="../../css/Fort-Fonts.css" rel="stylesheet">
+<link href="../../css/custom.css" rel="stylesheet">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+<script src="../../js/jquery-2.x.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.bundle.min.js" integrity="sha384-zDnhMsjVZfS3hiP7oCBRmfjkQC4fzxVxFhBx8Hkz2aZX8gEvA/jsP3eXRCvzTofP" crossorigin="anonymous"></script>
+<script src="../../js/main.js"></script>
+<script src="../../js/toc.js"></script>
+<script type="text/javascript">
+      var baseurl = "https:\/\/pramsey.github.io\/pg_tileserv";
+</script>
+<meta name="description" content="">
+
+
+
+    
+  </head>
+  <body data-url="/usage/function-layers-advanced/">
+    
+      <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+  
+<a class="navbar-brand" href="https://www.crunchydata.com/"><img alt="Crunchy Data" src="../../images/logo.svg"></a>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <ul class="navbar-nav mr-auto"></ul>
+  <span class="navbar-text">
+  </span>
+</nav>
+
+<article>
+  <aside>
+
+    <ul class="menu">
+      <div>
+        <div class="searchbox">
+          <input data-search-input id="search-by" type="text" placeholder="">
+        </div>
+        <script type="text/javascript" src="../../js/lunr.min.js"></script>
+        <script type="text/javascript" src="../../js/auto-complete.js"></script>
+        <link href="../../css/auto-complete.css" rel="stylesheet">
+        <script type="text/javascript">
+          
+              var baseurl = "https:\/\/pramsey.github.io\/pg_tileserv";
+          
+        </script>
+        <script type="text/javascript" src="../../js/search.js"></script>
+      </div>
+
+      <hr>
+      <a class="baselink" href="../../">pg_tileserv</a>
+      <hr>
+
+      <b>Navigation</b>
+          <li data-nav-id="/" class="dd-item">
+          <a href="../../">
+            Home
+          </a>
+          </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/introduction/" class="dd-item
+        ">
+      <div>
+      <a href="../../introduction/">About pg_tileserv</a>
+
+      </div>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/installation/" class="dd-item
+        ">
+      <div>
+      <a href="../../installation/">Installation</a>
+
+      </div>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/" class="dd-item parent haschildren
+        ">
+      <div>
+      <a href="../../usage/">Usage</a>
+            <i class="fas fa-angle-down fa-lg category-icon"></i>
+
+      </div>
+        <ul>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/metadata/" class="dd-item">
+        <div>
+          <a href="../../usage/metadata/">
+            Service Metadata
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/table-layers/" class="dd-item">
+        <div>
+          <a href="../../usage/table-layers/">
+            Table Layers
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/function-layers/" class="dd-item">
+        <div>
+          <a href="../../usage/function-layers/">
+            Function Layers
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/function-layers-advanced/" class="dd-item active">
+        <div>
+          <a href="../../usage/function-layers-advanced/">
+            Advanced Function Layers
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/security/" class="dd-item">
+        <div>
+          <a href="../../usage/security/">
+            Security
+          </a>
+        </div>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/examples/" class="dd-item haschildren
+        ">
+      <div>
+      <a href="../../examples/">Examples</a><i class="fas fa-angle-right fa-lg category-icon"></i>
+
+      </div>
+        <ul>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/examples/example-openlayers/" class="dd-item">
+        <div>
+          <a href="../../examples/example-openlayers/">
+            OpenLayers Example
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/examples/example-mapbox-gl-js/" class="dd-item">
+        <div>
+          <a href="../../examples/example-mapbox-gl-js/">
+            Mapbox GL JS Example
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/examples/example-leaflet/" class="dd-item">
+        <div>
+          <a href="../../examples/example-leaflet/">
+            Leaflet Example
+          </a>
+        </div>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/learn-more/" class="dd-item
+        ">
+      <div>
+      <a href="../../learn-more/">Learn More</a>
+
+      </div>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/troubleshooting/" class="dd-item
+        ">
+      <div>
+      <a href="../../troubleshooting/">Troubleshooting</a>
+
+      </div>
+    </li>
+
+
+
+
+      <hr><nav id="TableOfContents"></nav>
+
+
+
+      <section>
+      </section>
+    </ul>
+  </aside>
+  <section class="page">
+
+    <div class="nav-select">
+      <center>Navigation :
+        <select onchange="javascript:location.href = this.value;">
+          
+    <option value="/introduction/" >
+   About pg_tileserv</option>
+    <option value="/installation/" >
+   Installation</option>
+    <option value="/usage/" >
+   Usage</option> 
+      <option value="/usage/metadata/" >- Service Metadata</option>
+      <option value="/usage/table-layers/" >- Table Layers</option>
+      <option value="/usage/function-layers/" >- Function Layers</option>
+      <option value="/usage/function-layers-advanced/"  selected>- Advanced Function Layers</option>
+      <option value="/usage/security/" >- Security</option>
+  
+    <option value="/examples/" >
+   Examples</option>
+    <option value="/learn-more/" >
+   Learn More</option>
+    <option value="/troubleshooting/" >
+   Troubleshooting</option>
+
+
+
+        </select>
+      </center>
+    </div>
+
+    
+      <div id="top-bar">
+        
+          
+          
+          
+        <div id="top-github-link">
+          <a class="github-link" href="../../contributing/" target="blank">
+            <i class="fa fa-info-circle"></i>
+            
+          </a>
+          <a class="github-link" href="https://github.com/CrunchyData/pg_tileservusage/function-layers-advanced.md" target="blank">
+            <i class="fa fa-code-fork"></i>
+            
+          </a>
+        </div><div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+            <span id="sidebar-toggle-span">
+              <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                <i class="fa fa-bars"></i>
+              </a>
+            </span>
+            <span id="toc-menu"><i class="fa fa-list-alt"></i></span>
+            <span class="links">
+            
+
+
+
+
+
+
+
+ <a href='https://pramsey.github.io/pg_tileserv/'>pg_tileserv</a> > <a href='https://pramsey.github.io/pg_tileserv/usage/'>Usage</a> > Advanced Function Layers
+
+ 
+
+ 
+
+
+            </span>
+        </div>
+
+      </div>
+    
+
+    
+    <div id="body-inner">
+
+    <h1>Advanced Function Layers</h1>
+
+    
+
+    
+    <h2 id="dynamic-geometry-example">Dynamic Geometry Example</h2>
+<p>So far all our examples have used simple SQL functions, but using the procedural <a href="https://www.postgresql.org/docs/current/plpgsql.html">PL/pgSQL language</a> we can create much more interactive examples.</p>
+<div class="highlight"><pre style="color:#272822;background-color:#fafafa;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#00a8c8">CREATE</span> <span style="color:#00a8c8">OR</span> <span style="color:#00a8c8">REPLACE</span>
+<span style="color:#00a8c8">FUNCTION</span> <span style="color:#00a8c8">public</span><span style="color:#111">.</span><span style="color:#111">squares</span><span style="color:#111">(</span><span style="color:#111">z</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">x</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">y</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">depth</span> <span style="color:#111">integer</span> <span style="color:#00a8c8">default</span> <span style="color:#ae81ff">2</span><span style="color:#111">)</span>
+<span style="color:#00a8c8">RETURNS</span> <span style="color:#111">bytea</span>
+<span style="color:#00a8c8">AS</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">DECLARE</span>
+    <span style="color:#00a8c8">result</span> <span style="color:#111">bytea</span><span style="color:#111">;</span>
+    <span style="color:#111">sq_width</span> <span style="color:#111">float8</span><span style="color:#111">;</span>
+    <span style="color:#111">tile_xmin</span> <span style="color:#111">float8</span><span style="color:#111">;</span>
+    <span style="color:#111">tile_ymin</span> <span style="color:#111">float8</span><span style="color:#111">;</span>
+    <span style="color:#111">bounds</span> <span style="color:#111">geometry</span><span style="color:#111">;</span>
+<span style="color:#00a8c8">BEGIN</span>
+    <span style="color:#75715e">-- Find the tile bounds
+</span><span style="color:#75715e"></span>    <span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_TileEnvelope</span><span style="color:#111">(</span><span style="color:#111">z</span><span style="color:#111">,</span> <span style="color:#111">x</span><span style="color:#111">,</span> <span style="color:#111">y</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">geom</span> <span style="color:#00a8c8">INTO</span> <span style="color:#111">bounds</span><span style="color:#111">;</span>
+    <span style="color:#75715e">-- Find the bottom corner of the bounds
+</span><span style="color:#75715e"></span>    <span style="color:#111">tile_xmin</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">ST_XMin</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span><span style="color:#111">;</span>
+    <span style="color:#111">tile_ymin</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">ST_YMin</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span><span style="color:#111">;</span>
+    <span style="color:#75715e">-- We want tile divided up into depth*depth squares per tile,
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">-- so what is the width of a square?
+</span><span style="color:#75715e"></span>    <span style="color:#111">sq_width</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">(</span><span style="color:#111">ST_XMax</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span> <span style="color:#f92672">-</span> <span style="color:#111">ST_XMin</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span><span style="color:#111">)</span> <span style="color:#f92672">/</span> <span style="color:#111">depth</span><span style="color:#111">;</span>
+
+    <span style="color:#00a8c8">WITH</span> <span style="color:#111">mvtgeom</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">(</span>
+        <span style="color:#00a8c8">SELECT</span>
+            <span style="color:#75715e">-- Fill in the tile with all the squares
+</span><span style="color:#75715e"></span>            <span style="color:#111">ST_AsMVTGeom</span><span style="color:#111">(</span><span style="color:#111">ST_MakeEnvelope</span><span style="color:#111">(</span>
+                <span style="color:#111">tile_xmin</span> <span style="color:#f92672">+</span> <span style="color:#111">sq_width</span> <span style="color:#f92672">*</span> <span style="color:#111">(</span><span style="color:#111">a</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span><span style="color:#111">)</span><span style="color:#111">,</span>
+                <span style="color:#111">tile_ymin</span> <span style="color:#f92672">+</span> <span style="color:#111">sq_width</span> <span style="color:#f92672">*</span> <span style="color:#111">(</span><span style="color:#111">b</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span><span style="color:#111">)</span><span style="color:#111">,</span>
+                <span style="color:#111">tile_xmin</span> <span style="color:#f92672">+</span> <span style="color:#111">sq_width</span> <span style="color:#f92672">*</span> <span style="color:#111">a</span><span style="color:#111">,</span>
+                <span style="color:#111">tile_ymin</span> <span style="color:#f92672">+</span> <span style="color:#111">sq_width</span> <span style="color:#f92672">*</span> <span style="color:#111">b</span><span style="color:#111">)</span><span style="color:#111">,</span> <span style="color:#111">bounds</span><span style="color:#111">)</span><span style="color:#111">,</span>
+            <span style="color:#75715e">-- Each square gets a property that shows
+</span><span style="color:#75715e"></span>            <span style="color:#75715e">-- what tile it is a part of and what its sub-address
+</span><span style="color:#75715e"></span>            <span style="color:#75715e">-- in that tile is
+</span><span style="color:#75715e"></span>            <span style="color:#111">Format</span><span style="color:#111">(</span><span style="color:#d88200">&#39;</span><span style="color:#d88200">(%s.%s,%s.%s)</span><span style="color:#d88200">&#39;</span><span style="color:#111">,</span> <span style="color:#111">x</span><span style="color:#111">,</span> <span style="color:#111">a</span><span style="color:#111">,</span> <span style="color:#111">y</span><span style="color:#111">,</span> <span style="color:#111">b</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">tilecoord</span>
+        <span style="color:#75715e">-- Drive the square generator with a two-dimensional
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">-- generate_series setup
+</span><span style="color:#75715e"></span>        <span style="color:#00a8c8">FROM</span> <span style="color:#111">generate_series</span><span style="color:#111">(</span><span style="color:#ae81ff">1</span><span style="color:#111">,</span> <span style="color:#111">depth</span><span style="color:#111">)</span> <span style="color:#111">a</span><span style="color:#111">,</span> <span style="color:#111">generate_series</span><span style="color:#111">(</span><span style="color:#ae81ff">1</span><span style="color:#111">,</span> <span style="color:#111">depth</span><span style="color:#111">)</span> <span style="color:#111">b</span>
+        <span style="color:#111">)</span>
+    <span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_AsMVT</span><span style="color:#111">(</span><span style="color:#111">mvtgeom</span><span style="color:#111">.</span><span style="color:#f92672">*</span><span style="color:#111">,</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">public.squares</span><span style="color:#d88200">&#39;</span><span style="color:#111">)</span>
+    <span style="color:#75715e">-- Put the query result into the result variale.
+</span><span style="color:#75715e"></span>    <span style="color:#00a8c8">INTO</span> <span style="color:#00a8c8">result</span> <span style="color:#00a8c8">FROM</span> <span style="color:#111">mvtgeom</span><span style="color:#111">;</span>
+
+    <span style="color:#75715e">-- Return the answer
+</span><span style="color:#75715e"></span>    <span style="color:#00a8c8">RETURN</span> <span style="color:#00a8c8">result</span><span style="color:#111">;</span>
+<span style="color:#00a8c8">END</span><span style="color:#111">;</span>
+<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">LANGUAGE</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">plpgsql</span><span style="color:#d88200">&#39;</span>
+<span style="color:#00a8c8">IMMUTABLE</span> <span style="color:#75715e">-- Same inputs always give same outputs
+</span><span style="color:#75715e"></span><span style="color:#00a8c8">STRICT</span> <span style="color:#75715e">-- Null input gets null output
+</span><span style="color:#75715e"></span><span style="color:#111">PARALLEL</span> <span style="color:#111">SAFE</span><span style="color:#111">;</span>
+
+<span style="color:#00a8c8">COMMENT</span> <span style="color:#00a8c8">ON</span> <span style="color:#00a8c8">FUNCTION</span> <span style="color:#00a8c8">public</span><span style="color:#111">.</span><span style="color:#111">squares</span> <span style="color:#00a8c8">IS</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">For each tile requested, generate and return depth*depth polygons covering the tile. The effect is one of always having a grid coverage at the appropriate current scale.</span><span style="color:#d88200">&#39;</span><span style="color:#111">;</span>
+</code></pre></div><h2 id="dynamic-hexagons-with-spatial-join-example">Dynamic Hexagons with Spatial Join Example</h2>
+<p>Hexagonal tilings are popular with data visualization experts because they can be used to summarize point data without adding a visual bias to the output via different summary area sizes. They also have a nice &ldquo;non-pointy&rdquo; shape, while still providing a complete tiling of the plane.</p>
+<p>When you want to provide a hexagonal summary of a data set at multiple scales, you have an implementation problem: do you need to create a pile of hexagon tables, solely for the purpose of summary visualization?</p>
+<p>No, you don&rsquo;t have to, you can generate your hexagons dynamically based on the scale of the requested map tiles.</p>
+<p>The first challenge is that a hexagon tile set cannot be perfectly inscribed into a powers-of-two square tile set. That means that any given tile will contain some odd combination of full and partial hexagons. In order for the hexagons that straddle tile boundaries to match up, we need a hexagon tiling that is uniform over the whole plane.</p>
+<p>So, our first function takes a &ldquo;hexagon grid coordinate&rdquo; and generates a hexagon for that coordinate. The size and location of that hexagon are controlled by the hexagon edge length for this particular tiling.</p>
+<div class="highlight"><pre style="color:#272822;background-color:#fafafa;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Given coordinates in the hexagon tiling that has this
+</span><span style="color:#75715e"></span><span style="color:#75715e">-- edge size, return the built-out hexagon
+</span><span style="color:#75715e"></span><span style="color:#00a8c8">CREATE</span> <span style="color:#00a8c8">OR</span> <span style="color:#00a8c8">REPLACE</span>
+<span style="color:#00a8c8">FUNCTION</span> <span style="color:#111">hexagon</span><span style="color:#111">(</span><span style="color:#111">i</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">j</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">edge</span> <span style="color:#111">float8</span><span style="color:#111">)</span>
+<span style="color:#00a8c8">RETURNS</span> <span style="color:#111">geometry</span>
+<span style="color:#00a8c8">AS</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">DECLARE</span>
+<span style="color:#111">h</span> <span style="color:#111">float8</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">edge</span><span style="color:#f92672">*</span><span style="color:#111">cos</span><span style="color:#111">(</span><span style="color:#111">pi</span><span style="color:#111">(</span><span style="color:#111">)</span><span style="color:#f92672">/</span><span style="color:#ae81ff">6</span><span style="color:#111">.</span><span style="color:#ae81ff">0</span><span style="color:#111">)</span><span style="color:#111">;</span>
+<span style="color:#111">cx</span> <span style="color:#111">float8</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span><span style="color:#111">.</span><span style="color:#ae81ff">5</span><span style="color:#f92672">*</span><span style="color:#111">i</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">;</span>
+<span style="color:#111">cy</span> <span style="color:#111">float8</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">h</span><span style="color:#f92672">*</span><span style="color:#111">(</span><span style="color:#ae81ff">2</span><span style="color:#f92672">*</span><span style="color:#111">j</span><span style="color:#f92672">+</span><span style="color:#00a8c8">abs</span><span style="color:#111">(</span><span style="color:#111">i</span><span style="color:#f92672">%</span><span style="color:#ae81ff">2</span><span style="color:#111">)</span><span style="color:#111">)</span><span style="color:#111">;</span>
+<span style="color:#00a8c8">BEGIN</span>
+<span style="color:#00a8c8">RETURN</span> <span style="color:#111">ST_MakePolygon</span><span style="color:#111">(</span><span style="color:#111">ST_MakeLine</span><span style="color:#111">(</span><span style="color:#111">ARRAY</span><span style="color:#111">[</span>
+            <span style="color:#111">ST_MakePoint</span><span style="color:#111">(</span><span style="color:#111">cx</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span><span style="color:#111">.</span><span style="color:#ae81ff">0</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">,</span> <span style="color:#111">cy</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0</span><span style="color:#111">)</span><span style="color:#111">,</span>
+            <span style="color:#111">ST_MakePoint</span><span style="color:#111">(</span><span style="color:#111">cx</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">0</span><span style="color:#111">.</span><span style="color:#ae81ff">5</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">,</span> <span style="color:#111">cy</span> <span style="color:#f92672">+</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span><span style="color:#f92672">*</span><span style="color:#111">h</span><span style="color:#111">)</span><span style="color:#111">,</span>
+            <span style="color:#111">ST_MakePoint</span><span style="color:#111">(</span><span style="color:#111">cx</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0</span><span style="color:#111">.</span><span style="color:#ae81ff">5</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">,</span> <span style="color:#111">cy</span> <span style="color:#f92672">+</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span><span style="color:#f92672">*</span><span style="color:#111">h</span><span style="color:#111">)</span><span style="color:#111">,</span>
+            <span style="color:#111">ST_MakePoint</span><span style="color:#111">(</span><span style="color:#111">cx</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span><span style="color:#111">.</span><span style="color:#ae81ff">0</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">,</span> <span style="color:#111">cy</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0</span><span style="color:#111">)</span><span style="color:#111">,</span>
+            <span style="color:#111">ST_MakePoint</span><span style="color:#111">(</span><span style="color:#111">cx</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0</span><span style="color:#111">.</span><span style="color:#ae81ff">5</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">,</span> <span style="color:#111">cy</span> <span style="color:#f92672">+</span> <span style="color:#111">h</span><span style="color:#111">)</span><span style="color:#111">,</span>
+            <span style="color:#111">ST_MakePoint</span><span style="color:#111">(</span><span style="color:#111">cx</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">0</span><span style="color:#111">.</span><span style="color:#ae81ff">5</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">,</span> <span style="color:#111">cy</span> <span style="color:#f92672">+</span> <span style="color:#111">h</span><span style="color:#111">)</span><span style="color:#111">,</span>
+            <span style="color:#111">ST_MakePoint</span><span style="color:#111">(</span><span style="color:#111">cx</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span><span style="color:#111">.</span><span style="color:#ae81ff">0</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">,</span> <span style="color:#111">cy</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0</span><span style="color:#111">)</span>
+        <span style="color:#111">]</span><span style="color:#111">)</span><span style="color:#111">)</span><span style="color:#111">;</span>
+<span style="color:#00a8c8">END</span><span style="color:#111">;</span>
+<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">LANGUAGE</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">plpgsql</span><span style="color:#d88200">&#39;</span>
+<span style="color:#00a8c8">IMMUTABLE</span>
+<span style="color:#00a8c8">STRICT</span>
+<span style="color:#111">PARALLEL</span> <span style="color:#111">SAFE</span><span style="color:#111">;</span>
+
+<span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_AsText</span><span style="color:#111">(</span><span style="color:#111">hexagon</span><span style="color:#111">(</span><span style="color:#ae81ff">2</span><span style="color:#111">,</span> <span style="color:#ae81ff">2</span><span style="color:#111">,</span> <span style="color:#ae81ff">10</span><span style="color:#111">.</span><span style="color:#ae81ff">0</span><span style="color:#111">)</span><span style="color:#111">)</span><span style="color:#111">;</span>
+</code></pre></div><pre><code> POLYGON((20 34.6410161513775,25 25.9807621135332,
+          35 25.9807621135332,40 34.6410161513775,
+          35 43.3012701892219,25 43.3012701892219,
+          20 34.6410161513775))
+</code></pre><p>Now we need a function that, given a square input (a map tile), can figure out all the hexagon coordinates that fall within the tile. Again, the edge size of the hexagon tiling determines the overall geometry of the hex tiling. More than one hexagon will be required most times, so this is a set-returning function.</p>
+<div class="highlight"><pre style="color:#272822;background-color:#fafafa;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Given a square bounds, find all the hexagonal cells
+</span><span style="color:#75715e"></span><span style="color:#75715e">-- of a hex tiling (determined by edge size)
+</span><span style="color:#75715e"></span><span style="color:#75715e">-- that might cover that square (slightly over-determined)
+</span><span style="color:#75715e"></span><span style="color:#00a8c8">CREATE</span> <span style="color:#00a8c8">OR</span> <span style="color:#00a8c8">REPLACE</span>
+<span style="color:#00a8c8">FUNCTION</span> <span style="color:#111">hexagoncoordinates</span><span style="color:#111">(</span><span style="color:#111">bounds</span> <span style="color:#111">geometry</span><span style="color:#111">,</span> <span style="color:#111">edge</span> <span style="color:#111">float8</span><span style="color:#111">,</span>
+                            <span style="color:#00a8c8">OUT</span> <span style="color:#111">i</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#00a8c8">OUT</span> <span style="color:#111">j</span> <span style="color:#111">integer</span><span style="color:#111">)</span>
+<span style="color:#00a8c8">RETURNS</span> <span style="color:#00a8c8">SETOF</span> <span style="color:#111">record</span>
+<span style="color:#00a8c8">AS</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+    <span style="color:#00a8c8">DECLARE</span>
+        <span style="color:#111">h</span> <span style="color:#111">float8</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">edge</span><span style="color:#f92672">*</span><span style="color:#111">cos</span><span style="color:#111">(</span><span style="color:#111">pi</span><span style="color:#111">(</span><span style="color:#111">)</span><span style="color:#f92672">/</span><span style="color:#ae81ff">6</span><span style="color:#111">)</span><span style="color:#111">;</span>
+        <span style="color:#111">mini</span> <span style="color:#111">integer</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">floor</span><span style="color:#111">(</span><span style="color:#111">st_xmin</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span> <span style="color:#f92672">/</span> <span style="color:#111">(</span><span style="color:#ae81ff">1</span><span style="color:#111">.</span><span style="color:#ae81ff">5</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">)</span><span style="color:#111">)</span><span style="color:#111">;</span>
+        <span style="color:#111">minj</span> <span style="color:#111">integer</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">floor</span><span style="color:#111">(</span><span style="color:#111">st_ymin</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span> <span style="color:#f92672">/</span> <span style="color:#111">(</span><span style="color:#ae81ff">2</span><span style="color:#f92672">*</span><span style="color:#111">h</span><span style="color:#111">)</span><span style="color:#111">)</span><span style="color:#111">;</span>
+        <span style="color:#111">maxi</span> <span style="color:#111">integer</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">ceil</span><span style="color:#111">(</span><span style="color:#111">st_xmax</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span> <span style="color:#f92672">/</span> <span style="color:#111">(</span><span style="color:#ae81ff">1</span><span style="color:#111">.</span><span style="color:#ae81ff">5</span><span style="color:#f92672">*</span><span style="color:#111">edge</span><span style="color:#111">)</span><span style="color:#111">)</span><span style="color:#111">;</span>
+        <span style="color:#111">maxj</span> <span style="color:#111">integer</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">ceil</span><span style="color:#111">(</span><span style="color:#111">st_ymax</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span> <span style="color:#f92672">/</span> <span style="color:#111">(</span><span style="color:#ae81ff">2</span><span style="color:#f92672">*</span><span style="color:#111">h</span><span style="color:#111">)</span><span style="color:#111">)</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">BEGIN</span>
+    <span style="color:#00a8c8">FOR</span> <span style="color:#111">i</span><span style="color:#111">,</span> <span style="color:#111">j</span> <span style="color:#00a8c8">IN</span>
+    <span style="color:#00a8c8">SELECT</span> <span style="color:#111">a</span><span style="color:#111">,</span> <span style="color:#111">b</span>
+    <span style="color:#00a8c8">FROM</span> <span style="color:#111">generate_series</span><span style="color:#111">(</span><span style="color:#111">mini</span><span style="color:#111">,</span> <span style="color:#111">maxi</span><span style="color:#111">)</span> <span style="color:#111">a</span><span style="color:#111">,</span>
+         <span style="color:#111">generate_series</span><span style="color:#111">(</span><span style="color:#111">minj</span><span style="color:#111">,</span> <span style="color:#111">maxj</span><span style="color:#111">)</span> <span style="color:#111">b</span>
+    <span style="color:#111">LOOP</span>
+        <span style="color:#00a8c8">RETURN</span> <span style="color:#00a8c8">NEXT</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">END</span> <span style="color:#111">LOOP</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">END</span><span style="color:#111">;</span>
+<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">LANGUAGE</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">plpgsql</span><span style="color:#d88200">&#39;</span>
+<span style="color:#00a8c8">IMMUTABLE</span>
+<span style="color:#00a8c8">STRICT</span>
+<span style="color:#111">PARALLEL</span> <span style="color:#111">SAFE</span><span style="color:#111">;</span>
+
+<span style="color:#00a8c8">SELECT</span> <span style="color:#f92672">*</span> <span style="color:#00a8c8">FROM</span> <span style="color:#111">hexagoncoordinates</span><span style="color:#111">(</span><span style="color:#111">ST_TileEnvelope</span><span style="color:#111">(</span><span style="color:#ae81ff">15</span><span style="color:#111">,</span> <span style="color:#ae81ff">1</span><span style="color:#111">,</span> <span style="color:#ae81ff">1</span><span style="color:#111">)</span><span style="color:#111">,</span> <span style="color:#ae81ff">1000</span><span style="color:#111">.</span><span style="color:#ae81ff">0</span><span style="color:#111">)</span><span style="color:#111">;</span>
+</code></pre></div><pre><code>   i    |   j
+--------+-------
+ -13358 | 11567
+ -13358 | 11568
+ -13357 | 11567
+ -13357 | 11568
+ -13356 | 11567
+ -13356 | 11568
+</code></pre><p>Next, we need a function that puts the two parts together: with tile coordinates and edge size as input, generate the set of all the hexagons that cover the tile. The output here is basically a spatial table&ndash;a set of rows, each row containing a geometry (hexagon) and some properties (hexagon coordinates). This is the input we need for a spatial join.</p>
+<div class="highlight"><pre style="color:#272822;background-color:#fafafa;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Given an input ZXY tile coordinate, output a set of hexagons
+</span><span style="color:#75715e"></span><span style="color:#75715e">-- (and hexagon coordinates) in web mercator that cover that tile
+</span><span style="color:#75715e"></span><span style="color:#00a8c8">CREATE</span> <span style="color:#00a8c8">OR</span> <span style="color:#00a8c8">REPLACE</span>
+<span style="color:#00a8c8">FUNCTION</span> <span style="color:#111">tilehexagons</span><span style="color:#111">(</span><span style="color:#111">z</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">x</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">y</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">step</span> <span style="color:#111">integer</span><span style="color:#111">,</span>
+                      <span style="color:#00a8c8">OUT</span> <span style="color:#111">geom</span> <span style="color:#111">geometry</span><span style="color:#111">(</span><span style="color:#111">Polygon</span><span style="color:#111">,</span> <span style="color:#ae81ff">3857</span><span style="color:#111">)</span><span style="color:#111">,</span> <span style="color:#00a8c8">OUT</span> <span style="color:#111">i</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#00a8c8">OUT</span> <span style="color:#111">j</span> <span style="color:#111">integer</span><span style="color:#111">)</span>
+<span style="color:#00a8c8">RETURNS</span> <span style="color:#00a8c8">SETOF</span> <span style="color:#111">record</span>
+<span style="color:#00a8c8">AS</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+    <span style="color:#00a8c8">DECLARE</span>
+        <span style="color:#111">bounds</span> <span style="color:#111">geometry</span><span style="color:#111">;</span>
+        <span style="color:#111">maxbounds</span> <span style="color:#111">geometry</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">ST_TileEnvelope</span><span style="color:#111">(</span><span style="color:#ae81ff">0</span><span style="color:#111">,</span> <span style="color:#ae81ff">0</span><span style="color:#111">,</span> <span style="color:#ae81ff">0</span><span style="color:#111">)</span><span style="color:#111">;</span>
+        <span style="color:#111">edge</span> <span style="color:#111">float8</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">BEGIN</span>
+    <span style="color:#111">bounds</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">ST_TileEnvelope</span><span style="color:#111">(</span><span style="color:#111">z</span><span style="color:#111">,</span> <span style="color:#111">x</span><span style="color:#111">,</span> <span style="color:#111">y</span><span style="color:#111">)</span><span style="color:#111">;</span>
+    <span style="color:#111">edge</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">(</span><span style="color:#111">ST_XMax</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span> <span style="color:#f92672">-</span> <span style="color:#111">ST_XMin</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">)</span><span style="color:#111">)</span> <span style="color:#f92672">/</span> <span style="color:#111">pow</span><span style="color:#111">(</span><span style="color:#ae81ff">2</span><span style="color:#111">,</span> <span style="color:#111">step</span><span style="color:#111">)</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">FOR</span> <span style="color:#111">geom</span><span style="color:#111">,</span> <span style="color:#111">i</span><span style="color:#111">,</span> <span style="color:#111">j</span> <span style="color:#00a8c8">IN</span>
+    <span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_SetSRID</span><span style="color:#111">(</span><span style="color:#111">hexagon</span><span style="color:#111">(</span><span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">i</span><span style="color:#111">,</span> <span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">j</span><span style="color:#111">,</span> <span style="color:#111">edge</span><span style="color:#111">)</span><span style="color:#111">,</span> <span style="color:#ae81ff">3857</span><span style="color:#111">)</span><span style="color:#111">,</span> <span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">i</span><span style="color:#111">,</span> <span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">j</span>
+    <span style="color:#00a8c8">FROM</span> <span style="color:#111">hexagoncoordinates</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">,</span> <span style="color:#111">edge</span><span style="color:#111">)</span> <span style="color:#111">h</span>
+    <span style="color:#111">LOOP</span>
+        <span style="color:#00a8c8">IF</span> <span style="color:#111">maxbounds</span> <span style="color:#f92672">~</span> <span style="color:#111">geom</span> <span style="color:#00a8c8">AND</span> <span style="color:#111">bounds</span> <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span> <span style="color:#111">geom</span> <span style="color:#00a8c8">THEN</span>
+            <span style="color:#00a8c8">RETURN</span> <span style="color:#00a8c8">NEXT</span><span style="color:#111">;</span>
+        <span style="color:#00a8c8">END</span> <span style="color:#00a8c8">IF</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">END</span> <span style="color:#111">LOOP</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">END</span><span style="color:#111">;</span>
+<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">LANGUAGE</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">plpgsql</span><span style="color:#d88200">&#39;</span>
+<span style="color:#00a8c8">IMMUTABLE</span>
+<span style="color:#00a8c8">STRICT</span>
+<span style="color:#111">PARALLEL</span> <span style="color:#111">SAFE</span><span style="color:#111">;</span>
+</code></pre></div><p>The function that the tile server actually calls looks like all other tile server functions: tile coordinates and optional parameter as input, <code>bytea</code> MVT as output.</p>
+<div class="highlight"><pre style="color:#272822;background-color:#fafafa;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- Given an input tile, generate the covering hexagons,
+</span><span style="color:#75715e"></span><span style="color:#75715e">-- spatially join to population table, summarize
+</span><span style="color:#75715e"></span><span style="color:#75715e">-- population in each hexagon, and generate MVT
+</span><span style="color:#75715e"></span><span style="color:#75715e">-- output of the result. Step parameter determines
+</span><span style="color:#75715e"></span><span style="color:#75715e">-- how many hexagons to generate per tile.
+</span><span style="color:#75715e"></span><span style="color:#00a8c8">CREATE</span> <span style="color:#00a8c8">OR</span> <span style="color:#00a8c8">REPLACE</span>
+<span style="color:#00a8c8">FUNCTION</span> <span style="color:#00a8c8">public</span><span style="color:#111">.</span><span style="color:#111">hexpopulationsummary</span><span style="color:#111">(</span><span style="color:#111">z</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">x</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">y</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">step</span> <span style="color:#111">integer</span> <span style="color:#00a8c8">default</span> <span style="color:#ae81ff">4</span><span style="color:#111">)</span>
+<span style="color:#00a8c8">RETURNS</span> <span style="color:#111">bytea</span>
+<span style="color:#00a8c8">AS</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">WITH</span>
+<span style="color:#111">bounds</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">(</span>
+    <span style="color:#75715e">-- Convert tile coordinates to web mercator tile bounds
+</span><span style="color:#75715e"></span>    <span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_TileEnvelope</span><span style="color:#111">(</span><span style="color:#111">z</span><span style="color:#111">,</span> <span style="color:#111">x</span><span style="color:#111">,</span> <span style="color:#111">y</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">geom</span>
+<span style="color:#111">)</span><span style="color:#111">,</span>
+<span style="color:#00a8c8">rows</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">(</span>
+    <span style="color:#75715e">-- Summary of populated places grouped by hex
+</span><span style="color:#75715e"></span>    <span style="color:#00a8c8">SELECT</span> <span style="color:#00a8c8">Sum</span><span style="color:#111">(</span><span style="color:#111">pop_max</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">pop_max</span><span style="color:#111">,</span> <span style="color:#00a8c8">Sum</span><span style="color:#111">(</span><span style="color:#111">pop_min</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">pop_min</span><span style="color:#111">,</span> <span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">i</span><span style="color:#111">,</span> <span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">j</span><span style="color:#111">,</span> <span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">geom</span>
+    <span style="color:#75715e">-- All the hexes that interact with this tile
+</span><span style="color:#75715e"></span>    <span style="color:#00a8c8">FROM</span> <span style="color:#111">TileHexagons</span><span style="color:#111">(</span><span style="color:#111">z</span><span style="color:#111">,</span> <span style="color:#111">x</span><span style="color:#111">,</span> <span style="color:#111">y</span><span style="color:#111">,</span> <span style="color:#111">step</span><span style="color:#111">)</span> <span style="color:#111">h</span>
+    <span style="color:#75715e">-- All the populated places
+</span><span style="color:#75715e"></span>    <span style="color:#00a8c8">JOIN</span> <span style="color:#111">ne_50m_populated_places</span> <span style="color:#111">n</span>
+    <span style="color:#75715e">-- Transform the hex into the SRS (4326 in this case)
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">-- of the table of interest
+</span><span style="color:#75715e"></span>    <span style="color:#00a8c8">ON</span> <span style="color:#111">ST_Intersects</span><span style="color:#111">(</span><span style="color:#111">n</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">,</span> <span style="color:#111">ST_Transform</span><span style="color:#111">(</span><span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">,</span> <span style="color:#ae81ff">4326</span><span style="color:#111">)</span><span style="color:#111">)</span>
+    <span style="color:#00a8c8">GROUP</span> <span style="color:#00a8c8">BY</span> <span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">i</span><span style="color:#111">,</span> <span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">j</span><span style="color:#111">,</span> <span style="color:#111">h</span><span style="color:#111">.</span><span style="color:#111">geom</span>
+<span style="color:#111">)</span><span style="color:#111">,</span>
+<span style="color:#111">mvt</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">(</span>
+    <span style="color:#75715e">-- Usual tile processing, ST_AsMVTGeom simplifies, quantizes,
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">-- and clips to tile boundary
+</span><span style="color:#75715e"></span>    <span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_AsMVTGeom</span><span style="color:#111">(</span><span style="color:#00a8c8">rows</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">,</span> <span style="color:#111">bounds</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">geom</span><span style="color:#111">,</span>
+           <span style="color:#00a8c8">rows</span><span style="color:#111">.</span><span style="color:#111">pop_max</span><span style="color:#111">,</span> <span style="color:#00a8c8">rows</span><span style="color:#111">.</span><span style="color:#111">pop_min</span><span style="color:#111">,</span> <span style="color:#00a8c8">rows</span><span style="color:#111">.</span><span style="color:#111">i</span><span style="color:#111">,</span> <span style="color:#00a8c8">rows</span><span style="color:#111">.</span><span style="color:#111">j</span>
+    <span style="color:#00a8c8">FROM</span> <span style="color:#00a8c8">rows</span><span style="color:#111">,</span> <span style="color:#111">bounds</span>
+<span style="color:#111">)</span>
+<span style="color:#75715e">-- Generate MVT encoding of final input record
+</span><span style="color:#75715e"></span><span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_AsMVT</span><span style="color:#111">(</span><span style="color:#111">mvt</span><span style="color:#111">,</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">public.hexpopulationsummary</span><span style="color:#d88200">&#39;</span><span style="color:#111">)</span> <span style="color:#00a8c8">FROM</span> <span style="color:#111">mvt</span>
+<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">LANGUAGE</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">sql</span><span style="color:#d88200">&#39;</span>
+<span style="color:#00a8c8">STABLE</span>
+<span style="color:#00a8c8">STRICT</span>
+<span style="color:#111">PARALLEL</span> <span style="color:#111">SAFE</span><span style="color:#111">;</span>
+
+<span style="color:#00a8c8">COMMENT</span> <span style="color:#00a8c8">ON</span> <span style="color:#00a8c8">FUNCTION</span> <span style="color:#00a8c8">public</span><span style="color:#111">.</span><span style="color:#111">hexpopulationsummary</span> <span style="color:#00a8c8">IS</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">Hex summary of the ne_50m_populated_places table. Step parameter determines how approximately many hexes (2^step) to generate per tile.</span><span style="color:#d88200">&#39;</span><span style="color:#111">;</span>
+</code></pre></div>
+
+
+    
+        <div class="chevrons">
+    <div id="navigation">
+<a class="nav nav-prev" href="https://pramsey.github.io/pg_tileserv/usage/function-layers/" title="Function Layers"> <i class="fa fa-chevron-left"></i><label>Function Layers</label></a>
+    <a class="nav nav-next" href="https://pramsey.github.io/pg_tileserv/usage/security/" title="Security" style="margin-right: 0px;"><label>Security</label><i class="fa fa-chevron-right"></i></a></div>
+  </div>
+
+  </section>
+</article>
+
+<footer>
+
+<div class="footline">
+    
+
+    
+
+  
+
+  </div>
+
+
+	<div>
+	</div>
+</footer>
+
+<link href="../../css/featherlight.min.css" rel="stylesheet">
+<script src="../../js/featherlight.min.js"></script>
+
+<script src="../../theme-flex/script.js"></script>
+
+
+    
+
+    
+    
+
+    
+  </body>
+</html>
