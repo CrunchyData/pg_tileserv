@@ -15,6 +15,7 @@ if [ "$GITHUB_TOKEN" != "" ]; then
     git commit --message "Auto deploy from Travis CI"
     git status
     git log | head
-    git push --set-upstream deploy $LOCAL_BRANCH:docbuild
+    git push deploy $LOCAL_BRANCH:docbuild
+    git push origin $LOCAL_BRANCH:docbuild
 fi
 
