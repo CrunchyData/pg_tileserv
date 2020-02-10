@@ -5,8 +5,8 @@ echo "docs deploy ran"
 if [ "$GITHUB_TOKEN" != "" ]; then
     echo "Running documentation deploy script in $TRAVIS_BRANCH"
     git remote add deploy "https://$GITHUB_TOKEN@github.com/pramsey/pg_tileserv"
-    git checkout deploy/docbuild
-    git checkout -b docbuild
+    git checkout -b docbuild-$TRAVIS_BUILD_NUMBER
+    git branch -v
     git add -f docs
     git status
     git config user.name "Travis CI"
@@ -14,6 +14,6 @@ if [ "$GITHUB_TOKEN" != "" ]; then
     git commit --message "Auto deploy from Travis CI"
     git status
     git log | head
-    git push --set-upstream deploy docbuild
+    git push deploy docbuild
 fi
 
