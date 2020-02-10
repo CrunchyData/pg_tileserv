@@ -41,6 +41,7 @@ deploy:
       repo: CrunchyData/pg_tileserv
       branch: master
       condition: $TARGET != docker
+      condition: $TARGET != docs
     region: us-east-1
     bucket: postgisftw
     local_dir: "./upload"
@@ -55,6 +56,7 @@ deploy:
       repo: CrunchyData/pg_tileserv
       tags: true
       condition: $TARGET != docker
+      condition: $TARGET != docs
     region: us-east-1
     bucket: postgisftw
     local_dir: "./upload"
