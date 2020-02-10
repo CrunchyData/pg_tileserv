@@ -11,6 +11,8 @@ if [ "$GITHUB_TOKEN" != "" ]; then
     git config user.name "Travis CI"
     git config user.email "travis@travis-ci.org"
     git commit --message "Auto deploy from Travis CI"
+    git status
+    git log | head
     git push deploy docbuild
 fi
 
