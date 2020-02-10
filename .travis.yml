@@ -14,14 +14,14 @@ matrix:
     os: linux
     env: TARGET=windows
   - go: tip
+    os: osx
+    env: TARGET=osx
+  - go: tip
     os: linux
     env: TARGET=docs
   - go: tip
     os: linux
     env: TARGET=docker
-  - go: tip
-    os: osx
-    env: TARGET=osx
 
 before_install:
 - if [ "$TARGET" = "windows" ]; then sudo apt update; fi
@@ -40,8 +40,7 @@ deploy:
     on:
       repo: CrunchyData/pg_tileserv
       branch: master
-      condition: $TARGET != docker
-      condition: $TARGET != docs
+      condition: $TARGET =~ ^(windows|linux|osx)$
     region: us-east-1
     bucket: postgisftw
     local_dir: "./upload"
@@ -55,8 +54,7 @@ deploy:
     on:
       repo: CrunchyData/pg_tileserv
       tags: true
-      condition: $TARGET != docker
-      condition: $TARGET != docs
+      condition: $TARGET =~ ^(windows|linux|osx)$
     region: us-east-1
     bucket: postgisftw
     local_dir: "./upload"
