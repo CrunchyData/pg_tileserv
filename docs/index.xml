@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>pg_tileserv</title>
+    <link>https://pramsey.github.io/pg_tileserv/</link>
+    <description>Recent content on pg_tileserv</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://pramsey.github.io/pg_tileserv/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>OpenLayers Example</title>
+      <link>https://pramsey.github.io/pg_tileserv/examples/example-openlayers/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/examples/example-openlayers/</guid>
+      <description>Data Web </description>
+    </item>
+    
+    <item>
+      <title>Service Metadata</title>
+      <link>https://pramsey.github.io/pg_tileserv/usage/metadata/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/usage/metadata/</guid>
+      <description>You can explore the contents of the tile server using:
+ an HTML web interface for humans; and a JSON API for computers.  The JSON API is useful for clients that auto-configure based on the service metadata. In fact, the HTML web interface is an example of such an auto-configuring interface: it reads the JSON and uses that to set up the web map visualization and interface elements.
+Web Interface After start-up, you can connect to the server and explore the published tables and functions in the database via a web interface at:</description>
+    </item>
+    
+    <item>
+      <title>Mapbox GL JS Example</title>
+      <link>https://pramsey.github.io/pg_tileserv/examples/example-mapbox-gl-js/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/examples/example-mapbox-gl-js/</guid>
+      <description>Data Web </description>
+    </item>
+    
+    <item>
+      <title>Table Layers</title>
+      <link>https://pramsey.github.io/pg_tileserv/usage/table-layers/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/usage/table-layers/</guid>
+      <description>By default, pg_tileserv will provide access to only those spatial tables that:
+ your database connection has SELECT privileges for; include a geometry column; declare a geometry type; and, declare an SRID (spatial reference ID)  For example:
+CREATE TABLE mytable ( geom Geometry(Polygon, 4326), pid text, address text ); GRANT SELECT ON mytable TO myuser; To restrict access to a certain set of tables, use database security principles:
+ Create a role with limited privileges Only grant SELECT to that role for tables you want to publish Only grant EXECUTE to that role for functions you want to publish Connect pg_tileserv to the database using that role  Table Layer Detail JSON In the detail JSON, each layer declares information relevant to setting up a map interface for the layer.</description>
+    </item>
+    
+    <item>
+      <title>Function Layers</title>
+      <link>https://pramsey.github.io/pg_tileserv/usage/function-layers/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/usage/function-layers/</guid>
+      <description>Function Layer Detail JSON In the detail JSON, each function declares information relevant to setting up a map interface for the layer. Because functions generate tiles dynamically, the system cannot auto-discover things like extent or center. However, the custom parameters and defaults can be read from the function definition and exposed in the detail JSON.
+{ &amp;#34;name&amp;#34; : &amp;#34;parcels_in_radius&amp;#34;, &amp;#34;id&amp;#34; : &amp;#34;public.parcels_in_radius&amp;#34;, &amp;#34;schema&amp;#34; : &amp;#34;public&amp;#34;, &amp;#34;description&amp;#34; : &amp;#34;Given the click point (click_lon, click_lat) and radius, returns all the parcels in the radius, clipped to the radius circle.</description>
+    </item>
+    
+    <item>
+      <title>Leaflet Example</title>
+      <link>https://pramsey.github.io/pg_tileserv/examples/example-leaflet/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/examples/example-leaflet/</guid>
+      <description>Data Web </description>
+    </item>
+    
+    <item>
+      <title>Advanced Function Layers</title>
+      <link>https://pramsey.github.io/pg_tileserv/usage/function-layers-advanced/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/usage/function-layers-advanced/</guid>
+      <description>Dynamic Geometry Example So far all our examples have used simple SQL functions, but using the procedural PL/pgSQL language we can create much more interactive examples.
+CREATE OR REPLACE FUNCTION public.squares(z integer, x integer, y integer, depth integer default 2) RETURNS bytea AS $$ DECLARE result bytea; sq_width float8; tile_xmin float8; tile_ymin float8; bounds geometry; BEGIN -- Find the tile bounds  SELECT ST_TileEnvelope(z, x, y) AS geom INTO bounds; -- Find the bottom corner of the bounds  tile_xmin := ST_XMin(bounds); tile_ymin := ST_YMin(bounds); -- We want tile divided up into depth*depth squares per tile,  -- so what is the width of a square?</description>
+    </item>
+    
+    <item>
+      <title>Security</title>
+      <link>https://pramsey.github.io/pg_tileserv/usage/security/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/usage/security/</guid>
+      <description>The basic principle of security is to connect your tile server to the database with a user that has just the access you want it to have, and no more. To support different access patterns, create different users with access to different tables/functions, and run multiple services, connecting with those different users.
+CREATE USER tileserver; Start with a blank user. A blank user will have no select privileges on tables it does not own.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://pramsey.github.io/pg_tileserv/readme/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://pramsey.github.io/pg_tileserv/readme/</guid>
+      <description>Content Organization The content folder is a collection of Markdown files placed in different subfolders (plus a top-level _index.md file). When the site renders, these subfolders will display as top-level sections accessible in the navigation.
+_index.md is for the guide&amp;rsquo;s homepage.
+A section (subfolder) may also contain multiple subtopics. For example, the Installation section has three subtopics: Requirements (05-requirements.md), Installation (06-installation.md), and Deployment (07-deployment.md). On the other hand, the Learn More section does not have any subtopics, so it contains only one file (the index file).</description>
+    </item>
+    
+  </channel>
+</rss>

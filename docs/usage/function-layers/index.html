@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+    <title>pg_tileserv</title>
+    
+      <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="generator" content="Hugo 0.64.1" />
+<title>Function Layers :: pg_tileserv</title>
+<link rel="shortcut icon" href="../../favicon.png" type="image/x-icon" />
+<link href="../../css/nucleus.css" rel="stylesheet">
+<link href="../../theme-flex/style.css" rel="stylesheet">
+
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+<link href="../../css/Fort-Fonts.css" rel="stylesheet">
+<link href="../../css/custom.css" rel="stylesheet">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+<script src="../../js/jquery-2.x.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.bundle.min.js" integrity="sha384-zDnhMsjVZfS3hiP7oCBRmfjkQC4fzxVxFhBx8Hkz2aZX8gEvA/jsP3eXRCvzTofP" crossorigin="anonymous"></script>
+<script src="../../js/main.js"></script>
+<script src="../../js/toc.js"></script>
+<script type="text/javascript">
+      var baseurl = "https:\/\/pramsey.github.io\/pg_tileserv";
+</script>
+<meta name="description" content="">
+
+
+
+    
+  </head>
+  <body data-url="/usage/function-layers/">
+    
+      <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+  
+<a class="navbar-brand" href="https://www.crunchydata.com/"><img alt="Crunchy Data" src="../../images/logo.svg"></a>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <ul class="navbar-nav mr-auto"></ul>
+  <span class="navbar-text">
+  </span>
+</nav>
+
+<article>
+  <aside>
+
+    <ul class="menu">
+      <div>
+        <div class="searchbox">
+          <input data-search-input id="search-by" type="text" placeholder="">
+        </div>
+        <script type="text/javascript" src="../../js/lunr.min.js"></script>
+        <script type="text/javascript" src="../../js/auto-complete.js"></script>
+        <link href="../../css/auto-complete.css" rel="stylesheet">
+        <script type="text/javascript">
+          
+              var baseurl = "https:\/\/pramsey.github.io\/pg_tileserv";
+          
+        </script>
+        <script type="text/javascript" src="../../js/search.js"></script>
+      </div>
+
+      <hr>
+      <a class="baselink" href="../../">pg_tileserv</a>
+      <hr>
+
+      <b>Navigation</b>
+          <li data-nav-id="/" class="dd-item">
+          <a href="../../">
+            Home
+          </a>
+          </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/introduction/" class="dd-item
+        ">
+      <div>
+      <a href="../../introduction/">About pg_tileserv</a>
+
+      </div>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/installation/" class="dd-item
+        ">
+      <div>
+      <a href="../../installation/">Installation</a>
+
+      </div>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/" class="dd-item parent haschildren
+        ">
+      <div>
+      <a href="../../usage/">Usage</a>
+            <i class="fas fa-angle-down fa-lg category-icon"></i>
+
+      </div>
+        <ul>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/metadata/" class="dd-item">
+        <div>
+          <a href="../../usage/metadata/">
+            Service Metadata
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/table-layers/" class="dd-item">
+        <div>
+          <a href="../../usage/table-layers/">
+            Table Layers
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/function-layers/" class="dd-item active">
+        <div>
+          <a href="../../usage/function-layers/">
+            Function Layers
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/function-layers-advanced/" class="dd-item">
+        <div>
+          <a href="../../usage/function-layers-advanced/">
+            Advanced Function Layers
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/usage/security/" class="dd-item">
+        <div>
+          <a href="../../usage/security/">
+            Security
+          </a>
+        </div>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/examples/" class="dd-item haschildren
+        ">
+      <div>
+      <a href="../../examples/">Examples</a><i class="fas fa-angle-right fa-lg category-icon"></i>
+
+      </div>
+        <ul>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/examples/example-openlayers/" class="dd-item">
+        <div>
+          <a href="../../examples/example-openlayers/">
+            OpenLayers Example
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/examples/example-mapbox-gl-js/" class="dd-item">
+        <div>
+          <a href="../../examples/example-mapbox-gl-js/">
+            Mapbox GL JS Example
+          </a>
+        </div>
+    </li>
+      <li data-nav-id="https://pramsey.github.io/pg_tileserv/examples/example-leaflet/" class="dd-item">
+        <div>
+          <a href="../../examples/example-leaflet/">
+            Leaflet Example
+          </a>
+        </div>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/learn-more/" class="dd-item
+        ">
+      <div>
+      <a href="../../learn-more/">Learn More</a>
+
+      </div>
+    </li>
+    <li data-nav-id="https://pramsey.github.io/pg_tileserv/troubleshooting/" class="dd-item
+        ">
+      <div>
+      <a href="../../troubleshooting/">Troubleshooting</a>
+
+      </div>
+    </li>
+
+
+
+
+      <hr><nav id="TableOfContents"></nav>
+
+
+
+      <section>
+      </section>
+    </ul>
+  </aside>
+  <section class="page">
+
+    <div class="nav-select">
+      <center>Navigation :
+        <select onchange="javascript:location.href = this.value;">
+          
+    <option value="/introduction/" >
+   About pg_tileserv</option>
+    <option value="/installation/" >
+   Installation</option>
+    <option value="/usage/" >
+   Usage</option> 
+      <option value="/usage/metadata/" >- Service Metadata</option>
+      <option value="/usage/table-layers/" >- Table Layers</option>
+      <option value="/usage/function-layers/"  selected>- Function Layers</option>
+      <option value="/usage/function-layers-advanced/" >- Advanced Function Layers</option>
+      <option value="/usage/security/" >- Security</option>
+  
+    <option value="/examples/" >
+   Examples</option>
+    <option value="/learn-more/" >
+   Learn More</option>
+    <option value="/troubleshooting/" >
+   Troubleshooting</option>
+
+
+
+        </select>
+      </center>
+    </div>
+
+    
+      <div id="top-bar">
+        
+          
+          
+          
+        <div id="top-github-link">
+          <a class="github-link" href="../../contributing/" target="blank">
+            <i class="fa fa-info-circle"></i>
+            
+          </a>
+          <a class="github-link" href="https://github.com/CrunchyData/pg_tileservusage/function-layers.md" target="blank">
+            <i class="fa fa-code-fork"></i>
+            
+          </a>
+        </div><div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+            <span id="sidebar-toggle-span">
+              <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                <i class="fa fa-bars"></i>
+              </a>
+            </span>
+            <span id="toc-menu"><i class="fa fa-list-alt"></i></span>
+            <span class="links">
+            
+
+
+
+
+
+
+
+ <a href='https://pramsey.github.io/pg_tileserv/'>pg_tileserv</a> > <a href='https://pramsey.github.io/pg_tileserv/usage/'>Usage</a> > Function Layers
+
+ 
+
+ 
+
+
+            </span>
+        </div>
+
+      </div>
+    
+
+    
+    <div id="body-inner">
+
+    <h1>Function Layers</h1>
+
+    
+
+    
+    <h2 id="function-layer-detail-json">Function Layer Detail JSON</h2>
+<p>In the detail JSON, each function declares information relevant to setting up a map interface for the layer. Because functions generate tiles dynamically, the system cannot auto-discover things like extent or center. However, the custom parameters and defaults can be read from the function definition and exposed in the detail JSON.</p>
+<div class="highlight"><pre style="color:#272822;background-color:#fafafa;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json"><span style="color:#111">{</span>
+   <span style="color:#f92672">&#34;name&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;parcels_in_radius&#34;</span><span style="color:#111">,</span>
+   <span style="color:#f92672">&#34;id&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;public.parcels_in_radius&#34;</span><span style="color:#111">,</span>
+   <span style="color:#f92672">&#34;schema&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;public&#34;</span><span style="color:#111">,</span>
+   <span style="color:#f92672">&#34;description&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;Given the click point (click_lon, click_lat) and radius, returns all the parcels in the radius, clipped to the radius circle.&#34;</span><span style="color:#111">,</span>
+   <span style="color:#f92672">&#34;minzoom&#34;</span> <span style="color:#111">:</span> <span style="color:#ae81ff">0</span><span style="color:#111">,</span>
+   <span style="color:#f92672">&#34;arguments&#34;</span> <span style="color:#111">:</span> <span style="color:#111">[</span>
+      <span style="color:#111">{</span>
+         <span style="color:#f92672">&#34;default&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;-123.13&#34;</span><span style="color:#111">,</span>
+         <span style="color:#f92672">&#34;name&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;click_lon&#34;</span><span style="color:#111">,</span>
+         <span style="color:#f92672">&#34;type&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;double precision&#34;</span>
+      <span style="color:#111">}</span><span style="color:#111">,</span>
+      <span style="color:#111">{</span>
+         <span style="color:#f92672">&#34;default&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;49.25&#34;</span><span style="color:#111">,</span>
+         <span style="color:#f92672">&#34;name&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;click_lat&#34;</span><span style="color:#111">,</span>
+         <span style="color:#f92672">&#34;type&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;double precision&#34;</span>
+      <span style="color:#111">}</span><span style="color:#111">,</span>
+      <span style="color:#111">{</span>
+         <span style="color:#f92672">&#34;default&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;500.0&#34;</span><span style="color:#111">,</span>
+         <span style="color:#f92672">&#34;type&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;double precision&#34;</span><span style="color:#111">,</span>
+         <span style="color:#f92672">&#34;name&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;radius&#34;</span>
+      <span style="color:#111">}</span>
+   <span style="color:#111">]</span><span style="color:#111">,</span>
+   <span style="color:#f92672">&#34;maxzoom&#34;</span> <span style="color:#111">:</span> <span style="color:#ae81ff">22</span><span style="color:#111">,</span>
+   <span style="color:#f92672">&#34;tileurl&#34;</span> <span style="color:#111">:</span> <span style="color:#d88200">&#34;http://localhost:7800/public.parcels_in_radius/{z}/{x}/{y}.pbf&#34;</span>
+<span style="color:#111">}</span>
+</code></pre></div><ul>
+<li><code>description</code> can be set using <code>COMMENT ON FUNCTION</code> SQL command.</li>
+<li><code>id</code>, <code>schema</code> and <code>name</code> are the fully qualified name, schema and function name, respectively.</li>
+<li><code>minzoom</code> and <code>maxzoom</code> are just the defaults, as set in the configuration file.</li>
+<li><code>arguments</code> is a list of argument names, with the data type and default value.</li>
+</ul>
+<h2 id="function-layer-examples">Function Layer Examples</h2>
+<h3 id="filtering-example">Filtering Example</h3>
+<p>This simple example returns just a filtered subset of a table (<a href="https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip">ne_50m_admin_0_countries</a> <a href="https://epsg.io/4326">EPSG:4326</a>). The filter in this case is the first letters of the name. Note that the <code>name_prefix</code> parameter includes a <strong>default value</strong>: this is useful for clients (like the preview interface for this server) that read arbitrary function definitions and need a default value to fill into interface fields.</p>
+<div class="highlight"><pre style="color:#272822;background-color:#fafafa;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#00a8c8">CREATE</span> <span style="color:#00a8c8">OR</span> <span style="color:#00a8c8">REPLACE</span>
+<span style="color:#00a8c8">FUNCTION</span> <span style="color:#00a8c8">public</span><span style="color:#111">.</span><span style="color:#111">countries_name</span><span style="color:#111">(</span>
+            <span style="color:#111">z</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">x</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">y</span> <span style="color:#111">integer</span><span style="color:#111">,</span>
+            <span style="color:#111">name_prefix</span> <span style="color:#111">text</span> <span style="color:#00a8c8">default</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">B</span><span style="color:#d88200">&#39;</span><span style="color:#111">)</span>
+<span style="color:#00a8c8">RETURNS</span> <span style="color:#111">bytea</span>
+<span style="color:#00a8c8">AS</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+    <span style="color:#00a8c8">WITH</span>
+    <span style="color:#111">bounds</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">(</span>
+      <span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_TileEnvelope</span><span style="color:#111">(</span><span style="color:#111">z</span><span style="color:#111">,</span> <span style="color:#111">x</span><span style="color:#111">,</span> <span style="color:#111">y</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">geom</span>
+    <span style="color:#111">)</span><span style="color:#111">,</span>
+    <span style="color:#111">mvtgeom</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">(</span>
+      <span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_AsMVTGeom</span><span style="color:#111">(</span><span style="color:#111">ST_Transform</span><span style="color:#111">(</span><span style="color:#111">t</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">,</span> <span style="color:#ae81ff">3857</span><span style="color:#111">)</span><span style="color:#111">,</span> <span style="color:#111">bounds</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">geom</span><span style="color:#111">,</span>
+        <span style="color:#111">t</span><span style="color:#111">.</span><span style="color:#111">name</span>
+      <span style="color:#00a8c8">FROM</span> <span style="color:#111">ne_50m_admin_0_countries</span> <span style="color:#111">t</span><span style="color:#111">,</span> <span style="color:#111">bounds</span>
+      <span style="color:#00a8c8">WHERE</span> <span style="color:#111">ST_Intersects</span><span style="color:#111">(</span><span style="color:#111">t</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">,</span> <span style="color:#111">ST_Transform</span><span style="color:#111">(</span><span style="color:#111">bounds</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">,</span> <span style="color:#ae81ff">4326</span><span style="color:#111">)</span><span style="color:#111">)</span>
+      <span style="color:#00a8c8">AND</span> <span style="color:#00a8c8">upper</span><span style="color:#111">(</span><span style="color:#111">t</span><span style="color:#111">.</span><span style="color:#111">name</span><span style="color:#111">)</span> <span style="color:#00a8c8">LIKE</span> <span style="color:#111">(</span><span style="color:#00a8c8">upper</span><span style="color:#111">(</span><span style="color:#111">name_prefix</span><span style="color:#111">)</span> <span style="color:#f92672">|</span><span style="color:#f92672">|</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">%</span><span style="color:#d88200">&#39;</span><span style="color:#111">)</span>
+    <span style="color:#111">)</span>
+    <span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_AsMVT</span><span style="color:#111">(</span><span style="color:#111">mvtgeom</span><span style="color:#111">,</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">public.countries_name</span><span style="color:#d88200">&#39;</span><span style="color:#111">)</span> <span style="color:#00a8c8">FROM</span> <span style="color:#111">mvtgeom</span><span style="color:#111">;</span>
+<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">LANGUAGE</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">sql</span><span style="color:#d88200">&#39;</span>
+<span style="color:#00a8c8">VOLATILE</span>
+<span style="color:#111">PARALLEL</span> <span style="color:#111">SAFE</span><span style="color:#111">;</span>
+
+<span style="color:#00a8c8">COMMENT</span> <span style="color:#00a8c8">ON</span> <span style="color:#00a8c8">FUNCTION</span> <span style="color:#00a8c8">public</span><span style="color:#111">.</span><span style="color:#111">countries_name</span> <span style="color:#00a8c8">IS</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">Filters the countries table by the initial letters of the name using the &#34;name_prefix&#34; parameter.</span><span style="color:#d88200">&#39;</span><span style="color:#111">;</span>
+</code></pre></div><p>Some notes about this function:</p>
+<ul>
+<li>The <code>ST_AsMVT()</code> function uses the function name (&ldquo;public.countries_name&rdquo;) as the MVT layer name. This is not required, but for clients that self-configure, it allows them to use the function name as the layer source name.</li>
+<li>In the filter portion of the query (in the <code>WHERE</code> clause) the bounds are transformed to the spatial reference of the table data (4326) so that the spatial index on the table geometry can be used.</li>
+<li>In the <code>ST_AsMVTGeom()</code> portion of the query, the table geometry is transformed into web mercator (<a href="https://epsg.io/3857">3857</a>) to match the bounds, and the <em>de facto</em> expectation that MVT tiles are delivered in web mercator projection.</li>
+<li>The <code>ST_TileEnvelope()</code> function used here is a utility function available in PostGIS 3.0 and higher. For earlier versions, you will probably want to add a custom function to emulate the behavior.
+<div class="highlight"><pre style="color:#272822;background-color:#fafafa;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#00a8c8">CREATE</span> <span style="color:#00a8c8">OR</span> <span style="color:#00a8c8">REPLACE</span>
+<span style="color:#00a8c8">FUNCTION</span> <span style="color:#111">TS_TileEnvelope</span><span style="color:#111">(</span><span style="color:#111">z</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">x</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">y</span> <span style="color:#111">integer</span><span style="color:#111">)</span>
+<span style="color:#00a8c8">RETURNS</span> <span style="color:#111">geometry</span>
+<span style="color:#00a8c8">AS</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+  <span style="color:#00a8c8">DECLARE</span>
+    <span style="color:#00a8c8">size</span> <span style="color:#111">float8</span><span style="color:#111">;</span>
+    <span style="color:#111">zp</span> <span style="color:#111">integer</span> <span style="color:#f92672">=</span> <span style="color:#111">pow</span><span style="color:#111">(</span><span style="color:#ae81ff">2</span><span style="color:#111">,</span> <span style="color:#111">z</span><span style="color:#111">)</span><span style="color:#111">;</span>
+    <span style="color:#111">gx</span> <span style="color:#111">float8</span><span style="color:#111">;</span>
+    <span style="color:#111">gy</span> <span style="color:#111">float8</span><span style="color:#111">;</span>
+  <span style="color:#00a8c8">BEGIN</span>
+    <span style="color:#00a8c8">IF</span> <span style="color:#111">y</span> <span style="color:#f92672">&gt;</span><span style="color:#f92672">=</span> <span style="color:#111">zp</span> <span style="color:#00a8c8">OR</span> <span style="color:#111">y</span> <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span> <span style="color:#00a8c8">OR</span> <span style="color:#111">x</span> <span style="color:#f92672">&gt;</span><span style="color:#f92672">=</span> <span style="color:#111">zp</span> <span style="color:#00a8c8">OR</span> <span style="color:#111">x</span> <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span> <span style="color:#00a8c8">THEN</span>
+        <span style="color:#111">RAISE</span> <span style="color:#00a8c8">EXCEPTION</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">invalid tile coordinate (%, %, %)</span><span style="color:#d88200">&#39;</span><span style="color:#111">,</span> <span style="color:#111">z</span><span style="color:#111">,</span> <span style="color:#111">x</span><span style="color:#111">,</span> <span style="color:#111">y</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">END</span> <span style="color:#00a8c8">IF</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">size</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#ae81ff">40075016</span><span style="color:#111">.</span><span style="color:#ae81ff">6855784</span> <span style="color:#f92672">/</span> <span style="color:#111">zp</span><span style="color:#111">;</span>
+    <span style="color:#111">gx</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">(</span><span style="color:#00a8c8">size</span> <span style="color:#f92672">*</span> <span style="color:#111">x</span><span style="color:#111">)</span> <span style="color:#f92672">-</span> <span style="color:#111">(</span><span style="color:#ae81ff">40075016</span><span style="color:#111">.</span><span style="color:#ae81ff">6855784</span><span style="color:#f92672">/</span><span style="color:#ae81ff">2</span><span style="color:#111">)</span><span style="color:#111">;</span>
+    <span style="color:#111">gy</span> <span style="color:#111">:</span><span style="color:#f92672">=</span> <span style="color:#111">(</span><span style="color:#ae81ff">40075016</span><span style="color:#111">.</span><span style="color:#ae81ff">6855784</span><span style="color:#f92672">/</span><span style="color:#ae81ff">2</span><span style="color:#111">)</span> <span style="color:#f92672">-</span> <span style="color:#111">(</span><span style="color:#00a8c8">size</span> <span style="color:#f92672">*</span> <span style="color:#111">y</span><span style="color:#111">)</span><span style="color:#111">;</span>
+    <span style="color:#00a8c8">RETURN</span> <span style="color:#111">ST_SetSRID</span><span style="color:#111">(</span><span style="color:#111">ST_MakeEnvelope</span><span style="color:#111">(</span><span style="color:#111">gx</span><span style="color:#111">,</span> <span style="color:#111">gy</span><span style="color:#111">,</span> <span style="color:#111">gx</span> <span style="color:#f92672">+</span> <span style="color:#00a8c8">size</span><span style="color:#111">,</span> <span style="color:#111">gy</span> <span style="color:#f92672">-</span> <span style="color:#00a8c8">size</span><span style="color:#111">)</span><span style="color:#111">,</span> <span style="color:#ae81ff">3857</span><span style="color:#111">)</span><span style="color:#111">;</span>
+  <span style="color:#00a8c8">END</span><span style="color:#111">;</span>
+<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">LANGUAGE</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">plpgsql</span><span style="color:#d88200">&#39;</span>
+<span style="color:#00a8c8">IMMUTABLE</span>
+<span style="color:#00a8c8">STRICT</span>
+<span style="color:#111">PARALLEL</span> <span style="color:#111">SAFE</span><span style="color:#111">;</span>
+</code></pre></div></li>
+<li>The <code>LIMIT</code> is hard-coded in this example. If you want a user-defined limit, you need to add another parameter to your function definition.</li>
+<li>The function &ldquo;<a href="https://www.postgresql.org/docs/current/xfunc-volatility.html">volatility</a>&rdquo; is declared as <code>STABLE</code> because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as <code>IMMUTABLE</code> because changes in the base table can change the outputs over time, even for the same inputs.</li>
+<li>The function is declared as <code>PARALLEL SAFE</code> because it doesn&rsquo;t depend on any global state that might get confused by running multiple copies of the function at once.</li>
+</ul>
+<h3 id="spatial-processing-example">Spatial Processing Example</h3>
+<p>This example clips a layer of <a href="https://data.vancouver.ca/datacatalogue/propertyInformation.htm">parcels</a> <a href="https://epsg.io/26910">EPSG:26910</a> using a radius and center point, returning only the parcels in the radius, with the boundary parcels clipped to the center.</p>
+<div class="highlight"><pre style="color:#272822;background-color:#fafafa;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#00a8c8">CREATE</span> <span style="color:#00a8c8">OR</span> <span style="color:#00a8c8">REPLACE</span>
+<span style="color:#00a8c8">FUNCTION</span> <span style="color:#00a8c8">public</span><span style="color:#111">.</span><span style="color:#111">parcels_in_radius</span><span style="color:#111">(</span>
+                    <span style="color:#111">z</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">x</span> <span style="color:#111">integer</span><span style="color:#111">,</span> <span style="color:#111">y</span> <span style="color:#111">integer</span><span style="color:#111">,</span>
+                    <span style="color:#111">click_lon</span> <span style="color:#111">float8</span> <span style="color:#00a8c8">default</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">123</span><span style="color:#111">.</span><span style="color:#ae81ff">13</span><span style="color:#111">,</span>
+                    <span style="color:#111">click_lat</span> <span style="color:#111">float8</span> <span style="color:#00a8c8">default</span> <span style="color:#ae81ff">49</span><span style="color:#111">.</span><span style="color:#ae81ff">25</span><span style="color:#111">,</span>
+                    <span style="color:#111">radius</span> <span style="color:#111">float8</span> <span style="color:#00a8c8">default</span> <span style="color:#ae81ff">500</span><span style="color:#111">.</span><span style="color:#ae81ff">0</span><span style="color:#111">)</span>
+<span style="color:#00a8c8">RETURNS</span> <span style="color:#111">bytea</span>
+<span style="color:#00a8c8">AS</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+    <span style="color:#00a8c8">WITH</span>
+    <span style="color:#111">args</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">(</span>
+      <span style="color:#00a8c8">SELECT</span>
+        <span style="color:#111">ST_TileEnvelope</span><span style="color:#111">(</span><span style="color:#111">z</span><span style="color:#111">,</span> <span style="color:#111">x</span><span style="color:#111">,</span> <span style="color:#111">y</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">bounds</span><span style="color:#111">,</span>
+        <span style="color:#111">ST_Transform</span><span style="color:#111">(</span><span style="color:#111">ST_SetSRID</span><span style="color:#111">(</span><span style="color:#111">ST_MakePoint</span><span style="color:#111">(</span><span style="color:#111">click_lon</span><span style="color:#111">,</span> <span style="color:#111">click_lat</span><span style="color:#111">)</span><span style="color:#111">,</span> <span style="color:#ae81ff">4326</span><span style="color:#111">)</span><span style="color:#111">,</span> <span style="color:#ae81ff">26910</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">click</span>
+    <span style="color:#111">)</span><span style="color:#111">,</span>
+    <span style="color:#111">mvtgeom</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">(</span>
+      <span style="color:#00a8c8">SELECT</span>
+        <span style="color:#111">ST_AsMVTGeom</span><span style="color:#111">(</span>
+            <span style="color:#111">ST_Transform</span><span style="color:#111">(</span>
+                <span style="color:#111">ST_Intersection</span><span style="color:#111">(</span>
+                    <span style="color:#111">p</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">,</span>
+                    <span style="color:#111">ST_Buffer</span><span style="color:#111">(</span><span style="color:#111">args</span><span style="color:#111">.</span><span style="color:#111">click</span><span style="color:#111">,</span> <span style="color:#111">radius</span><span style="color:#111">)</span><span style="color:#111">)</span><span style="color:#111">,</span>
+                <span style="color:#ae81ff">3857</span><span style="color:#111">)</span><span style="color:#111">,</span>
+            <span style="color:#111">args</span><span style="color:#111">.</span><span style="color:#111">bounds</span><span style="color:#111">)</span> <span style="color:#00a8c8">AS</span> <span style="color:#111">geom</span><span style="color:#111">,</span>
+        <span style="color:#111">p</span><span style="color:#111">.</span><span style="color:#111">site_id</span>
+      <span style="color:#00a8c8">FROM</span> <span style="color:#111">parcels</span> <span style="color:#111">p</span><span style="color:#111">,</span> <span style="color:#111">args</span>
+      <span style="color:#00a8c8">WHERE</span> <span style="color:#111">ST_Intersects</span><span style="color:#111">(</span><span style="color:#111">p</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">,</span> <span style="color:#111">ST_Transform</span><span style="color:#111">(</span><span style="color:#111">args</span><span style="color:#111">.</span><span style="color:#111">bounds</span><span style="color:#111">,</span> <span style="color:#ae81ff">26910</span><span style="color:#111">)</span><span style="color:#111">)</span>
+      <span style="color:#00a8c8">AND</span> <span style="color:#111">ST_DWithin</span><span style="color:#111">(</span><span style="color:#111">p</span><span style="color:#111">.</span><span style="color:#111">geom</span><span style="color:#111">,</span> <span style="color:#111">args</span><span style="color:#111">.</span><span style="color:#111">click</span><span style="color:#111">,</span> <span style="color:#111">radius</span><span style="color:#111">)</span>
+      <span style="color:#00a8c8">LIMIT</span> <span style="color:#ae81ff">10000</span>
+    <span style="color:#111">)</span>
+    <span style="color:#00a8c8">SELECT</span> <span style="color:#111">ST_AsMVT</span><span style="color:#111">(</span><span style="color:#111">mvtgeom</span><span style="color:#111">,</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">public.parcels_in_radius</span><span style="color:#d88200">&#39;</span><span style="color:#111">)</span> <span style="color:#00a8c8">FROM</span> <span style="color:#111">mvtgeom</span>
+<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#960050;background-color:#1e0010">$</span>
+<span style="color:#00a8c8">LANGUAGE</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">sql</span><span style="color:#d88200">&#39;</span>
+<span style="color:#00a8c8">STABLE</span>
+<span style="color:#111">PARALLEL</span> <span style="color:#111">SAFE</span><span style="color:#111">;</span>
+
+<span style="color:#00a8c8">COMMENT</span> <span style="color:#00a8c8">ON</span> <span style="color:#00a8c8">FUNCTION</span> <span style="color:#00a8c8">public</span><span style="color:#111">.</span><span style="color:#111">parcels_in_radius</span> <span style="color:#00a8c8">IS</span> <span style="color:#d88200">&#39;</span><span style="color:#d88200">Given the click point (click_lon, click_lat) and radius, returns all the parcels in the radius, clipped to the radius circle.</span><span style="color:#d88200">&#39;</span><span style="color:#111">;</span>
+</code></pre></div><p>Notes:</p>
+<ul>
+<li>The parcels are stored in a table with spatial reference system <a href="https://epsg.io/3005">3005</a>, a planar projection.</li>
+<li>The click parameters are longitude/latitude, so in building a click geometry (<code>ST_MakePoint()</code>) to use for querying, we transform the geometry to the table spatial reference.</li>
+<li>To get the parcel boundaries clipped to the radius, we build a circle in the native spatial reference (26910) using the <code>ST_Buffer()</code> function on the click point, then intersect that circle with the parcels.</li>
+</ul>
+
+
+
+    
+        <div class="chevrons">
+    <div id="navigation">
+<a class="nav nav-prev" href="https://pramsey.github.io/pg_tileserv/usage/table-layers/" title="Table Layers"> <i class="fa fa-chevron-left"></i><label>Table Layers</label></a>
+    <a class="nav nav-next" href="https://pramsey.github.io/pg_tileserv/usage/function-layers-advanced/" title="Advanced Function Layers" style="margin-right: 0px;"><label>Advanced Function Layers</label><i class="fa fa-chevron-right"></i></a></div>
+  </div>
+
+  </section>
+</article>
+
+<footer>
+
+<div class="footline">
+    
+
+    
+
+  
+
+  </div>
+
+
+	<div>
+	</div>
+</footer>
+
+<link href="../../css/featherlight.min.css" rel="stylesheet">
+<script src="../../js/featherlight.min.js"></script>
+
+<script src="../../theme-flex/script.js"></script>
+
+
+    
+
+    
+    
+
+    
+  </body>
+</html>
