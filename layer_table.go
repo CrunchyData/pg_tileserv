@@ -231,7 +231,11 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 	bounds := Bounds{}
 	extentSql := fmt.Sprintf(`
 	WITH ext AS (
-		SELECT ST_Transform(ST_SetSRID(ST_Extent(%s), %d), 4326) AS geom
+		SELECT
+			coalesce(
+				ST_Transform(ST_SetSRID(ST_Extent("%s"), %d), 4326),
+				ST_MakeEnvelope(-180, -90, 180, 90, 4326)
+			) AS geom
 		FROM "%s"."%s"
 	)
 	SELECT
@@ -253,12 +257,13 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 		ymax pgtype.Float8
 	)
 	err = db.QueryRow(context.Background(), extentSql).Scan(&xmin, &ymin, &xmax, &ymax)
-	if err != nil || xmin.Status == pgtype.Null {
+	if err != nil {
 		return bounds, tileAppError{
 			SrcErr:  err,
 			Message: "Unable to calculate table bounds",
 		}
 	}
+
 	bounds.Xmin = xmin.Float
 	bounds.Ymin = ymin.Float
 	bounds.Xmax = xmax.Float
@@ -381,11 +386,11 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	tmplSql := `
 	SELECT ST_AsMVT(mvtgeom, {{ .MvtParams }}) FROM (
 		SELECT ST_AsMVTGeom(
-			ST_Transform(t.{{ .GeometryColumn }}, 3857),
+			ST_Transform(t."{{ .GeometryColumn }}", 3857),
 			bounds.geom_clip,
 			{{ .Resolution }},
 			{{ .Buffer }}
-		  ) AS {{ .GeometryColumn }}
+		  ) AS "{{ .GeometryColumn }}"
 		  {{ if .Properties }}
 		  , {{ .Properties }}
 		  {{ end }}
@@ -393,7 +398,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 			SELECT {{ .TileSql }}  AS geom_clip,
 					{{ .QuerySql }} AS geom_query
 			) bounds
-		WHERE ST_Intersects(t.{{ .GeometryColumn }},
+		WHERE ST_Intersects(t."{{ .GeometryColumn }}",
 							ST_Transform(bounds.geom_query, {{ .Srid }}))
 		{{ .Limit }}
 	) mvtgeom
