@@ -7,7 +7,9 @@ weight: 300
 
 ## Function Layer Detail JSON
 
-In the detail JSON, each function declares information relevant to setting up a map interface for the layer. Because functions generate tiles dynamically, the system cannot auto-discover things like extent or center. However, the custom parameters and defaults can be read from the function definition and exposed in the detail JSON.
+In the detail JSON, each function declares information relevant to setting up a map interface for the layer.
+
+Since functions generate tiles dynamically, the system cannot auto-discover things like extent, or center. However, the custom parameters as well as defaults can be read from the function definition and exposed in the detail JSON.
 ```json
 {
    "name" : "parcels_in_radius",
@@ -36,8 +38,8 @@ In the detail JSON, each function declares information relevant to setting up a 
    "tileurl" : "http://localhost:7800/public.parcels_in_radius/{z}/{x}/{y}.pbf"
 }
 ```
-* `description` can be set using `COMMENT ON FUNCTION` SQL command.
-* `id`, `schema` and `name` are the fully qualified name, schema and function name, respectively.
+* `description` can be set using the `COMMENT ON FUNCTION` SQL command.
+* `id`, `schema`, and `name` are the fully qualified name, schema, and function name, respectively.
 * `minzoom` and `maxzoom` are just the defaults, as set in the configuration file.
 * `arguments` is a list of argument names, with the data type and default value.
 
@@ -45,7 +47,11 @@ In the detail JSON, each function declares information relevant to setting up a 
 
 ### Filtering Example
 
-This simple example returns just a filtered subset of a table ([ne_50m_admin_0_countries](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip) [EPSG:4326](https://epsg.io/4326)). The filter in this case is the first letters of the name. Note that the `name_prefix` parameter includes a **default value**: this is useful for clients (like the preview interface for this server) that read arbitrary function definitions and need a default value to fill into interface fields.
+This simple example returns a filtered subset of a table ([ne_50m_admin_0_countries](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip) [EPSG:4326](https://epsg.io/4326)). The filter in this case is the first letter of the name.
+
+Note that the `name_prefix` parameter includes a **default value**: this is useful for clients (like the preview interface for this server) that read arbitrary function definitions and need a default value to fill into interface fields.
+
+This example also uses `ST_TileEnvelope()`, a utility function available in PostGIS 3.0 and higher. See the notes below for a workaround using custom functions.
 ```sql
 CREATE OR REPLACE
 FUNCTION public.countries_name(
@@ -74,10 +80,10 @@ COMMENT ON FUNCTION public.countries_name IS 'Filters the countries table by the
 ```
 Some notes about this function:
 
-* The `ST_AsMVT()` function uses the function name ("public.countries_name") as the MVT layer name. This is not required, but for clients that self-configure, it allows them to use the function name as the layer source name.
-* In the filter portion of the query (in the `WHERE` clause) the bounds are transformed to the spatial reference of the table data (4326) so that the spatial index on the table geometry can be used.
-* In the `ST_AsMVTGeom()` portion of the query, the table geometry is transformed into web mercator ([3857](https://epsg.io/3857)) to match the bounds, and the _de facto_ expectation that MVT tiles are delivered in web mercator projection.
-* The `ST_TileEnvelope()` function used here is a utility function available in PostGIS 3.0 and higher. For earlier versions, you will probably want to add a custom function to emulate the behavior.
+* The `ST_AsMVT()` function uses the function name ("public.countries_name") as the MVT layer name. While this is not required, it allows clients that auto-configure to use the function name as the layer source name.
+* In the filter portion of the query (i.e. in the `WHERE` clause) the bounds are transformed to the spatial reference of the table data (in this case, 4326) so that the spatial index on the table geometry can be used.
+* In the `ST_AsMVTGeom()` portion of the query, the table geometry is transformed into Web Mercator ([3857](https://epsg.io/3857)) to match the bounds and the _de facto_ expectation that MVT tiles are delivered in Web Mercator projection.
+* For earlier versions of PostGIS, the following is an example of a custom function that emulates the behavior of `ST_TileEnvelope()`:
   ```sql
   CREATE OR REPLACE
   FUNCTION TS_TileEnvelope(z integer, x integer, y integer)

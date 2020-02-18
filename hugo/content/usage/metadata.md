@@ -10,7 +10,7 @@ You can explore the contents of the tile server using:
 * an HTML web interface for humans; and
 * a JSON API for computers.
 
-The JSON API is useful for clients that auto-configure based on the service metadata. In fact, the HTML web interface is an example of such an auto-configuring interface: it reads the JSON and uses that to set up the web map visualization and interface elements.
+The JSON API is useful for clients that auto-configure based on the service metadata. In fact, the HTML web interface itself is an example of such an auto-configuring interface: it reads the JSON and uses that to set up the web map visualization and interface elements.
 
 ## Web Interface
 
@@ -26,7 +26,7 @@ A top-level list of layers is available in JSON at:
 
 * http://localhost:7800/index.json
 
-The index JSON just returns the minimum information about each layer.
+The index JSON returns just the minimum information about each layer.
 ```json
 {
     "public.ne_50m_admin_0_countries" : {
@@ -39,9 +39,9 @@ The index JSON just returns the minimum information about each layer.
     }
 }
 ```
+
 * The `detailurl` provides more detailed metadata for table and function layers.
-* The `detailurl` provides more detailed metadata for table and function layers.
-* The `description` field is read from the `comment` value of the table. To set a comment on a table, use the `COMMENT` command.
+* The `description` field is read from the `comment` value of the table. To set a comment on a table, use the `COMMENT` command:
     ```sql
     COMMENT ON TABLE ne_50m_admin_0_countries IS 'This is my comment';
     ```
