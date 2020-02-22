@@ -12,6 +12,9 @@
 # Hold no more than this number of connections in the database pool
 # DbPoolMaxConns = 4
 
+# Cancel a tile request if a response can't be completed in this time (seconds)
+# WriteTimeout = 10
+
 # Look to read html templates from this directory
 # AssetsPath = "./assets"
 

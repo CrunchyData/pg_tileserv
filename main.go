@@ -61,7 +61,7 @@ func init() {
 	// 1d, 1h, 1m, 1s, see https://golang.org/pkg/time/#ParseDuration
 	viper.SetDefault("DbPoolMaxConnLifeTime", "1h")
 	viper.SetDefault("DbPoolMaxConns", 4)
-	viper.SetDefault("DbTimeout", 10)
+	viper.SetDefault("WriteTimeout", 10)
 }
 
 func main() {
@@ -265,7 +265,7 @@ func requestTile(w http.ResponseWriter, r *http.Request) error {
 		"key":   tile.String(),
 	}).Tracef("RequestLayerTile: %s", tile.String())
 
-	ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("DbTimeout")*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("WriteTimeout")*time.Second)
 	defer cancel()
 
 	tilerequest := lyr.GetTileRequest(tile, r)
@@ -365,11 +365,19 @@ func handleRequests() {
 	// Allow CORS from anywhere
 	corsOpt := handlers.AllowedOrigins([]string{"*"})
 
+	// Set a writeTimeout for the http server.
+	// This value is the application's WriteTimeout config setting plus a
+	// grace period. The additional time allows the application to gracefully
+	// handle timeouts on its own, canceling outstanding database queries and
+	// returning an error to the client, while keeping the http.Server
+	// WriteTimeout as a fallback.
+	writeTimeout := (viper.GetDuration("WriteTimeout") + 2) * time.Second
+
 	// more "production friendly" timeouts
 	// https://blog.simon-frey.eu/go-as-in-golang-standard-net-http-config-will-break-your-production/#You_should_at_least_do_this_The_easy_path
 	s := &http.Server{
 		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		WriteTimeout: writeTimeout,
 		Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort")),
 		Handler:      handlers.CompressHandler(handlers.CORS(corsOpt)(r)),
 	}
@@ -391,7 +399,7 @@ func handleRequests() {
 	// Interrupt signal received:  Start shutting down
 	log.Infoln("Shutting down...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), writeTimeout)
 	defer cancel()
 	s.Shutdown(ctx)
 
