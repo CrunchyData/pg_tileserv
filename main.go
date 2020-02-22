@@ -61,7 +61,7 @@ func init() {
 	// 1d, 1h, 1m, 1s, see https://golang.org/pkg/time/#ParseDuration
 	viper.SetDefault("DbPoolMaxConnLifeTime", "1h")
 	viper.SetDefault("DbPoolMaxConns", 4)
-	viper.SetDefault("WriteTimeout", 10)
+	viper.SetDefault("DbTimeout", 10)
 }
 
 func main() {
@@ -265,7 +265,7 @@ func requestTile(w http.ResponseWriter, r *http.Request) error {
 		"key":   tile.String(),
 	}).Tracef("RequestLayerTile: %s", tile.String())
 
-	ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("WriteTimeout")*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("DbTimeout")*time.Second)
 	defer cancel()
 
 	tilerequest := lyr.GetTileRequest(tile, r)
@@ -366,12 +366,12 @@ func handleRequests() {
 	corsOpt := handlers.AllowedOrigins([]string{"*"})
 
 	// Set a writeTimeout for the http server.
-	// This value is the application's WriteTimeout config setting plus a
+	// This value is the application's DbTimeout config setting plus a
 	// grace period. The additional time allows the application to gracefully
 	// handle timeouts on its own, canceling outstanding database queries and
 	// returning an error to the client, while keeping the http.Server
 	// WriteTimeout as a fallback.
-	writeTimeout := (viper.GetDuration("WriteTimeout") + 2) * time.Second
+	writeTimeout := (viper.GetDuration("DbTimeout") + 5) * time.Second
 
 	// more "production friendly" timeouts
 	// https://blog.simon-frey.eu/go-as-in-golang-standard-net-http-config-will-break-your-production/#You_should_at_least_do_this_The_easy_path
