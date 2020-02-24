@@ -10,6 +10,7 @@ import (
 	"time"
 
 	// Database
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -104,22 +105,33 @@ func LoadVersions() error {
 	return nil
 }
 
-func DBTileRequest(tr *TileRequest) ([]byte, error) {
+func DBTileRequest(ctx context.Context, tr *TileRequest) ([]byte, error) {
 	db, err := DbConnect()
 	if err != nil {
 		log.Error(err)
 		return nil, err
 	}
-	row := db.QueryRow(context.Background(), tr.Sql, tr.Args...)
+	row := db.QueryRow(ctx, tr.Sql, tr.Args...)
 	var mvtTile []byte
 	err = row.Scan(&mvtTile)
 	if err != nil {
 		log.Warn(err)
+
+		// check for errors retrieving the rendered tile from the database
+		// Timeout errors can occur if the context deadline is reached
+		// or if the context is canceled during/before a database query.
+		if pgconn.Timeout(err) {
+			return nil, tileAppError{
+				SrcErr:  err,
+				Message: fmt.Sprintf("Timeout: deadline exceeded on %s/%s", tr.LayerId, tr.Tile.String()),
+			}
+		}
+
 		return nil, tileAppError{
 			SrcErr:  err,
 			Message: fmt.Sprintf("SQL error on %s/%s", tr.LayerId, tr.Tile.String()),
 		}
-	} else {
-		return mvtTile, nil
+
 	}
+	return mvtTile, nil
 }
