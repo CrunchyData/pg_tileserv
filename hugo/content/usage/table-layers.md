@@ -74,25 +74,25 @@ In the detail JSON, each layer declares information relevant to setting up a map
    "maxzoom" : 22
 }
 ```
-* `id`, `name` and `schema` are the fully qualified, table and schema name of the database table.
+* `id`, `name`, and `schema` are the fully qualified, table, and schema name of the database table.
 * `bounds` and `center` give the extent and middle of the data collection, in geographic coordinates. The order of coordinates in bounds is [minlon, minlat, maxlon, maxlat]. The order of coordinates in center is [lon, lat].
 * `tileurl` is the standard substitution pattern URL consumed by map clients like [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/api/) and [OpenLayers](https://openlayers.org).
-* `properties` is a list of columns in the table, with their data types and descriptions. The column `description` field can be set using the `COMMENT` SQL command, for example:
+* `properties` is a list of columns in the table, with their data types and descriptions. The `description` field can be set using the `COMMENT` SQL command, for example:
   ```sql
   COMMENT ON COLUMN ne_50m_admin_0_countries.name_long IS 'This is the long name';
   ```
 
 ## Table Tile Request Customization
 
-Most developers will just use the `tileurl` as is, but it possible to add some parameters to the URL to customize behaviour at run time:
+Most developers will use the `tileurl` as is, but it's possible to add some parameters to the URL to customize behaviour at run time:
 
-* `limit` controls the number of features to write to a tile, the default is 50000.
-* `resolution` controls the resolution of a tile, the default is 4096 units per side for a tile.
-* `buffer` controls the size of the extra data buffer for a tile, the default is 256 units.
+* `limit` controls the number of features to write to a tile. The default is 50000.
+* `resolution` controls the resolution of a tile. The default is 4096 units per side for a tile.
+* `buffer` controls the size of the extra data buffer for a tile. The default is 256 units.
 * `properties` is a comma-separated list of properties to include in the tile. For wide tables with large numbers of columns, this allows a slimmer tile to be composed.
 
 For example:
 
     http://localhost:7800/public.ne_50m_admin_0_countries/{z}/{x}/{y}.pbf?limit=100000&properties=name,long_name
 
-For property names that include commas (why did you do that?) [URL encode](https://en.wikipedia.org/wiki/Percent-encoding) the comma in the name string before composing the comma-separated string of all names.
+We recommend avoiding commas in property names. If necessary, you can [URL encode](https://en.wikipedia.org/wiki/Percent-encoding) the comma in the name string before composing the comma-separated string of all names.

@@ -22,9 +22,13 @@ PROJ="6.1.0" LIBXML="2.9.4" LIBJSON="0.13"
 LIBPROTOBUF="1.3.2" WAGYU="0.4.3 (Internal)"
 ```
 
+You don't need advanced knowledge in Postgres/PostGIS or web mapping to install `pg_tileserver` and set up the examples in this guide. With that said, if you are new to functions in Postgres, you might try this [quick interactive course](https://learn.crunchydata.com/postgresql-devel/courses/beyond-basics/basicfunctions) on our Learning Portal to better see how you might take advantage of `pg_tileserv`'s capabilities.
+
+We also link to [further resources](../learn-more/) at the end of this guide, for your reference.
+
 ## Installation
 
-To install `pg_tileserv`, download the binary file. Alternatively, you may run a container, or build the executable from source.
+To install `pg_tileserv`, download the binary file. Alternatively, you may run a container. These first two options will suit most use cases; needing to build the executable from source is rare.
 
 ### A. Download Binaries
 
@@ -42,7 +46,7 @@ There is a docker image available on DockerHub.
 
 * [Docker](https://hub.docker.com/repository/docker/pramsey/pg_tileserv)
 
-Run the container, provide database connection information in the `DATABASE_URL` environment variable and map the default service port (7800).
+When you run the container, provide the database connection information in the `DATABASE_URL` environment variable and map the default service port (7800).
 
 ```sh
 docker run -e DATABASE_URL=postgres://user:pass@host/dbname -p 7800:7800 pramsey/pg_tileserv
@@ -50,7 +54,7 @@ docker run -e DATABASE_URL=postgres://user:pass@host/dbname -p 7800:7800 pramsey
 
 ### C. Build From Source
 
-Install the [Go software development environment](https://golang.org/doc/install). Make sure that the [`GOPATH` environment variable](https://github.com/golang/go/wiki/SettingGOPATH) is also set.
+If you must build from source, install the [Go software development environment](https://golang.org/doc/install). Make sure that the [`GOPATH` environment variable](https://github.com/golang/go/wiki/SettingGOPATH) is also set.
 
 ```sh
 SRC=$GOPATH/src/github.com/CrunchyData
@@ -94,13 +98,15 @@ The configuration file will be automatically read from the following locations, 
 * In the system configuration directory, at `/etc/pg_tileserv.toml`
 * Relative to the directory from which the program is run, `./pg_tileserv.toml`
 
-If you want to pass a path directly to the configuration file, use the `--config` commandline parameter to pass in a pull path to configuration file. When using the `--config` option, configuration files in other locations will be ignored.
+If you want to pass a path directly to the configuration file, use the `--config` command line parameter.
+
+Configuration files in other locations will be ignored when using the `--config` option.
 
 ```sh
 ./pg_tileserv --config /opt/pg_tileserv/pg_tileserv.toml
 ```
 
-In general the defaults are fine, and the program autodetects things like the server name.
+The default settings will suit most uses, and the program autodetects values like the server name.
 
 ```toml
 # Database connection
