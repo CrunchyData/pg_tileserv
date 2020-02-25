@@ -40,4 +40,4 @@ You should see the `ne_50m_admin_0_countries` table with the `\dt` SQL shell com
 
 Make sure that `pg_tileserv` connection specifies `naturalearth`, i.e.: `DATABASE_URL=postgres://username:password@host/naturalearth`. With the service running, you should also see the layer on the web preview, i.e.: http://localhost:7800/public.ne_50m_admin_0_countries.html 
 
-![pg_tileserv web interface preview](/example-web-preview.PNG)
+![pg_tileserv web interface preview](/example-web-preview.png)

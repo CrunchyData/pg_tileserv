@@ -6,4 +6,4 @@ weight: 200
 ---
 
 [Source](https://github.com/CrunchyData/pg_tileserv/blob/master/examples/leaflet/leaflet-tiles.html)
-![Mapbox GL JS map](/example-leaflet.PNG)
+![Mapbox GL JS map](/example-leaflet.png)
