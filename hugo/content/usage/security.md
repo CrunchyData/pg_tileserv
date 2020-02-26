@@ -5,7 +5,7 @@ draft: false
 weight: 500
 ---
 
-The basic principle of security is to connect your tile server to the database with a user that has just the access you want it to have, and no more. 
+The basic principle of security is to connect your tile server to the database with a user that has just the access you want it to have, and no more.
 
 To support different access patterns, create different users with access to different tables/functions, and run multiple services, connecting with those different users.
 ```sql
@@ -13,9 +13,9 @@ CREATE USER tileserver;
 ```
 Start with a blank user. A blank user will have no select privileges on tables it does not own. It will have execute privileges on functions. However, the user will have no select privileges on tables accessed by functions, so effectively the user will still have no access to data.
 
-## Tables
+## Tables and Views
 
-If your tables are in a schema other than public, you will have to also grant "usage" on that schema to your user.
+If your tables and views are in a schema other than public, you will have to also grant "usage" on that schema to your user.
 ```sql
 GRANT USAGE ON SCHEMA myschema TO tileserver;
 ```

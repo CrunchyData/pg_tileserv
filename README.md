@@ -291,7 +291,7 @@ AS $$
     SELECT ST_AsMVT(mvtgeom, 'public.countries_name') FROM mvtgeom;
 $$
 LANGUAGE 'sql'
-VOLATILE
+STABLE
 PARALLEL SAFE;
 
 COMMENT ON FUNCTION public.countries_name IS 'Filters the countries table by the initial letters of the name using the "name_prefix" parameter.';
@@ -301,10 +301,13 @@ Some notes about this function:
 * The `ST_AsMVT()` function uses the function name ("public.countries_name") as the MVT layer name. This is not required, but for clients that self-configure, it allows them to use the function name as the layer source name.
 * In the filter portion of the query (in the `WHERE` clause) the bounds are transformed to the spatial reference of the table data (4326) so that the spatial index on the table geometry can be used.
 * In the `ST_AsMVTGeom()` portion of the query, the table geometry is transformed into web mercator ([3857](https://epsg.io/3857)) to match the bounds, and the _de facto_ expectation that MVT tiles are delivered in web mercator projection.
+* The `LIMIT` is hard-coded in this example. If you want a user-defined limit you need to add another parameter to your function definition.
+* The function "[volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html)" is declared as `STABLE` because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as `IMMUTABLE` because changes in the base table can change the outputs over time, even for the same inputs.
+* The function is declared as `PARALLEL SAFE` because it doesn't depend on any global state that might get confused by running multiple copies of the function at once.
 * The `ST_TileEnvelope()` function used here is a utility function available in PostGIS 3.0 and higher. For earlier versions, you will probably want to add a custom function to emulate the behavior.
   ```sql
   CREATE OR REPLACE
-  FUNCTION TS_TileEnvelope(z integer, x integer, y integer)
+  FUNCTION ST_TileEnvelope(z integer, x integer, y integer)
   RETURNS geometry
   AS $$
     DECLARE
@@ -327,9 +330,6 @@ Some notes about this function:
   STRICT
   PARALLEL SAFE;
   ```
-* The `LIMIT` is hard-coded in this example. If you want a user-defined limit you need to add another parameter to your function definition.
-* The function "[volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html)" is declared as `STABLE` because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as `IMMUTABLE` because changes in the base table can change the outputs over time, even for the same inputs.
-* The function is declared as `PARALLEL SAFE` because it doesn't depend on any global state that might get confused by running multiple copies of the function at once.
 
 #### Spatial Processing Example
 
@@ -599,6 +599,41 @@ STRICT
 PARALLEL SAFE;
 
 COMMENT ON FUNCTION public.hexpopulationsummary IS 'Hex summary of the ne_50m_populated_places table. Step parameter determines how approximately many hexes (2^step) to generate per tile.';
+```
+A basic "just hexes" layer that skips the spatial join step is even simpler.
+```sql
+-- Given an input tile, generate the covering hexagons Step parameter determines
+-- how many hexagons to generate per tile.
+CREATE OR REPLACE
+FUNCTION public.hexagons(z integer, x integer, y integer, step integer default 4)
+RETURNS bytea
+AS $$
+WITH
+bounds AS (
+    -- Convert tile coordinates to web mercator tile bounds
+    SELECT ST_TileEnvelope(z, x, y) AS geom
+),
+rows AS (
+    -- All the hexes that interact with this tile
+    SELECT h.i, h.j, h.geom
+    FROM TileHexagons(z, x, y, step) h
+),
+mvt AS (
+    -- Usual tile processing, ST_AsMVTGeom simplifies, quantizes,
+    -- and clips to tile boundary
+    SELECT ST_AsMVTGeom(rows.geom, bounds.geom) AS geom,
+           rows.i, rows.j
+    FROM rows, bounds
+)
+-- Generate MVT encoding of final input record
+SELECT ST_AsMVT(mvt, 'public.hexagons') FROM mvt
+$$
+LANGUAGE 'sql'
+STABLE
+STRICT
+PARALLEL SAFE;
+
+COMMENT ON FUNCTION public.hexagons IS 'Hex coverage dynamically generated. Step parameter determines how approximately many hexes (2^step) to generate per tile.';
 ```
 
 # Security

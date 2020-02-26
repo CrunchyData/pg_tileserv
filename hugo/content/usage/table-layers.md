@@ -5,7 +5,7 @@ draft: false
 weight: 200
 ---
 
-By default, `pg_tileserv` will provide access to **only** those spatial tables that:
+By default, `pg_tileserv` will provide access to **only** those spatial tables and views that:
 
 * your database connection has `SELECT` privileges for;
 * include a geometry column;

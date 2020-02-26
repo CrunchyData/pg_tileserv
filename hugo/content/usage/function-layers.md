@@ -73,7 +73,7 @@ AS $$
     SELECT ST_AsMVT(mvtgeom, 'public.countries_name') FROM mvtgeom;
 $$
 LANGUAGE 'sql'
-VOLATILE
+STABLE
 PARALLEL SAFE;
 
 COMMENT ON FUNCTION public.countries_name IS 'Filters the countries table by the initial letters of the name using the "name_prefix" parameter.';
@@ -83,10 +83,13 @@ Some notes about this function:
 * The `ST_AsMVT()` function uses the function name ("public.countries_name") as the MVT layer name. While this is not required, it allows clients that auto-configure to use the function name as the layer source name.
 * In the filter portion of the query (i.e. in the `WHERE` clause) the bounds are transformed to the spatial reference of the table data (in this case, 4326) so that the spatial index on the table geometry can be used.
 * In the `ST_AsMVTGeom()` portion of the query, the table geometry is transformed into Web Mercator ([3857](https://epsg.io/3857)) to match the bounds and the _de facto_ expectation that MVT tiles are delivered in Web Mercator projection.
+* The `LIMIT` is hard-coded in this example. If you want a user-defined limit, you need to add another parameter to your function definition.
+* The function "[volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html)" is declared as `STABLE` because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as `IMMUTABLE` because changes in the base table can change the outputs over time, even for the same inputs.
+* The function is declared as `PARALLEL SAFE` because it doesn't depend on any global state that might get confused by running multiple copies of the function at once.
 * For earlier versions of PostGIS, the following is an example of a custom function that emulates the behavior of `ST_TileEnvelope()`:
   ```sql
   CREATE OR REPLACE
-  FUNCTION TS_TileEnvelope(z integer, x integer, y integer)
+  FUNCTION ST_TileEnvelope(z integer, x integer, y integer)
   RETURNS geometry
   AS $$
     DECLARE
@@ -109,9 +112,7 @@ Some notes about this function:
   STRICT
   PARALLEL SAFE;
   ```
-* The `LIMIT` is hard-coded in this example. If you want a user-defined limit, you need to add another parameter to your function definition.
-* The function "[volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html)" is declared as `STABLE` because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as `IMMUTABLE` because changes in the base table can change the outputs over time, even for the same inputs.
-* The function is declared as `PARALLEL SAFE` because it doesn't depend on any global state that might get confused by running multiple copies of the function at once.
+
 
 ### Spatial processing example
 
