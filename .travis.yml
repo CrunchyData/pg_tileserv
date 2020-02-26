@@ -1,8 +1,6 @@
 language: go
 sudo: required
 
-services:
-  - docker
 
 
 matrix:
@@ -19,6 +17,8 @@ matrix:
   - go: tip
     os: linux
     env: TARGET=docker
+    services:
+     - docker
 #  - go: tip
 #    os: linux
 #    env: TARGET=docs
