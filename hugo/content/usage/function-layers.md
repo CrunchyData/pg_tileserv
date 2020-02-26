@@ -45,7 +45,7 @@ Since functions generate tiles dynamically, the system cannot auto-discover thin
 
 ## Function Layer Examples
 
-### Filtering Example
+### Filtering example
 
 This simple example returns a filtered subset of a table ([ne_50m_admin_0_countries](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip) [EPSG:4326](https://epsg.io/4326)). The filter in this case is the first letter of the name.
 
@@ -113,7 +113,7 @@ Some notes about this function:
 * The function "[volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html)" is declared as `STABLE` because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as `IMMUTABLE` because changes in the base table can change the outputs over time, even for the same inputs.
 * The function is declared as `PARALLEL SAFE` because it doesn't depend on any global state that might get confused by running multiple copies of the function at once.
 
-### Spatial Processing Example
+### Spatial processing example
 
 This example clips a layer of [parcels](https://data.vancouver.ca/datacatalogue/propertyInformation.htm) [EPSG:26910](https://epsg.io/26910) using a radius and center point, returning only the parcels in the radius, with the boundary parcels clipped to the center.
 ```sql

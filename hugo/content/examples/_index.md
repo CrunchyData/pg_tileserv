@@ -10,7 +10,7 @@ running on a local machine, using popular open source JavaScript web map compone
 
 ## Load Natural Earth data
 
-### Database Preparation
+### Database preparation
 
 The following terminal commands will create a database named `naturalearth`, assuming that your user account has create database privilege:
 
@@ -24,7 +24,7 @@ Load the PostGIS extension as superuser (`postgres`):
 psql -U postgres -d naturalearth -c 'CREATE EXTENSION postgis'
 ```
 
-### Import Shapefile
+### Import shapefile
 
 The data used in the examples are loaded from [Natural Earth](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/).
 

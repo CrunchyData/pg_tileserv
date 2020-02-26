@@ -45,4 +45,3 @@ The index JSON returns just the minimum information about each layer.
     ```sql
     COMMENT ON TABLE ne_50m_admin_0_countries IS 'This is my comment';
     ```
-

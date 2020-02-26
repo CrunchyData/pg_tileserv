@@ -7,7 +7,7 @@ weight: 10
 
 ## Motivation
 
-There are already lots of tile generators out there ([Tegola](https://tegola.io/), [Geoserver](https://geoserver.org), [Mapserver](https://mapserver.org)) that read from multiple data sources and generate vector tiles. `pg_tileserv` works exclusively with PostGIS data, but this also allows more flexibility of usage.
+There are numerous tile generators available (such as [Tegola](https://tegola.io/), [Geoserver](https://geoserver.org), [Mapserver](https://mapserver.org)) that read from multiple data sources and generate vector tiles. `pg_tileserv` works exclusively with PostGIS data, but this also allows more flexibility of usage.
 
 By restricting itself to only using PostGIS as a data source, `pg_tileserv` gains the following features:
 
@@ -20,10 +20,9 @@ By restricting itself to only using PostGIS as a data source, `pg_tileserv` gain
 `pg_tileserv` is one component in "PostGIS for the Web" (aka "PostGIS FTW"), a growing family of Go spatial microservices. Database-centric applications naturally have a central source of coordinating state, the database, which allows otherwise independent microservices to coordinate and provide HTTP-level access to the database with less middleware software complexity.
 
 * [pg_tileserv](.) provides MVT tiles for interactive clients and smooth rendering
-* [pg_featureserv](https://github.com/crunchydata/pg_featureserv) provides GeoJSON feature services for reading and writing vector and attribute data from tables
-<!--* [pg_importserv]() (TBD) will provide an import API for ingesting arbitrary GIS data files-->
+* [pg_featureserv](https:access.crunchydata.com/documentation/pg_featureserv/latest/) provides GeoJSON feature services for reading and writing vector and attribute data from tables
 
-It should be possible to stand up a spatial services architecture of stateless microservices surrounding a PostgreSQL/PostGIS database cluster, in a standard container environment, on any cloud platform or internal datacenter: that's "PostGIS for the Web".
+PostGIS for the Web makes it possible to stand up a spatial services architecture of stateless microservices surrounding a PostgreSQL/PostGIS database cluster, in a standard container environment, on any cloud platform or internal datacenter.
 
 ## Definitions
 
