@@ -1,4 +1,4 @@
-baseURL = "https://pramsey.github.io/pg_tileserv"
+baseURL = ""
 canonifyurls = true
 defaultContentLanguage = "en"
 defaultContentLanguageInSubdir= false

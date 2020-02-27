@@ -22,15 +22,15 @@ PROJ="6.1.0" LIBXML="2.9.4" LIBJSON="0.13"
 LIBPROTOBUF="1.3.2" WAGYU="0.4.3 (Internal)"
 ```
 
-You don't need advanced knowledge in Postgres/PostGIS or web mapping to install `pg_tileserver` and set up the examples in this guide. With that said, if you are new to functions in Postgres, you might try this [quick interactive course](https://learn.crunchydata.com/postgresql-devel/courses/beyond-basics/basicfunctions) on our Learning Portal to better see how you might take advantage of `pg_tileserv`'s capabilities.
+You don't need advanced knowledge in Postgres/PostGIS or web mapping to install `pg_tileserv` and set up the examples in this guide. If you are new to functions in Postgres, you might try this [quick interactive course](https://learn.crunchydata.com/postgresql-devel/courses/beyond-basics/basicfunctions/) to better see how you might take advantage of `pg_tileserv`'s capabilities.
 
-We also link to [further resources](../learn-more/) at the end of this guide, for your reference.
+We also link to [further resources](/learn-more/) at the end of this guide, for your reference.
 
 ## Installation
 
 To install `pg_tileserv`, download the binary file. Alternatively, you may run a container. These first two options will suit most use cases; needing to build the executable from source is rare.
 
-### A. Download Binaries
+### A. Download binaries
 
 Builds of the latest code:
 
@@ -40,11 +40,11 @@ Builds of the latest code:
 
 Unzip the file, copy the `pg_tileserv` binary wherever you wish, or use it in place. If you move the binary, remember to move the `assets/` directory to the same location, or start the server using the `AssetsDir` configuration option.
 
-### B. Run Container
+### B. Run container
 
-There is a docker image available on DockerHub.
+A Docker image is available on DockerHub:
 
-* [Docker](https://hub.docker.com/repository/docker/pramsey/pg_tileserv)
+* [Docker](https://hub.docker.com/r/pramsey/pg_tileserv/)
 
 When you run the container, provide the database connection information in the `DATABASE_URL` environment variable and map the default service port (7800).
 
@@ -52,7 +52,7 @@ When you run the container, provide the database connection information in the `
 docker run -e DATABASE_URL=postgres://user:pass@host/dbname -p 7800:7800 pramsey/pg_tileserv
 ```
 
-### C. Build From Source
+### C. Build from source
 
 If you must build from source, install the [Go software development environment](https://golang.org/doc/install). Make sure that the [`GOPATH` environment variable](https://github.com/golang/go/wiki/SettingGOPATH) is also set.
 
@@ -75,7 +75,7 @@ $GOPATH/bin/pg_tileserv
 
 ## Deployment
 
-### Basic Operation
+### Basic operation
 
 #### Linux/OSX
 
@@ -91,7 +91,7 @@ SET DATABASE_URL=postgresql://username:password@host/dbname
 pg_tileserv.exe
 ```
 
-### Configuration File
+### Configuration file
 
 The configuration file will be automatically read from the following locations, if it exists:
 
@@ -106,7 +106,7 @@ Configuration files in other locations will be ignored when using the `--config`
 ./pg_tileserv --config /opt/pg_tileserv/pg_tileserv.toml
 ```
 
-The default settings will suit most uses, and the program autodetects values like the server name.
+The default settings will suit most uses, and the program autodetects values such as the server name.
 
 ```toml
 # Database connection

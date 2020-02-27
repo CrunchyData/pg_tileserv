@@ -5,5 +5,6 @@ draft: false
 weight: 100
 ---
 
-[Source](https://github.com/CrunchyData/pg_tileserv/blob/master/examples/openlayers/openlayers-tiles.html)
-![OpenLayers map](/example-openlayers.png)
+With the service running, open this [HTML](https://github.com/CrunchyData/pg_tileserv/blob/master/examples/openlayers/openlayers-tiles.html) in your browser.
+
+![OpenLayers map preview](/example-openlayers.png)

@@ -18,6 +18,8 @@ After start-up, you can connect to the server and explore the published tables a
 
 * http://localhost:7800
 
+Remember that the server name is autodected, and can also be [configured](/installation#configuration-file/).
+
 Click the "preview" link of any of the layer entries to see a web map view of the layer. The "json" link provides a direct link to the JSON metadata for that layer.
 
 ## Layers List
@@ -26,7 +28,7 @@ A top-level list of layers is available in JSON at:
 
 * http://localhost:7800/index.json
 
-The index JSON returns just the minimum information about each layer.
+The index JSON returns the minimum information about each layer.
 ```json
 {
     "public.ne_50m_admin_0_countries" : {
@@ -45,4 +47,3 @@ The index JSON returns just the minimum information about each layer.
     ```sql
     COMMENT ON TABLE ne_50m_admin_0_countries IS 'This is my comment';
     ```
-

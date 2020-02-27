@@ -61,13 +61,15 @@ PARALLEL SAFE;
 
 COMMENT ON FUNCTION public.squares IS 'For each tile requested, generate and return depth*depth polygons covering the tile. The effect is one of always having a grid coverage at the appropriate current scale.';
 ```
-## Dynamic Hexagons with Spatial Join Example
+## Dynamic Hexagons with Spatial join Example
 
 Hexagonal tilings are popular with data visualization experts because they can be used to summarize point data without adding a visual bias to the output via different summary area sizes. They also have a nice "non-pointy" shape, while still providing a complete tiling of the plane.
 
 When you want to provide a hexagonal summary of a data set at multiple scales, it presents an implementation problem: do you need to create a pile of hexagon tables, solely for the purpose of summary visualization?
 
 The answer is no: you can generate your hexagons dynamically based on the scale of the requested map tiles.
+
+### Generate hexagons
 
 The first challenge is that a hexagon tile set cannot be perfectly inscribed into a powers-of-two square tile set. That means that any given tile will contain some odd combination of full and partial hexagons. In order for the hexagons that straddle tile boundaries to match up, we need a hexagon tiling that is uniform over the whole plane.
 
@@ -108,6 +110,9 @@ SELECT ST_AsText(hexagon(2, 2, 10.0));
           35 43.3012701892219,25 43.3012701892219,
           20 34.6410161513775))
 ```
+
+### Find hexagon coordinates within the map tile
+
 Now we need a function that, given a square input (a map tile), can figure out all the hexagon coordinates that fall within the tile. Again, the edge size of the hexagon tiling determines the overall geometry of the hex tiling. More than one hexagon will be required most times, so this is a set-returning function.
 ```sql
 -- Given a square bounds, find all the hexagonal cells
@@ -151,7 +156,10 @@ SELECT * FROM hexagoncoordinates(ST_TileEnvelope(15, 1, 1), 1000.0);
  -13356 | 11567
  -13356 | 11568
 ```
-Next, we need a function that puts the two parts together: with tile coordinates and edge size as input, generate the set of all the hexagons that cover the tile. The output here is basically a spatial table -- a set of rows, each row containing a geometry (hexagon) and some properties (hexagon coordinates). This is the input we need for a spatial join.
+
+### Generate hexagons that cover the map tile
+
+Next, we need a function that puts the two parts together: with tile coordinates and edge size as input, generate the set of all the hexagons that cover the tile. The output here is basically a spatial table: a set of rows, each row containing a geometry (hexagon) and some properties (hexagon coordinates). This is the input we need for a spatial join.
 ```sql
 -- Given an input ZXY tile coordinate, output a set of hexagons
 -- (and hexagon coordinates) in web mercator that cover that tile

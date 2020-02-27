@@ -9,7 +9,7 @@ weight: 300
 
 In the detail JSON, each function declares information relevant to setting up a map interface for the layer.
 
-Since functions generate tiles dynamically, the system cannot auto-discover things like extent, or center. However, the custom parameters as well as defaults can be read from the function definition and exposed in the detail JSON.
+Since functions generate tiles dynamically, the system cannot auto-discover properties such as extent, or center. However, the custom parameters as well as defaults can be read from the function definition and exposed in the detail JSON.
 ```json
 {
    "name" : "parcels_in_radius",
@@ -40,18 +40,18 @@ Since functions generate tiles dynamically, the system cannot auto-discover thin
 ```
 * `description` can be set using the `COMMENT ON FUNCTION` SQL command.
 * `id`, `schema`, and `name` are the fully qualified name, schema, and function name, respectively.
-* `minzoom` and `maxzoom` are just the defaults, as set in the configuration file.
+* `minzoom` and `maxzoom` are the defaults as set in the configuration file.
 * `arguments` is a list of argument names, with the data type and default value.
 
 ## Function Layer Examples
 
-### Filtering Example
+### Filtering example
 
 This simple example returns a filtered subset of a table ([ne_50m_admin_0_countries](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip) [EPSG:4326](https://epsg.io/4326)). The filter in this case is the first letter of the name.
 
 Note that the `name_prefix` parameter includes a **default value**: this is useful for clients (like the preview interface for this server) that read arbitrary function definitions and need a default value to fill into interface fields.
 
-This example also uses `ST_TileEnvelope()`, a utility function available in PostGIS 3.0 and higher. See the notes below for a workaround using custom functions.
+This example also uses `ST_TileEnvelope()`, a utility function only available in PostGIS 3.0 and higher. See the notes below for a workaround using custom functions.
 ```sql
 CREATE OR REPLACE
 FUNCTION public.countries_name(
@@ -81,7 +81,7 @@ COMMENT ON FUNCTION public.countries_name IS 'Filters the countries table by the
 Some notes about this function:
 
 * The `ST_AsMVT()` function uses the function name ("public.countries_name") as the MVT layer name. While this is not required, it allows clients that auto-configure to use the function name as the layer source name.
-* In the filter portion of the query (i.e. in the `WHERE` clause) the bounds are transformed to the spatial reference of the table data (in this case, 4326) so that the spatial index on the table geometry can be used.
+* In the filter portion of the query (i.e. in the `WHERE` clause), the bounds are transformed to the spatial reference of the table data (in this case, 4326) so that the spatial index on the table geometry can be used.
 * In the `ST_AsMVTGeom()` portion of the query, the table geometry is transformed into Web Mercator ([3857](https://epsg.io/3857)) to match the bounds and the _de facto_ expectation that MVT tiles are delivered in Web Mercator projection.
 * The `LIMIT` is hard-coded in this example. If you want a user-defined limit, you need to add another parameter to your function definition.
 * The function "[volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html)" is declared as `STABLE` because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as `IMMUTABLE` because changes in the base table can change the outputs over time, even for the same inputs.
@@ -113,10 +113,9 @@ Some notes about this function:
   PARALLEL SAFE;
   ```
 
+### Spatial processing example
 
-### Spatial Processing Example
-
-This example clips a layer of [parcels](https://data.vancouver.ca/datacatalogue/propertyInformation.htm) [EPSG:26910](https://epsg.io/26910) using a radius and center point, returning only the parcels in the radius, with the boundary parcels clipped to the center.
+This example clips a layer of [parcels](https://data.vancouver.ca/datacatalogue/propertyInformation.htm) ([EPSG:26910](https://epsg.io/26910)) using a radius and center point, returning only the parcels in the radius, with the boundary parcels clipped to the center.
 ```sql
 CREATE OR REPLACE
 FUNCTION public.parcels_in_radius(
