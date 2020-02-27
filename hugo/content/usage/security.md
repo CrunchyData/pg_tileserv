@@ -7,11 +7,14 @@ weight: 500
 
 The basic principle of security is to connect your tile server to the database with a user that has just the access you want it to have, and no more.
 
-To support different access patterns, create different users with access to different tables/functions, and run multiple services, connecting with those different users.
+Start with a new, blank user. A blank user has no select privileges on tables it does not own.
+It does have execute privileges on functions.
+However, the user has no select privileges on tables accessed by functions, so effectively the user will still have no access to data.
+
 ```sql
 CREATE USER tileserver;
 ```
-Start with a blank user. A blank user will have no select privileges on tables it does not own. It will have execute privileges on functions. However, the user will have no select privileges on tables accessed by functions, so effectively the user will still have no access to data.
+To support different access patterns, create different users with access to different tables/functions, and run multiple services, connecting with those different users.
 
 ## Tables and Views
 
