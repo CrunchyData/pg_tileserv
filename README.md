@@ -1,4 +1,4 @@
-<img src="./hugo/static/crunchy-spatial-logo.png?raw=true" />
+<img width="180" height="180" src="./hugo/static/crunchy-spatial-logo.png?raw=true" />
 
 # pg_tileserv
 
