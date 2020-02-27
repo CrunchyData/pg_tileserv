@@ -10,7 +10,7 @@ By default, `pg_tileserv` will provide access to **only** those spatial tables a
 * your database connection has `SELECT` privileges for;
 * include a geometry column;
 * declare a geometry type; and,
-* declare an SRID (spatial reference ID)
+* declare an SRID (spatial reference ID).
 
 For example:
 ```sql
@@ -84,7 +84,7 @@ In the detail JSON, each layer declares information relevant to setting up a map
 
 ## Table Tile Request Customization
 
-Most developers will use the `tileurl` as is, but it's possible to add some parameters to the URL to customize behaviour at run time:
+Most developers will use the `tileurl` as is, but it's possible to add parameters to the URL to customize behaviour at run time:
 
 * `limit` controls the number of features to write to a tile. The default is 50000.
 * `resolution` controls the resolution of a tile. The default is 4096 units per side for a tile.

@@ -22,9 +22,9 @@ PROJ="6.1.0" LIBXML="2.9.4" LIBJSON="0.13"
 LIBPROTOBUF="1.3.2" WAGYU="0.4.3 (Internal)"
 ```
 
-You don't need advanced knowledge in Postgres/PostGIS or web mapping to install `pg_tileserv` and set up the examples in this guide. With that said, if you are new to functions in Postgres, you might try this [quick interactive course](https://learn.crunchydata.com/postgresql-devel/courses/beyond-basics/basicfunctions) on our Learning Portal to better see how you might take advantage of `pg_tileserv`'s capabilities.
+You don't need advanced knowledge in Postgres/PostGIS or web mapping to install `pg_tileserv` and set up the examples in this guide. If you are new to functions in Postgres, you might try this [quick interactive course](https://learn.crunchydata.com/postgresql-devel/courses/beyond-basics/basicfunctions/) to better see how you might take advantage of `pg_tileserv`'s capabilities.
 
-We also link to [further resources](../learn-more/) at the end of this guide, for your reference.
+We also link to [further resources](/learn-more/) at the end of this guide, for your reference.
 
 ## Installation
 
@@ -42,9 +42,9 @@ Unzip the file, copy the `pg_tileserv` binary wherever you wish, or use it in pl
 
 ### B. Run container
 
-There is a docker image available on DockerHub.
+A Docker image is available on DockerHub:
 
-* [Docker](https://hub.docker.com/repository/docker/pramsey/pg_tileserv)
+* [Docker](https://hub.docker.com/r/pramsey/pg_tileserv/)
 
 When you run the container, provide the database connection information in the `DATABASE_URL` environment variable and map the default service port (7800).
 
@@ -106,7 +106,7 @@ Configuration files in other locations will be ignored when using the `--config`
 ./pg_tileserv --config /opt/pg_tileserv/pg_tileserv.toml
 ```
 
-The default settings will suit most uses, and the program autodetects values like the server name.
+The default settings will suit most uses, and the program autodetects values such as the server name.
 
 ```toml
 # Database connection

@@ -15,7 +15,7 @@ Start with a blank user. A blank user will have no select privileges on tables i
 
 ## Tables and Views
 
-If your tables and views are in a schema other than public, you will have to also grant "usage" on that schema to your user.
+If your tables and views are in a schema other than `public`, you will have to also grant "usage" on that schema to your user.
 ```sql
 GRANT USAGE ON SCHEMA myschema TO tileserver;
 ```
