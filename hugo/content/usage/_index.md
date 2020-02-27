@@ -2,7 +2,7 @@
 title: "Usage"
 date:
 draft: false
-weight: 35
+weight: 25
 ---
 
 The purpose of `pg_tileserv` is to turn a set of spatial records into tiles, on the fly. The tile server reads two different layers of data:
