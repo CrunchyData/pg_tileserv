@@ -16,7 +16,7 @@
 # DbTimeout = 10
 
 # Look to read html templates from this directory
-# AssetsPath = "./assets"
+AssetsPath = "/usr/share/pg_tileserv/assets"
 
 # Accept connections on this subnet (default accepts on all)
 # HttpHost = "0.0.0.0"
