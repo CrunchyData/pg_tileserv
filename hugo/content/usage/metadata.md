@@ -18,8 +18,6 @@ After start-up, you can connect to the server and explore the published tables a
 
 * http://localhost:7800
 
-Remember that the server name is autodected, and can also be [configured](/installation#configuration-file/).
-
 Click the "preview" link of any of the layer entries to see a web map view of the layer. The "json" link provides a direct link to the JSON metadata for that layer.
 
 ## Layers List
