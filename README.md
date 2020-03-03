@@ -1,4 +1,4 @@
-<img width="180" height="180" src="./hugo/static/crunchy-spatial-logo.png?raw=true" />
+<a href="https://access.crunchydata.com/documentation/pg_tileserv/latest/"><img width="180" height="180" src="./hugo/static/crunchy-spatial-logo.png?raw=true" /></a>
 
 # pg_tileserv
 
@@ -7,6 +7,8 @@
 [travisbuild]: https://api.travis-ci.org/CrunchyData/pg_tileserv.svg?branch=master "Travis CI"
 
 A [PostGIS](https://postgis.net/)-only tile server in [Go](https://golang.org/). Strip away all the other requirements, it just has to take in HTTP tile requests and form and execute SQL.  In a sincere act of flattery, the API looks a lot like that of the [Martin](https://github.com/urbica/martin) tile server.
+
+* https://access.crunchydata.com/documentation/pg_tileserv/latest/
 
 # Setup and Installation
 
