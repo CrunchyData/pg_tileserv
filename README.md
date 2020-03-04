@@ -49,7 +49,8 @@ To get more information about what is going on behind the scenes, run with the `
 The configuration file will be automatically read from the following locations, if it exists:
 
 * In the system configuration directory, at `/etc/pg_tileserv.toml`
-* Relative to the directory from which the program is run, `./pg_tileserv.toml`
+* Relative to the directory from which the program is run, `./config/pg_tileserv.toml`
+* In a root volume at `/config/pg_tileserv.toml`
 
 If you want to pass a path directly to the configuration file, use the `--config` commandline parameter to pass in a pull path to configuration file. When using the `--config` option, configuration files in other locations will be ignored.
 
@@ -67,7 +68,7 @@ DbPoolMaxConnLifeTime = "1h"
 # Hold no more than this number of connections in the database pool
 DbPoolMaxConns = 4
 # Look to read html templates from this directory
-AssetsPath = "./assets"
+AssetsPath = "/usr/share/pg_tileserv/assets"
 # Accept connections on this subnet (default accepts on all)
 HttpHost = "0.0.0.0"
 # Accept connections on this port
