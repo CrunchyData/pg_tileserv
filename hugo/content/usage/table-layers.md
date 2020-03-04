@@ -78,9 +78,10 @@ In the detail JSON, each layer declares information relevant to setting up a map
 * `bounds` and `center` give the extent and middle of the data collection, in geographic coordinates. The order of coordinates in bounds is [minlon, minlat, maxlon, maxlat]. The order of coordinates in center is [lon, lat].
 * `tileurl` is the standard substitution pattern URL consumed by map clients like [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/api/) and [OpenLayers](https://openlayers.org).
 * `properties` is a list of columns in the table, with their data types and descriptions. The `description` field can be set using the `COMMENT` SQL command, for example:
-  ```sql
-  COMMENT ON COLUMN ne_50m_admin_0_countries.name_long IS 'This is the long name';
-  ```
+
+```sql
+COMMENT ON COLUMN ne_50m_admin_0_countries.name_long IS 'This is the long name';
+```
 
 ## Table Tile Request Customization
 

@@ -31,5 +31,5 @@ if [ "$TARGET" = "docker" ]; then
 # windows, linux, osx pre-deploy
 elif [ "$TARGET" != "docs" ]; then
     mkdir upload
-    zip -r upload/pg_tileserv_${TAG}_${TARGET}.zip ${BINARY} README.md LICENSE.md assets/
+    zip -r upload/pg_tileserv_${TAG}_${TARGET}.zip ${BINARY} README.md LICENSE.md assets/ config/
 fi
