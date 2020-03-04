@@ -98,9 +98,9 @@ func main() {
 		viper.SetConfigFile(*flagConfigFile)
 	} else {
 		viper.SetConfigName(programName)
-		viper.AddConfigPath("/etc/")
-		viper.AddConfigPath("/usr/local/etc/")
-		viper.AddConfigPath(".")
+		viper.AddConfigPath("./config")
+		viper.AddConfigPath("/config")
+		viper.AddConfigPath("/etc")
 	}
 
 	if err := viper.ReadInConfig(); err != nil {

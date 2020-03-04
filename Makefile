@@ -38,7 +38,7 @@ install: $(PROGRAM) docs
 	$(MKDIR) -p $(DESTDIR)/usr/share/$(PROGRAM)
 	$(MKDIR) -p $(DESTDIR)/etc
 	$(CP) $(PROGRAM) $(DESTDIR)/usr/bin/$(PROGRAM)
-	$(CP) example.toml $(DESTDIR)/etc/$(PROGRAM).toml
+	$(CP) config/$(PROGRAM).toml.example $(DESTDIR)/etc/$(PROGRAM).toml
 	$(CP) -r assets $(DESTDIR)/usr/share/$(PROGRAM)/assets
 	$(CP) -r docs $(DESTDIR)/usr/share/$(PROGRAM)/docs
 
