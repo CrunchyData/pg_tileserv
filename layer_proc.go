@@ -174,7 +174,7 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 			coalesce(d.description, '') AS description,
 			coalesce(p.proargnames, ARRAY[]::text[]) AS argnames,
 			coalesce(string_to_array(oidvectortypes(p.proargtypes),', '), ARRAY[]::text[]) AS argtypes,
-			coalesce(string_to_array(regexp_replace(pg_get_expr(p.proargdefaults, 0::Oid), '''([a-zA-Z0-9_]+)''::text', '\1'),', '), ARRAY[]::text[]) AS argdefaults
+			coalesce(string_to_array(regexp_replace(pg_get_expr(p.proargdefaults, 0::Oid), '''([a-zA-Z0-9_\-\.]+)''::[a-z1-9]+', '\1'),', ', 'g'), ARRAY[]::text[]) AS argdefaults
 		FROM pg_proc p
 		JOIN pg_namespace n ON (p.pronamespace = n.oid)
 		LEFT JOIN pg_description d ON (p.oid = d.objoid)
