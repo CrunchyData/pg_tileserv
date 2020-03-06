@@ -10,3 +10,6 @@ shp2pgsql -s 26910 -D -I water-hydrants.shp hydrants | psql postgisftw
 
 Create the `public.hydrants_delaunay()` function in your database by loading the [openlayer-function-click.sql](openlayer-function-click.sql) file.
 
+Restart your `pg_tileserv` or at least reload the front page to force a refresh of the catalogue information.
+
+Load the [openlayer-function-click.html](openlayer-function-click.html) file in your browser.
