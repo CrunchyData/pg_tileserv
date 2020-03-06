@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenLayers Vector Tiles</title>
+
+  <!-- CSS/JS for OpenLayers map  -->
+  <link rel="stylesheet" href="https://openlayers.org/en/v6.1.1/css/ol.css" type="text/css">
+  <script src="https://openlayers.org/en/v6.1.1/build/ol.js"></script>
+
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    html, body, #map {
+      height: 100%;
+      width: 100%;
+      font-family: sans-serif;
+    }
+    #meta {
+      background-color: rgba(255,255,255,0.75);
+      color: black;
+      z-index: 2;
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      padding: 10px 20px;
+      margin: 0;
+    }
+    #info {
+        font-size: 80%;
+        z-index: 1;
+        opacity: 0;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: rgba(255,255,255,0.75);
+        color: black;
+        border: 0;
+        transition: opacity 100ms ease-in;
+      }
+      #infotext {
+        margin: 10px;
+        padding: 10px;
+      }
+    .ol-zoom {
+     left: unset;
+     right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="meta">
+  <h2>Dynamic Hydrant Voronoi Tiles</h2>
+  <p>Click on the map and generate the voronoi polygons
+  <br/> for the nearest fire hydrants to your click.</p>
+  <p><strong>Last click:</strong> <span id="clicklon">0</span>, <span id="clicklat">0</span></p>
+  <p><strong>N nearest:</strong>
+  <input type="radio" id="count20" name="count" value="20" checked="checked" onchange='changeCount()'>
+  <label for="20">20</label>
+  <input type="radio" id="count40" name="count" value="40" onchange='changeCount()'>
+  <label for="40">40</label>
+  <input type="radio" id="count80" name="count" value="80" onchange='changeCount()'>
+  <label for="80">80</label>
+  <input type="radio" id="count160" name="count" value="160" onchange='changeCount()'>
+  <label for="160">160</label>
+  </p>
+</div>
+
+<div id="map"></div>
+<div id="info"><div id="infotext"></div>
+
+<script>
+
+var vectorServer = "http://localhost:7800/";
+var delaunayFunction = "public.hydrants_delaunay";
+var hydrantTable = "public.hydrants";
+var startPoint = [-123.129, 49.253];
+var startZoom = 15;
+
+function polyStyle(pFill, pStroke) {
+  return new ol.style.Style({
+    stroke: new ol.style.Stroke({
+      width: 1,
+      color: pStroke
+    }),
+    fill: new ol.style.Fill({
+      color: pFill
+    })
+  });
+}
+
+function setAlpha(clr, alpha) {
+  var a = ol.color.asArray(clr);
+  a[3] = alpha;
+  return a;
+}
+
+var hydrantStyleCache = {};
+var hydrantStyle = function(f) {
+  var alpha = 0.8;
+  var zoom = map.getView().getZoom();
+  var clr = f.get('color');
+  clr = (clr && clr.length ? clr.toLowerCase() : 'grey');
+  var k = zoom + clr;
+  var s = hydrantStyleCache[k];
+  if (!s) {
+    s = new ol.style.Style({
+        image: new ol.style.RegularShape({
+          fill: new ol.style.Fill({color: setAlpha(clr, alpha)}),
+          stroke: new ol.style.Stroke({color: setAlpha('grey', alpha), width: 1}),
+          points: 4,
+          radius: 2 + (zoom < 12 ? 0 : (zoom - 12)),
+          angle: 0
+        })
+      });
+    hydrantStyleCache[k] = s;
+  }
+  return s;
+}
+
+function vectorSource(vUrl) {
+  return new ol.source.VectorTile({
+      format: new ol.format.MVT(),
+      url: vUrl
+  })
+}
+
+function vectorLayer(vSource, vStyle) {
+  return new ol.layer.VectorTile({
+    source: vSource,
+    style: vStyle
+  });
+}
+
+
+function setClick(lonlat) {
+  document.getElementById("clicklon").innerHTML = Number(lonlat[0]).toFixed(4);
+  document.getElementById("clicklat").innerHTML = Number(lonlat[1]).toFixed(4);
+}
+
+function getClick() {
+  var c = [];
+  c[0] = document.getElementById("clicklon").innerHTML;
+  c[1] = document.getElementById("clicklat").innerHTML;
+  return c;
+}
+
+function refreshDelaunay(lonlat, count) {
+  var url = delaunayUrl(lonlat[0], lonlat[1], count);
+  console.log(url);
+  delaunaySource.setUrl(url);
+  delaunaySource.refresh();
+  map.render();
+}
+
+function getCount() {
+  var radios = document.getElementsByName('count');
+  for (var i = 0, length = radios.length; i < length; i++) {
+    if (radios[i].checked) {
+      return radios[i].value;
+    }
+  }
+}
+
+function changeCount() {
+  var lonlat = getClick();
+  refreshDelaunay(lonlat, getCount());
+}
+
+function delaunayUrl(x, y, count) {
+  var url = vectorServer + delaunayFunction + "/{z}/{x}/{y}.pbf"
+  if (count < 1) { return url; }
+  var data = "?lon=" + x
+           + "&lat=" + y
+           + "&count=" + count;
+  return url + encodeURI(data);
+}
+
+var delaunayStyle = polyStyle("#aaaaaa33", "#888888aa");
+var delaunaySource = vectorSource(delaunayUrl(0,0,0));
+var delaunayLayer = vectorLayer(delaunaySource, delaunayStyle);
+var hydrantProperties = "?properties=street,street_numb,id,subsystem,code,covwaterhyd,distancefro,color"
+var hydrantUrl = vectorServer + hydrantTable + "/{z}/{x}/{y}.pbf" + hydrantProperties;
+
+var baseLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    url: "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png"
+  })
+});
+
+var map = new ol.Map({
+  target: 'map',
+  view: new ol.View({
+    center: ol.proj.transform(startPoint, 'EPSG:4326', 'EPSG:3857'),
+    zoom: startZoom
+  }),
+  layers: [
+    baseLayer,
+    delaunayLayer,
+    vectorLayer(vectorSource(hydrantUrl), hydrantStyle)
+    ]
+});
+
+map.on('singleclick', function(evt) {
+  var lonlat = ol.proj.transform(evt.coordinate, 'EPSG:3857', 'EPSG:4326');
+  setClick(lonlat);
+  refreshDelaunay(lonlat, getCount());
+});
+
+var info = document.getElementById('info');
+map.on('pointermove', function showInfo(event) {
+  var features = map.getFeaturesAtPixel(event.pixel);
+  if (features.length == 0) {
+    infotext.innerHTML = '';
+    info.style.opacity = 0;
+    return;
+  }
+  var properties = features[0].getProperties();
+  infotext.innerHTML = props2html(properties);
+  info.style.opacity = 1;
+});
+
+function props2html(props) {
+  var html = "<table>";
+  for (var item in props) {
+    html += "<tr>";
+    html += "<th>" + item + "</th>";
+    html += "<td>" + props[item] + "</td>";
+    html += "</tr>";
+  }
+  html += "</table>";
+  return html;
+}
+
+
+setClick(startPoint);
+
+
+</script>
+
+</body>
+</html>
