@@ -40,7 +40,7 @@ type FunctionDetailJson struct {
 	Schema      string             `json:"schema"`
 	Name        string             `json:"name"`
 	Description string             `json:"description,omitempty"`
-	Arguments   []FunctionArgument `json:"arguments,omitempty"`
+	Arguments   []FunctionArgument `json:"arguments"`
 	MinZoom     int                `json:"minzoom"`
 	MaxZoom     int                `json:"maxzoom"`
 	TileUrl     string             `json:"tileurl"`
@@ -143,6 +143,7 @@ func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDeta
 		Schema:      lyr.Schema,
 		Name:        lyr.Function,
 		Description: lyr.Description,
+		Arguments:   make([]FunctionArgument, 0),
 		MinZoom:     viper.GetInt("DefaultMinZoom"),
 		MaxZoom:     viper.GetInt("DefaultMaxZoom"),
 	}
