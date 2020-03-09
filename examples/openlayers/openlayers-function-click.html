@@ -76,30 +76,28 @@
 
 <script>
 
+// Some globals for this map
 var vectorServer = "http://localhost:7800/";
-var voronoiFunction = "public.hydrants_voronoi";
-var hydrantTable = "public.hydrants";
 var startPoint = [-123.129, 49.253];
 var startZoom = 15;
 
-function polyStyle(pFill, pStroke) {
-  return new ol.style.Style({
-    stroke: new ol.style.Stroke({
-      width: 1,
-      color: pStroke
-    }),
-    fill: new ol.style.Fill({
-      color: pFill
-    })
-  });
-}
 
+// Utility function to add an alpha channel
+// to an existing color (like 'red')
 function setAlpha(clr, alpha) {
   var a = ol.color.asArray(clr);
   a[3] = alpha;
   return a;
 }
 
+// Dynamic style for hydrant points.
+// Depending on the value of the 'color' property returned
+// by the server, the points are assigned a different color.
+// Depending on the current zoom value of the map, the
+// point makers are given a different size.
+// To avoid performance issues of repeatedly generating
+// the same style, combinations of zoom/color are cached
+// in a dictionary.
 var hydrantStyleCache = {};
 var hydrantStyle = function(f) {
   var alpha = 0.8;
@@ -137,12 +135,13 @@ function vectorLayer(vSource, vStyle) {
   });
 }
 
-
+// Given a click point, update the UI to show the coordinates.
 function setClick(lonlat) {
   document.getElementById("clicklon").innerHTML = Number(lonlat[0]).toFixed(4);
   document.getElementById("clicklat").innerHTML = Number(lonlat[1]).toFixed(4);
 }
 
+// Read the last click point from the UI form.
 function getClick() {
   var c = [];
   c[0] = document.getElementById("clicklon").innerHTML;
@@ -150,14 +149,7 @@ function getClick() {
   return c;
 }
 
-function refreshVoronoi(lonlat, count) {
-  var url = voronoiUrl(lonlat[0], lonlat[1], count);
-  console.log(url);
-  voronoiSource.setUrl(url);
-  voronoiSource.refresh();
-  map.render();
-}
-
+// Read the count value from the count radiobuttons
 function getCount() {
   var radios = document.getElementsByName('count');
   for (var i = 0, length = radios.length; i < length; i++) {
@@ -167,11 +159,35 @@ function getCount() {
   }
 }
 
+// ----------------------------------------------------------------------
+// On a click or form change event, we need to
+// change the vector tile source for the dynamic
+// voronoi layer.
+// The URL change reflects the new click/count
+// values. The vector layer they needs to be
+// forced to reload, and the map to re-rerender.
+// ----------------------------------------------------------------------
+function refreshVoronoi(lonlat, count) {
+  var url = voronoiUrl(lonlat[0], lonlat[1], count);
+  console.log(url);
+  voronoiSource.setUrl(url);
+  voronoiSource.refresh();
+  map.render();
+}
+
+// Refresh the map on a change to the radiobutton
 function changeCount() {
   var lonlat = getClick();
   refreshVoronoi(lonlat, getCount());
 }
 
+// ----------------------------------------------------------------------
+// Set up a layer for the voronoi diagram.
+// The voronoi vector layer will read from a function
+// source in the tile server, with standard XYZ URL
+// plus client-side parameters (lon/lat/count)
+// ----------------------------------------------------------------------
+var voronoiFunction = "public.hydrants_voronoi";
 function voronoiUrl(x, y, count) {
   var url = vectorServer + voronoiFunction + "/{z}/{x}/{y}.pbf"
   if (count < 1) { return url; }
@@ -180,13 +196,32 @@ function voronoiUrl(x, y, count) {
            + "&count=" + count;
   return url + encodeURI(data);
 }
-
-var voronoiStyle = polyStyle("#aaaaaa33", "#888888aa");
 var voronoiSource = vectorSource(voronoiUrl(0,0,0));
+var voronoiStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({
+      width: 1,
+      color: '#888888aa'
+    }),
+    fill: new ol.style.Fill({
+      color: '#aaaaaa33'
+    })
+  });
 var voronoiLayer = vectorLayer(voronoiSource, voronoiStyle);
+
+// ----------------------------------------------------------------------
+// Set up a layer for the hydrant table.
+// The hydrant table has a lot of columns, but we
+// only transfer a few of them to the client.
+// ----------------------------------------------------------------------
+var hydrantTable = "public.hydrants";
 var hydrantProperties = "?properties=street,street_numb,id,subsystem,code,covwaterhyd,distancefro,color"
 var hydrantUrl = vectorServer + hydrantTable + "/{z}/{x}/{y}.pbf" + hydrantProperties;
+var hydrantLayer = vectorLayer(vectorSource(hydrantUrl), hydrantStyle);
 
+// ----------------------------------------------------------------------
+// Compose the map interface
+// The basemap layer, with the roads, etc, etc.
+// ----------------------------------------------------------------------
 var baseLayer = new ol.layer.Tile({
   source: new ol.source.XYZ({
     url: "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png"
@@ -202,7 +237,7 @@ var map = new ol.Map({
   layers: [
     baseLayer,
     voronoiLayer,
-    vectorLayer(vectorSource(hydrantUrl), hydrantStyle)
+    hydrantLayer
     ]
 });
 
@@ -212,6 +247,9 @@ map.on('singleclick', function(evt) {
   refreshVoronoi(lonlat, getCount());
 });
 
+// ----------------------------------------------------------------------
+// Mouse hover action for all vector features on the map
+// ----------------------------------------------------------------------
 var info = document.getElementById('info');
 map.on('pointermove', function showInfo(event) {
   var features = map.getFeaturesAtPixel(event.pixel);
@@ -225,6 +263,7 @@ map.on('pointermove', function showInfo(event) {
   info.style.opacity = 1;
 });
 
+// Convert properties to HTML table
 function props2html(props) {
   var html = "<table>";
   for (var item in props) {
@@ -238,6 +277,7 @@ function props2html(props) {
 }
 
 
+// Initialize map and display at startpoint.
 setClick(startPoint);
 
 
