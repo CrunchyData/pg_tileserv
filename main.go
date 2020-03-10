@@ -165,6 +165,11 @@ func requestPreview(w http.ResponseWriter, r *http.Request) error {
 		"key":   lyrId,
 	}).Tracef("requestPreview: %s", lyrId)
 
+	// reqProperties := r.FormValue("properties")
+	// reqLimit := r.FormValue("limit")
+	// reqResolution := r.FormValue("resolution")
+	// reqBuffer := r.FormValue("buffer")
+
 	// Refresh the layers list
 	if err := LoadLayers(); err != nil {
 		return err
