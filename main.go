@@ -66,11 +66,6 @@ func init() {
 
 func main() {
 
-	// Read environment configuration first
-	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
-		viper.Set("DbConnection", dbUrl)
-	}
-
 	// Read the commandline
 	flagDebugOn := getopt.BoolLong("debug", 'd', "log debugging information")
 	flagConfigFile := getopt.StringLong("config", 'c', "", "full path to config file", "config.toml")
@@ -103,6 +98,18 @@ func main() {
 		viper.AddConfigPath("/etc")
 	}
 
+	// Report our status
+	log.Infof("%s %s", programName, programVersion)
+	log.Info("Run with --help parameter for commandline options")
+
+	// Read environment configuration first
+	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
+		viper.Set("DbConnection", dbUrl)
+		log.Info("Read connection string from DATABASE_URL")
+	}
+
+	log.Infof("Listening on: %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
+
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			log.Debugf("viper.ConfigFileNotFoundError: %s", err)
@@ -116,13 +123,12 @@ func main() {
 	} else {
 		// Really would like to log location of filename we found...
 		// 	log.Infof("Reading configuration file %s", cf)
-		log.Info("ReadInConfig returned no err")
+		if cf := viper.ConfigFileUsed(); cf != "" {
+			log.Infof("Config file: %s", cf)
+		} else {
+			log.Info("Config file: none found, using defaults")
+		}
 	}
-
-	// Report our status
-	log.Infof("%s %s\n", programName, programVersion)
-	log.Info("Run with --help parameter for commandline options\n")
-	log.Infof("Listening on: %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
 
 	// Load the global layer list right away
 	// Also connects to database
