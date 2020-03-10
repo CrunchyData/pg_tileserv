@@ -88,6 +88,8 @@ MaxFeaturesPerTile = 10000
 DefaultMinZoom = 0
 # Advertise this maximum zoom level
 DefaultMaxZoom = 22
+# Allow any page to consume these tiles
+CORSOrigins = *
 # Output extra logging information?
 Debug = false
 ```

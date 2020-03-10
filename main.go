@@ -62,6 +62,7 @@ func init() {
 	viper.SetDefault("DbPoolMaxConnLifeTime", "1h")
 	viper.SetDefault("DbPoolMaxConns", 4)
 	viper.SetDefault("DbTimeout", 10)
+	viper.SetDefault("CORSOrigins", "*")
 }
 
 func main() {
@@ -105,10 +106,10 @@ func main() {
 	// Read environment configuration first
 	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
 		viper.Set("DbConnection", dbUrl)
-		log.Info("Read connection string from DATABASE_URL")
+		log.Info("Using database connection info from environment variable DATABASE_URL")
 	}
 
-	log.Infof("Listening on: %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
+	log.Infof("Serving at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -124,7 +125,7 @@ func main() {
 		// Really would like to log location of filename we found...
 		// 	log.Infof("Reading configuration file %s", cf)
 		if cf := viper.ConfigFileUsed(); cf != "" {
-			log.Infof("Config file: %s", cf)
+			log.Infof("Using config file: %s", cf)
 		} else {
 			log.Info("Config file: none found, using defaults")
 		}
@@ -369,7 +370,8 @@ func handleRequests() {
 	r := TileRouter()
 
 	// Allow CORS from anywhere
-	corsOpt := handlers.AllowedOrigins([]string{"*"})
+	corsOrigins := viper.GetString("CORSOrigins")
+	corsOpt := handlers.AllowedOrigins([]string{corsOrigins})
 
 	// Set a writeTimeout for the http server.
 	// This value is the application's DbTimeout config setting plus a
