@@ -36,7 +36,7 @@ func makeTile(vars map[string]string) (Tile, error) {
 }
 
 func (tile *Tile) Width() float64 {
-	worldTileSize := int(1) << tile.Zoom
+	worldTileSize := int(1) << uint(tile.Zoom)
 	return worldMercWidth / float64(worldTileSize)
 }
 
