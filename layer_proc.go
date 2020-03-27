@@ -40,7 +40,7 @@ type FunctionDetailJson struct {
 	Schema      string             `json:"schema"`
 	Name        string             `json:"name"`
 	Description string             `json:"description,omitempty"`
-	Arguments   []FunctionArgument `json:"arguments,omitempty"`
+	Arguments   []FunctionArgument `json:"arguments"`
 	MinZoom     int                `json:"minzoom"`
 	MaxZoom     int                `json:"maxzoom"`
 	TileUrl     string             `json:"tileurl"`
@@ -143,6 +143,7 @@ func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDeta
 		Schema:      lyr.Schema,
 		Name:        lyr.Function,
 		Description: lyr.Description,
+		Arguments:   make([]FunctionArgument, 0),
 		MinZoom:     viper.GetInt("DefaultMinZoom"),
 		MaxZoom:     viper.GetInt("DefaultMaxZoom"),
 	}
@@ -222,7 +223,7 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 				order:   i - 3,
 				Name:    argnames[i],
 				Type:    argtypes[i],
-				Default: argdef,
+				Default: parseArgDefault(argdef),
 			}
 		}
 
@@ -242,4 +243,28 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 	}
 	rows.Close()
 	return layerFunctions, nil
+}
+
+// parseArgDefault parses a default for an argument to a function-based
+// tile layer. Most default arguments don't require special handling,
+// but some are returned quoted with a type; e.g. a negative integer
+// is `'-123'::integer` instead of `-123`.
+func parseArgDefault(arg string) string {
+	// check for a value in the value::type format
+	sp := strings.Split(arg, "::")
+
+	if len(sp) > 1 {
+		// join back all but the last split parts.
+		// this allows for the edge case of a double colon :: in text strings
+		val := strings.Join(sp[:len(sp)-1], "::")
+
+		// check for a value wrapped in single quotes and return the value
+		// with them stripped.  If the value is not wrapped in quotes,
+		// fall back to returning the value as is.
+		if val[0] == '\'' && val[len(val)-1] == '\'' {
+			return val[1 : len(val)-1]
+		}
+	}
+
+	return arg
 }
