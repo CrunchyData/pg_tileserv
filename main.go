@@ -30,7 +30,8 @@ import (
 const programName string = "pg_tileserv"
 
 // programVersion is the version string we use
-const programVersion string = "0.1"
+//const programVersion string = "0.1"
+var programVersion string
 
 // worldMercWidth is the width of the Web Mercator plane
 const worldMercWidth float64 = 40075016.6855784
