@@ -83,3 +83,77 @@ func renderSqlTemplate(name string, tmpl string, data interface{}) (string, erro
 	log.Debug(sql)
 	return sql, nil
 }
+
+type FilterData struct {
+	FieldName string `json:"fieldName"`
+	FieldType int    `json:"fieldType"`
+	Operator  int    `json:"operator"`
+	Arg0      string `json:"arg0,omitempty"`
+	Arg1      string `json:"arg1,omitempty"`
+}
+
+const (
+	Numeric = 0
+	String  = 1
+	Bool    = 2
+)
+
+const (
+	Equal    = 0
+	Less     = 1
+	Greater  = 2
+	Like     = 3
+	NotEqual = 4
+	Between  = 5
+	NotNull  = 6
+	Null     = 7
+)
+
+func getWrappedPlaceholder(fieldType int, arg string) string {
+	if fieldType == String {
+		return "'" + arg + "'"
+	} else {
+		return arg
+	}
+}
+
+func toOneWhereClause(a FilterData) string {
+	switch a.Operator {
+	case NotNull:
+		return "t.\"" + a.FieldName + "\"" + " IS NOT NULL"
+	case Null:
+		return "t.\"" + a.FieldName + "\"" + " IS NULL"
+	case Between:
+
+		if a.FieldType != Numeric {
+			// Skip wrong
+			return ""
+		}
+
+		return fmt.Sprintf("t.\"%s\" BETWEEN %s AND %s", a.FieldName,
+			getWrappedPlaceholder(a.FieldType, a.Arg0), getWrappedPlaceholder(a.FieldType, a.Arg1))
+	case Like:
+		if a.FieldType != String {
+			// Skip wrong
+			return ""
+		}
+		return "t.\"" + a.FieldName + "\"" + " LIKE '%" + a.Arg0 + "%'"
+	case NotEqual:
+		return "t.\"" + a.FieldName + "\"" + " <> " + getWrappedPlaceholder(a.FieldType, a.Arg0)
+	case Greater, Less:
+		if a.FieldType != Numeric {
+			// Skip wrong
+			return ""
+		}
+		operator := " "
+		if a.Operator == Less {
+			operator = "<"
+		} else {
+			operator = ">"
+		}
+		return "t.\"" + a.FieldName + "\"" + " " + operator + " " + getWrappedPlaceholder(a.FieldType, a.Arg0)
+	default:
+		return "t.\"" + a.FieldName + "\"" + " = " + getWrappedPlaceholder(a.FieldType, a.Arg0)
+	}
+	return ""
+}
