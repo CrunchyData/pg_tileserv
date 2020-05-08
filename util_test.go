@@ -117,8 +117,8 @@ func Test_toOneWhereClause(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := toOneWhereClause(tt.args.a); got != tt.want {
-				t.Errorf("toOneWhereClause() = %v, want %v", got, tt.want)
+			if got := convertFilterDataToSql(tt.args.a); got != tt.want {
+				t.Errorf("convertFilterDataToSql() = %v, want %v", got, tt.want)
 			}
 		})
 	}

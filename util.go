@@ -84,6 +84,7 @@ func renderSqlTemplate(name string, tmpl string, data interface{}) (string, erro
 	return sql, nil
 }
 
+// Structure for filter row in postgres (incomes via http api)
 type FilterData struct {
 	FieldName string `json:"fieldName"`
 	FieldType int    `json:"fieldType"`
@@ -92,12 +93,14 @@ type FilterData struct {
 	Arg1      string `json:"arg1,omitempty"`
 }
 
+// Field types
 const (
 	Numeric = 0
 	String  = 1
 	Bool    = 2
 )
 
+// Operators
 const (
 	Equal    = 0
 	Less     = 1
@@ -109,6 +112,7 @@ const (
 	Null     = 7
 )
 
+// wrap placeholder if field type is string
 func getWrappedPlaceholder(fieldType int, arg string) string {
 	if fieldType == String {
 		return "'" + arg + "'"
@@ -117,7 +121,7 @@ func getWrappedPlaceholder(fieldType int, arg string) string {
 	}
 }
 
-func toOneWhereClause(a FilterData) string {
+func convertFilterDataToSql(a FilterData) string {
 	switch a.Operator {
 	case NotNull:
 		return "t.\"" + a.FieldName + "\"" + " IS NOT NULL"
@@ -126,7 +130,7 @@ func toOneWhereClause(a FilterData) string {
 	case Between:
 
 		if a.FieldType != Numeric {
-			// Skip wrong
+			// Skip wrong - only for numeric type is available
 			return ""
 		}
 
@@ -134,7 +138,7 @@ func toOneWhereClause(a FilterData) string {
 			getWrappedPlaceholder(a.FieldType, a.Arg0), getWrappedPlaceholder(a.FieldType, a.Arg1))
 	case Like:
 		if a.FieldType != String {
-			// Skip wrong
+			// Skip wrong - only for string type is available
 			return ""
 		}
 		return "t.\"" + a.FieldName + "\"" + " LIKE '%" + a.Arg0 + "%'"
@@ -142,7 +146,7 @@ func toOneWhereClause(a FilterData) string {
 		return "t.\"" + a.FieldName + "\"" + " <> " + getWrappedPlaceholder(a.FieldType, a.Arg0)
 	case Greater, Less:
 		if a.FieldType != Numeric {
-			// Skip wrong
+			// Skip wrong - only for numeric type is available
 			return ""
 		}
 		operator := " "

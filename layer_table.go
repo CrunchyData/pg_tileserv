@@ -356,7 +356,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	data := make([]FilterData, 0)
 	json.Unmarshal([]byte(qp.Filters), &data)
 	for _, a := range data {
-		clause := toOneWhereClause(a)
+		clause := convertFilterDataToSql(a)
 		if clause != "" {
 			whereClauseParts = append(whereClauseParts, clause)
 		}
