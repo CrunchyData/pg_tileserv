@@ -1,13 +1,12 @@
 #!/bin/bash
 
-PROJECT=pg_featureserv
-DOCKER_REPO=pramsey/$PROJECT
+DOCKER_REPO=pramsey/pg_tileserv
 
 
 if [ "$TARGET" = "windows" ]; then
-    BINARY=$PROJECT.exe
+    BINARY=pg_tileserv.exe
 else
-    BINARY=$PROJECT
+    BINARY=pg_tileserv
 fi
 
 if [ "$TRAVIS_TAG" = "" ]; then
