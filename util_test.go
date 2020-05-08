@@ -20,7 +20,7 @@ func Test_toOneWhereClause(t *testing.T) {
 					Arg0:      "12",
 					Arg1:      "",
 				}},
-			"\"f1\" = 12",
+			"t.\"f1\" = 12",
 		},
 		{"less numeric",
 			args{
@@ -31,7 +31,7 @@ func Test_toOneWhereClause(t *testing.T) {
 					Arg0:      "12",
 					Arg1:      "",
 				}},
-			"\"f1\" < 12",
+			"t.\"f1\" < 12",
 		},
 		{"greater numeric",
 			args{
@@ -42,7 +42,7 @@ func Test_toOneWhereClause(t *testing.T) {
 					Arg0:      "12",
 					Arg1:      "",
 				}},
-			"\"f1\" > 12",
+			"t.\"f1\" > 12",
 		},
 		{"between numeric",
 			args{
@@ -53,7 +53,7 @@ func Test_toOneWhereClause(t *testing.T) {
 					Arg0:      "12",
 					Arg1:      "13",
 				}},
-			"\"f1\" BETWEEN 12 AND 13",
+			"t.\"f1\" BETWEEN 12 AND 13",
 		},
 		{"between string",
 			args{
@@ -74,7 +74,7 @@ func Test_toOneWhereClause(t *testing.T) {
 					Operator:  Like,
 					Arg0:      "12",
 				}},
-			"\"f1\" LIKE '%12%'",
+			"t.\"f1\" LIKE '%12%'",
 		},
 		{"no equal bool",
 			args{
@@ -84,7 +84,7 @@ func Test_toOneWhereClause(t *testing.T) {
 					Operator:  NotEqual,
 					Arg0:      "true",
 				}},
-			"\"f1\" <> true",
+			"t.\"f1\" <> true",
 		},
 		{"like bool",
 			args{
@@ -103,7 +103,7 @@ func Test_toOneWhereClause(t *testing.T) {
 					FieldType: String,
 					Operator:  NotNull,
 				}},
-			"\"f1\" IS NOT NULL",
+			"t.\"f1\" IS NOT NULL",
 		},
 		{"is null",
 			args{
@@ -112,7 +112,7 @@ func Test_toOneWhereClause(t *testing.T) {
 					FieldType: String,
 					Operator:  Null,
 				}},
-			"\"f1\" IS NULL",
+			"t.\"f1\" IS NULL",
 		},
 	}
 	for _, tt := range tests {
