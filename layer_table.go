@@ -108,6 +108,7 @@ type queryParameters struct {
 	Properties []string
 	Resolution int
 	Buffer     int
+	Filters    string
 }
 
 // getRequestIntParameter ignores missing parameters and non-integer parameters,
@@ -121,6 +122,14 @@ func getQueryIntParameter(q url.Values, param string) int {
 		}
 	}
 	return -1
+}
+
+func getQueryStringParameter(q url.Values, param string, defaultValue string) string {
+	sParam, ok := q[param]
+	if ok {
+		return sParam[0]
+	}
+	return defaultValue
 }
 
 // getRequestPropertiesParameter compares the properties in the request
@@ -171,6 +180,7 @@ func (lyr *LayerTable) getQueryParameters(q url.Values) queryParameters {
 		Resolution: getQueryIntParameter(q, "resolution"),
 		Buffer:     getQueryIntParameter(q, "buffer"),
 		Properties: lyr.getQueryPropertiesParameter(q),
+		Filters:    getQueryStringParameter(q, "filter", "{}"),
 	}
 	if rp.Limit < 0 {
 		rp.Limit = viper.GetInt("MaxFeaturesPerTile")
@@ -332,12 +342,24 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 		Resolution     int
 		Buffer         int
 		Properties     string
+		WhereClause    string
 		MvtParams      string
 		Limit          string
 		Schema         string
 		Table          string
 		GeometryColumn string
 		Srid           int
+	}
+
+	whereClauseParts := make([]string, 0)
+	whereClauseParts = append(whereClauseParts, "1=1")
+	data := make([]FilterData, 0)
+	json.Unmarshal([]byte(qp.Filters), &data)
+	for _, a := range data {
+		clause := toOneWhereClause(a)
+		if clause != "" {
+			whereClauseParts = append(whereClauseParts, clause)
+		}
 	}
 
 	// need both the exact tile boundary for clipping and an
@@ -372,6 +394,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 		Resolution:     qp.Resolution,
 		Buffer:         qp.Buffer,
 		Properties:     strings.Join(attrNames, ", "),
+		WhereClause:    strings.Join(whereClauseParts, " AND "),
 		MvtParams:      strings.Join(mvtParams, ", "),
 		Schema:         lyr.Schema,
 		Table:          lyr.Table,
@@ -400,6 +423,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 			) bounds
 		WHERE ST_Intersects(t."{{ .GeometryColumn }}",
 							ST_Transform(bounds.geom_query, {{ .Srid }}))
+				AND {{ .WhereClause }}
 		{{ .Limit }}
 	) mvtgeom
 	`
