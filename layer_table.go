@@ -383,10 +383,12 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 		sp.Limit = fmt.Sprintf("LIMIT %d", qp.Limit)
 	}
 
+	// TODO: Remove ST_Force2D when fixes to line clipping are common
+	// in GEOS. See https://trac.osgeo.org/postgis/ticket/4690
 	tmplSql := `
 	SELECT ST_AsMVT(mvtgeom, {{ .MvtParams }}) FROM (
 		SELECT ST_AsMVTGeom(
-			ST_Transform(t."{{ .GeometryColumn }}", 3857),
+			ST_Transform(ST_Force2D(t."{{ .GeometryColumn }}"), 3857),
 			bounds.geom_clip,
 			{{ .Resolution }},
 			{{ .Buffer }}
