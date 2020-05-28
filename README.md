@@ -159,6 +159,43 @@ To restrict access to a certain set of tables, use database security principles:
 * Only grant `EXECUTE` to that role for functions you want to publish
 * Connect `pg_tileserv` to the database using that role
 
+
+If your table contains a geometry column that appears valid, but it is not
+available within `pg_tileserv`, you may need to specifically set a geometry
+type or SRID.
+
+To determine if a table is compatible, make sure that it is returned by the
+following query:
+
+```sql
+SELECT
+	nspname AS SCHEMA,
+	relname AS TABLE,
+	attname AS geometry_column,
+	postgis_typmod_srid (atttypmod) AS srid,
+	postgis_typmod_type (atttypmod) AS geometry_type
+FROM
+	pg_class c
+	JOIN pg_namespace n ON (c.relnamespace = n.oid)
+	JOIN pg_attribute a ON (a.attrelid = c.oid)
+	JOIN pg_type t ON (a.atttypid = t.oid)
+WHERE
+	relkind IN('r', 'v')
+	AND typname = 'geometry'
+    AND postgis_typmod_srid (atttypmod) != 0
+	AND relname = '<mytable>';
+```
+
+If not, make sure that the geometry column has a valid SRID defined in the table
+metadata. You may need to specifically assign a geometry type, especially if the
+table was created using a `SELECT` query from another geometry table.
+
+For example, to set the geometry as a `Point` type:
+
+```SQL
+ALTER TABLE mytable ALTER COLUMN geom TYPE geometry (Point, 4326);
+```
+
 ### Table Layer Detail JSON
 
 In the detail JSON, each layer declares information relevant to setting up a map interface for the layer.
