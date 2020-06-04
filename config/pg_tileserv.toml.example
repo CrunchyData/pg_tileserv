@@ -23,6 +23,12 @@ AssetsPath = "/usr/share/pg_tileserv/assets"
 
 # Accept connections on this port
 # HttpPort = 7800
+# HttpsPort = 7801
+
+# HTTPS configuration - TLS server certificate full chain
+# TlsServerCertificateFile = ""
+# TlsServerPrivateKeyFile = ""
+
 
 # Advertise URLs relative to this server name
 # default is to look this up from incoming request headers
