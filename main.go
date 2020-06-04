@@ -376,8 +376,8 @@ func handleRequests() {
 	r := TileRouter()
 
 	// Allow CORS from anywhere
-	corsOrigins := viper.GetString("CORSOrigins")
-	corsOpt := handlers.AllowedOrigins([]string{corsOrigins})
+	corsOrigins := viper.GetStringSlice("CORSOrigins")
+	corsOpt := handlers.AllowedOrigins(corsOrigins)
 
 	// Set a writeTimeout for the http server.
 	// This value is the application's DbTimeout config setting plus a
