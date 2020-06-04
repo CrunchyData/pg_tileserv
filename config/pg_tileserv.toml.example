@@ -43,8 +43,9 @@ AssetsPath = "/usr/share/pg_tileserv/assets"
 # Advertise this maximum zoom level
 # DefaultMaxZoom = 22
 
-# Allow any page to consume these tiles
-# CORSOrigins = *
+# Allow any page to consume these tiles (default)
+# To specify domain(s) that should be CORS-allowed, express them as ["https://mydomain.com", "https://anotherdomain.org"]
+# CORSOrigins = ["*"]
 
 # Output extra logging information?
 # Debug = false
