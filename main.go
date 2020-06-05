@@ -115,7 +115,7 @@ func main() {
 	}
 
 	log.Infof("Serving HTTP  at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
-	log.Infof("Serving HTTPS at %s:%d", viper.GetString("HttpsHost"), viper.GetInt("HttpsPort"))
+	log.Infof("Serving HTTPS at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpsPort"))
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
