@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -51,6 +52,9 @@ func init() {
 	viper.SetDefault("DbConnection", "sslmode=disable")
 	viper.SetDefault("HttpHost", "0.0.0.0")
 	viper.SetDefault("HttpPort", 7800)
+	viper.SetDefault("HttpsPort", 7801)
+	viper.SetDefault("TlsServerCertificateFile", "")
+	viper.SetDefault("TlsServerPrivateKeyFile", "")
 	viper.SetDefault("UrlBase", "")
 	viper.SetDefault("DefaultResolution", 4096)
 	viper.SetDefault("DefaultBuffer", 256)
@@ -110,7 +114,8 @@ func main() {
 		log.Info("Using database connection info from environment variable DATABASE_URL")
 	}
 
-	log.Infof("Serving at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
+	log.Infof("Serving HTTP  at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
+	log.Infof("Serving HTTPS at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpsPort"))
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -405,6 +410,36 @@ func handleRequests() {
 		}
 	}()
 
+	tlsServerCert := viper.GetString("TlsServerCertificateFile")
+	tlsServerPrivKey := viper.GetString("TlsServerPrivateKeyFile")
+	var stls *http.Server
+	doServeTLS := false
+	// Attempt to use HTTPS only if server certificate and private key files specified
+	if tlsServerCert != "" && tlsServerPrivKey != "" {
+		doServeTLS = true
+	}
+
+	if doServeTLS {
+		stls = &http.Server{
+			ReadTimeout:  1 * time.Second,
+			WriteTimeout: writeTimeout,
+			Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpsPort")),
+			Handler:      handlers.CompressHandler(handlers.CORS(corsOpt)(r)),
+			TLSConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12, // Secure TLS versions only
+			},
+		}
+
+		// start https service
+		go func() {
+			// ListenAndServe returns http.ErrServerClosed when the server receives
+			// a call to Shutdown(). Other errors are unexpected.
+			if err := stls.ListenAndServeTLS(tlsServerCert, tlsServerPrivKey); err != nil && err != http.ErrServerClosed {
+				log.Fatal(err)
+			}
+		}()
+	}
+
 	// wait here for interrupt signal
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
@@ -416,6 +451,9 @@ func handleRequests() {
 	ctx, cancel := context.WithTimeout(context.Background(), writeTimeout)
 	defer cancel()
 	s.Shutdown(ctx)
+	if doServeTLS {
+		stls.Shutdown(ctx)
+	}
 
 	if globalDb != nil {
 		log.Debugln("Closing DB connections")
