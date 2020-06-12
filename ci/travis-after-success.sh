@@ -19,7 +19,7 @@ fi
 if [ "$TARGET" = "docker" ]; then
     DATE=`date +%Y%m%d`
     make build-docker
-    docker tag $DOCKER_REPO:$TAG $DOCKER_REPO:$DATE
+    docker tag $DOCKER_REPO:$TAG $DOCKER_REPO:$DATE 
     if [ "$TRAVIS_BRANCH" = "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
         docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
         docker push $DOCKER_REPO

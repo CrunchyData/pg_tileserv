@@ -1,5 +1,5 @@
 
-APPVERSION := CI
+APPVERSION := latest
 GOVERSION := 1.13
 PROGRAM := pg_tileserv
 CONTAINER := pramsey/$(PROGRAM)
