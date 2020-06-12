@@ -307,7 +307,7 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 
 	// Failed to get estimate? Get the exact bounds.
 	if xmin.Status == pgtype.Null {
-		warning := fmt.Sprintf("Estimated extent query failed, ANALYZE %s.%s", lyr.Schema, lyr.Table)
+		warning := fmt.Sprintf("Estimated extent query failed, run 'ANALYZE %s.%s'", lyr.Schema, lyr.Table)
 		log.WithFields(log.Fields{
 			"event": "request",
 			"topic": "detail",
