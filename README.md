@@ -180,7 +180,7 @@ FROM
 	JOIN pg_attribute a ON (a.attrelid = c.oid)
 	JOIN pg_type t ON (a.atttypid = t.oid)
 WHERE
-	relkind IN('r', 'v')
+	relkind IN('r', 'v', 'm')
 	AND typname = 'geometry'
     AND postgis_typmod_srid (atttypmod) != 0
 	AND relname = '<mytable>';
