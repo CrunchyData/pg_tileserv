@@ -249,14 +249,15 @@ In the detail JSON, each layer declares information relevant to setting up a map
   ```
 
 ### Feature id
-The [vector tile specification](https://github.com/mapbox/vector-tile-spec/tree/master/2.1#42-features) allows for an *optional* id field for each feature. The id must be unique within the parent layer. 
+The [vector tile specification](https://github.com/mapbox/vector-tile-spec/tree/master/2.1#42-features) allows for an *optional* `id` field for each feature. The id must be unique within the parent layer.
 
-By default, ``pg_tileserv`` will generate this id field if:
+By default, `pg_tileserv` will generate this id field if:
 
+* the PostGIS version is >= 3.0 and;
 * the table has a primary key and;
 * the primary key field is one of ``'int2', 'int4', 'int8'``
 
-
+A feature id will not be generaeted for Views since these do not have a primary key. In cases where an `id` is not generated, depending on the map renderer, it may be possible to generate a feature id at runtime. See https://docs.mapbox.com/mapbox-gl-js/style-spec/sources/#vector-promoteId for an example in Mapbox GL JS.
 
 ### Table Tile Request Customization
 
