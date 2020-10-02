@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"time"
+	"io/ioutil"
 
 	// REST routing
 	"github.com/gorilla/handlers"
@@ -25,6 +26,9 @@ import (
 	// Configuration
 	"github.com/pborman/getopt/v2"
 	"github.com/spf13/viper"
+
+	// Template functions
+	"github.com/Masterminds/sprig/v3"
 )
 
 // programName is the name string we use
@@ -218,7 +222,15 @@ func requestListHtml(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	jsonLayers := GetJsonLayers(r)
-	t, err := template.ParseFiles(fmt.Sprintf("%s/index.html", viper.GetString("AssetsPath")))
+
+	content, err := ioutil.ReadFile(fmt.Sprintf("%s/index.html", viper.GetString("AssetsPath")))
+
+	if err != nil {
+		return err
+	}
+
+	t, err := template.New("index").Funcs(sprig.FuncMap()).Parse(string(content))
+
 	if err != nil {
 		return err
 	}
