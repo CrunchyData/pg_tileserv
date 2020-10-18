@@ -120,9 +120,6 @@ func main() {
 		log.Info("Using database connection info from environment variable DATABASE_URL")
 	}
 
-	log.Infof("Serving HTTP  at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
-	log.Infof("Serving HTTPS at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpsPort"))
-
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			log.Debugf("viper.ConfigFileNotFoundError: %s", err)
@@ -142,6 +139,12 @@ func main() {
 			log.Info("Config file: none found, using defaults")
 		}
 	}
+
+	basePath := viper.GetString("BasePath")
+	log.Infof("Serving HTTP  at %s/", formatBaseURL(fmt.Sprintf("http://%s:%d",
+		viper.GetString("HttpHost"), viper.GetInt("HttpPort")), basePath))
+	log.Infof("Serving HTTPS at %s/", formatBaseURL(fmt.Sprintf("http://%s:%d",
+		viper.GetString("HttpHost"), viper.GetInt("HttpsPort")), basePath))
 
 	// Load the global layer list right away
 	// Also connects to database
