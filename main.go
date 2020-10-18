@@ -7,11 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
-	"io/ioutil"
 
 	// REST routing
 	"github.com/gorilla/handlers"
@@ -72,6 +73,7 @@ func init() {
 	viper.SetDefault("DbPoolMaxConns", 4)
 	viper.SetDefault("DbTimeout", 10)
 	viper.SetDefault("CORSOrigins", "*")
+	viper.SetDefault("BasePath", "/")
 }
 
 func main() {
@@ -374,7 +376,14 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func TileRouter() *mux.Router {
 	// creates a new instance of a mux router
-	r := mux.NewRouter().StrictSlash(true)
+	r := mux.NewRouter().
+		StrictSlash(true).
+		PathPrefix(
+			"/" +
+				strings.TrimLeft(viper.GetString("BasePath"), "/"),
+		).
+		Subrouter()
+
 	// Front page and layer list
 	r.Handle("/", tileAppHandler(requestListHtml))
 	r.Handle("/index.html", tileAppHandler(requestListHtml))
