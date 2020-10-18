@@ -18,7 +18,7 @@ func Test_formatBaseURL(t *testing.T) {
 			"http://example.com/tiles",
 		},
 		{
-			[]string{"http://example.com/", "/tiles"},
+			[]string{"http://example.com/", "/tiles/"},
 			"http://example.com/tiles",
 		},
 		{
