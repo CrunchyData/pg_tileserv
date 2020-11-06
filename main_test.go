@@ -48,3 +48,25 @@ func TestDBNoTables(t *testing.T) {
 	json_expect := "{}"
 	assert.Equal(t, json_expect, json_result, "empty json response is expected")
 }
+
+// TestBasePath sets an alternate base path to check that handlers are
+// mounted at the specified path
+func TestBasePath(t *testing.T) {
+
+	if !dbsetup {
+		t.Skip("DB integration test suite setup failed, skipping")
+	}
+
+	// paths to check
+	paths := []string{"/test", "/test/"}
+
+	for _, path := range paths {
+		viper.Set("BasePath", path)
+		r := TileRouter()
+		request, _ := http.NewRequest("GET", "/test/index.json", nil)
+		response := httptest.NewRecorder()
+		r.ServeHTTP(response, request)
+		assert.Equal(t, 200, response.Code, "OK response is expected")
+	}
+
+}
