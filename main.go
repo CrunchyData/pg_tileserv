@@ -114,9 +114,6 @@ func main() {
 		log.Info("Using database connection info from environment variable DATABASE_URL")
 	}
 
-	log.Infof("Serving HTTP  at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
-	log.Infof("Serving HTTPS at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpsPort"))
-
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			log.Debugf("viper.ConfigFileNotFoundError: %s", err)
@@ -360,6 +357,17 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 /******************************************************************************/
 
+
+func SetSchemeHTTPS(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        r.URL.Scheme = "https"
+        next.ServeHTTP(w, r)
+    })
+}
+
+
+/******************************************************************************/
+
 func TileRouter() *mux.Router {
 	// creates a new instance of a mux router
 	r := mux.NewRouter().StrictSlash(true)
@@ -419,12 +427,15 @@ func handleRequests() {
 		doServeTLS = true
 	}
 
+	log.Infof("Serving HTTP  at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort"))
+
 	if doServeTLS {
+		log.Infof("Serving HTTPS at %s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpsPort"))
 		stls = &http.Server{
 			ReadTimeout:  1 * time.Second,
 			WriteTimeout: writeTimeout,
 			Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpsPort")),
-			Handler:      handlers.CompressHandler(handlers.CORS(corsOpt)(r)),
+			Handler:      SetSchemeHTTPS(handlers.CompressHandler(handlers.CORS(corsOpt)(r))),
 			TLSConfig: &tls.Config{
 				MinVersion: tls.VersionTLS12, // Secure TLS versions only
 			},

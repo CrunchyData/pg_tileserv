@@ -10,7 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/theckman/httpforwarded"
-	// log "github.com/sirupsen/logrus"
 )
 
 // serverURLBase returns the server URL
@@ -26,8 +25,13 @@ func serverURLBase(r *http.Request) string {
 	if configUrl != "" {
 		return configUrl
 	}
+
 	// Preferred scheme
 	ps := "http"
+	if r.URL.Scheme != "" {
+		ps = r.URL.Scheme
+	}
+
 	// Preferred host:port
 	ph := strings.TrimRight(r.Host, "/")
 
