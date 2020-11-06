@@ -48,7 +48,7 @@ func (tile *Tile) IsValid() bool {
 	if tile.Zoom > 32 || tile.Zoom < 0 {
 		return false
 	}
-	worldTileSize := int(1) << tile.Zoom
+	worldTileSize := int(1) << uint(tile.Zoom)
 	if tile.X < 0 || tile.X >= worldTileSize ||
 		tile.Y < 0 || tile.Y >= worldTileSize {
 		return false
