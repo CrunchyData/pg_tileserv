@@ -425,7 +425,7 @@ func handleRequests() {
 	// handle timeouts on its own, canceling outstanding database queries and
 	// returning an error to the client, while keeping the http.Server
 	// WriteTimeout as a fallback.
-	writeTimeout := (viper.GetDuration("DbTimeout") + 5) * time.Second
+	writeTimeout := (time.Duration(viper.GetInt("DbTimeout") + 5)) * time.Second
 
 	// more "production friendly" timeouts
 	// https://blog.simon-frey.eu/go-as-in-golang-standard-net-http-config-will-break-your-production/#You_should_at_least_do_this_The_easy_path
