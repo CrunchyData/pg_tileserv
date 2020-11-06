@@ -16,7 +16,7 @@
 # DbTimeout = 10
 
 # Look to read html templates from this directory
-AssetsPath = "/usr/share/pg_tileserv/assets"
+# AssetsPath = "/usr/share/pg_tileserv/assets"
 
 # Accept connections on this subnet (default accepts on all)
 # HttpHost = "0.0.0.0"
@@ -34,6 +34,10 @@ AssetsPath = "/usr/share/pg_tileserv/assets"
 # Advertise URLs relative to this server name
 # default is to look this up from incoming request headers
 # UrlBase = "http://localhost/"
+
+# Optional path to add to the service base URL
+# If set, all routes will be prefixed with this path
+# BasePath = "/"
 
 # Resolution to quantize vector tiles to
 # DefaultResolution = 4096

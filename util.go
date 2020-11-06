@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"text/template"
 
@@ -12,14 +13,44 @@ import (
 	"github.com/theckman/httpforwarded"
 )
 
-// serverURLBase returns the server URL
+// formatBaseURL takes a hostname (baseHost) and a base path
+// and joins them.  Both are parsed as URLs (using net/url) and
+// then joined to ensure a properly formed URL.
+// net/url does not support parsing hostnames without a scheme
+// (e.g. example.com is invalid; http://example.com is valid).
+// serverURLHost ensures a scheme is added.
+func formatBaseURL(baseHost string, basePath string) string {
+	urlHost, err := url.Parse(baseHost)
+	if err != nil {
+		log.Fatal(err)
+	}
+	urlPath, err := url.Parse(basePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return strings.TrimRight(urlHost.ResolveReference(urlPath).String(), "/")
+}
+
+// serverURLBase returns the base server URL
 // that the client used to access this service.
+// All pg_tileserv routes are mounted relative to
+// this URL (including path, if specified by the
+// BasePath config option)
+func serverURLBase(r *http.Request) string {
+	baseHost := serverURLHost(r)
+	basePath := viper.GetString("BasePath")
+
+	return formatBaseURL(baseHost, basePath)
+}
+
+// serverURLHost returns the host (and scheme)
+// for this service.
 // In the case of access via a proxy service, if
 // the standard headers are set, we return that
-// URL base. If necessary the automatic calculation
+// hostname. If necessary the automatic calculation
 // can be over-ridden by setting the "UrlBase"
-// configuration option
-func serverURLBase(r *http.Request) string {
+// configuration option.
+func serverURLHost(r *http.Request) string {
 	// Use configuration file settings if we have them
 	configUrl := viper.GetString("UrlBase")
 	if configUrl != "" {

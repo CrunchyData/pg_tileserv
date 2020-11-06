@@ -7,9 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	// REST routing
@@ -25,6 +27,9 @@ import (
 	// Configuration
 	"github.com/pborman/getopt/v2"
 	"github.com/spf13/viper"
+
+	// Template functions
+	"github.com/Masterminds/sprig/v3"
 )
 
 // programName is the name string we use
@@ -68,6 +73,7 @@ func init() {
 	viper.SetDefault("DbPoolMaxConns", 4)
 	viper.SetDefault("DbTimeout", 10)
 	viper.SetDefault("CORSOrigins", "*")
+	viper.SetDefault("BasePath", "/")
 }
 
 func main() {
@@ -133,6 +139,12 @@ func main() {
 			log.Info("Config file: none found, using defaults")
 		}
 	}
+
+	basePath := viper.GetString("BasePath")
+	log.Infof("Serving HTTP  at %s/", formatBaseURL(fmt.Sprintf("http://%s:%d",
+		viper.GetString("HttpHost"), viper.GetInt("HttpPort")), basePath))
+	log.Infof("Serving HTTPS at %s/", formatBaseURL(fmt.Sprintf("http://%s:%d",
+		viper.GetString("HttpHost"), viper.GetInt("HttpsPort")), basePath))
 
 	// Load the global layer list right away
 	// Also connects to database
@@ -215,7 +227,15 @@ func requestListHtml(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	jsonLayers := GetJsonLayers(r)
-	t, err := template.ParseFiles(fmt.Sprintf("%s/index.html", viper.GetString("AssetsPath")))
+
+	content, err := ioutil.ReadFile(fmt.Sprintf("%s/index.html", viper.GetString("AssetsPath")))
+
+	if err != nil {
+		return err
+	}
+
+	t, err := template.New("index").Funcs(sprig.FuncMap()).Parse(string(content))
+
 	if err != nil {
 		return err
 	}
@@ -370,7 +390,14 @@ func SetSchemeHTTPS(next http.Handler) http.Handler {
 
 func TileRouter() *mux.Router {
 	// creates a new instance of a mux router
-	r := mux.NewRouter().StrictSlash(true)
+	r := mux.NewRouter().
+		StrictSlash(true).
+		PathPrefix(
+			"/" +
+				strings.TrimLeft(viper.GetString("BasePath"), "/"),
+		).
+		Subrouter()
+
 	// Front page and layer list
 	r.Handle("/", tileAppHandler(requestListHtml))
 	r.Handle("/index.html", tileAppHandler(requestListHtml))
