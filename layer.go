@@ -60,6 +60,10 @@ func GetLayer(lyrId string) (Layer, error) {
 }
 
 func LoadLayers() error {
+	_, errBnd := getServerBounds()
+	if errBnd != nil {
+		return errBnd
+	}
 	tableLayers, errTl := GetTableLayers()
 	if errTl != nil {
 		return errTl

@@ -264,6 +264,7 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 		}
 	}
 
+	bounds.SRID = 4326
 	bounds.Xmin = xmin.Float
 	bounds.Ymin = ymin.Float
 	bounds.Xmax = xmax.Float
@@ -316,6 +317,7 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 		return lyr.GetBoundsExact()
 	}
 
+	bounds.SRID = 4326
 	bounds.Xmin = xmin.Float
 	bounds.Ymin = ymin.Float
 	bounds.Xmax = xmax.Float
@@ -342,8 +344,8 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 
 	// need both the exact tile boundary for clipping and an
 	// expanded version for querying
-	tileBounds := tile.Bounds()
-	queryBounds := tile.Bounds()
+	tileBounds := tile.Bounds
+	queryBounds := tile.Bounds
 	queryBounds.Expand(tile.Width() * float64(qp.Buffer) / float64(qp.Resolution))
 	tileSql := tileBounds.SQL()
 	tileQuerySql := queryBounds.SQL()

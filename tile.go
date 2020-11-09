@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -10,10 +11,11 @@ import (
 // pyramid, usually referenced in a URL path
 // of the form "Zoom/X/Y.Ext"
 type Tile struct {
-	Zoom int    `json:"zoom"`
-	X    int    `json:"x"`
-	Y    int    `json:"y"`
-	Ext  string `json:"ext"`
+	Zoom   int    `json:"zoom"`
+	X      int    `json:"x"`
+	Y      int    `json:"y"`
+	Ext    string `json:"ext"`
+	Bounds Bounds `json:"bounds"`
 }
 
 // makeTile uses the map populated by the mux.Router
@@ -32,12 +34,12 @@ func makeTile(vars map[string]string) (Tile, error) {
 	if !tile.IsValid() {
 		return tile, errors.New(fmt.Sprintf("invalid tile address %s", tile.String()))
 	}
-	return tile, nil
+	e := tile.CalculateBounds()
+	return tile, e
 }
 
 func (tile *Tile) Width() float64 {
-	worldTileSize := int(1) << uint(tile.Zoom)
-	return worldMercWidth / float64(worldTileSize)
+	return math.Abs(tile.Bounds.Xmax - tile.Bounds.Xmin)
 }
 
 // IsValid tests that the tile contains
@@ -56,24 +58,27 @@ func (tile *Tile) IsValid() bool {
 	return true
 }
 
-// Bounds calculates the web mercator bounds that
+// CalculateBounds calculates the cartesian bounds that
 // correspond to this tile
-func (tile *Tile) Bounds() Bounds {
-	worldMercMax := worldMercWidth / 2
-	worldMercMin := -1 * worldMercMax
+func (tile *Tile) CalculateBounds() (e error) {
+	serverBounds, e := getServerBounds()
+	if e != nil {
+		return e
+	}
 
-	// Tile width in EPSG:3857
-	tileMercSize := tile.Width()
+	worldWidthInTiles := float64(int(1) << uint(tile.Zoom))
+	tileWidth := math.Abs(serverBounds.Xmax-serverBounds.Xmin) / worldWidthInTiles
 
 	// Calculate geographic bounds from tile coordinates
 	// XYZ tile coordinates are in "image space" so origin is
 	// top-left, not bottom right
-	xmin := worldMercMin + (tileMercSize * float64(tile.X))
-	xmax := worldMercMin + (tileMercSize * float64(tile.X+1))
-	ymin := worldMercMax - (tileMercSize * float64(tile.Y+1))
-	ymax := worldMercMax - (tileMercSize * float64(tile.Y))
+	xmin := serverBounds.Xmin + (tileWidth * float64(tile.X))
+	xmax := serverBounds.Xmin + (tileWidth * float64(tile.X+1))
+	ymin := serverBounds.Ymax - (tileWidth * float64(tile.Y+1))
+	ymax := serverBounds.Ymax - (tileWidth * float64(tile.Y))
+	tile.Bounds = Bounds{serverBounds.SRID, xmin, ymin, xmax, ymax}
 
-	return Bounds{xmin, ymin, xmax, ymax}
+	return nil
 }
 
 // String returns a path-like representation of the Tile

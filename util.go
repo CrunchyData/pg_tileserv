@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -117,4 +119,43 @@ func renderSqlTemplate(name string, tmpl string, data interface{}) (string, erro
 	sql := string(buf.Bytes())
 	log.Debug(sql)
 	return sql, nil
+}
+
+/******************************************************************************/
+
+func getServerBounds() (b *Bounds, e error) {
+
+	if globalServerBounds != nil {
+		return globalServerBounds, nil
+	}
+
+	srid := viper.GetInt("CoordinateSystem.SRID")
+	xmin := viper.GetFloat64("CoordinateSystem.Xmin")
+	ymin := viper.GetFloat64("CoordinateSystem.Ymin")
+	xmax := viper.GetFloat64("CoordinateSystem.Xmax")
+	ymax := viper.GetFloat64("CoordinateSystem.Ymax")
+
+	log.Infof("Using CoordinateSystem.SRID %d with bounds [%g, %g, %g, %g]",
+		srid, xmin, ymin, xmax, ymax)
+
+	width := xmax - xmin
+	height := ymax - ymin
+	size := math.Min(width, height)
+
+	/* Not square enough to just adjust */
+	if math.Abs(width-height) > 0.01*size {
+		return nil, errors.New("CoordinateSystem bounds must be square")
+	}
+
+	cx := xmin + width/2
+	cy := ymin + height/2
+
+	/* Perfectly square bounds please */
+	xmin = cx - size/2
+	ymin = cy - size/2
+	xmax = cx + size/2
+	ymax = cy + size/2
+
+	globalServerBounds = &Bounds{srid, xmin, ymin, xmax, ymax}
+	return globalServerBounds, nil
 }
