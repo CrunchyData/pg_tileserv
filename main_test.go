@@ -18,7 +18,8 @@ var dbsetup = false
 
 func TestMain(m *testing.M) {
 
-	viper.Set("DbConnection", os.Getenv("TEST_DATABASE_URL"))
+	// viper.Set("DbConnection", os.Getenv("TEST_DATABASE_URL"))
+	viper.Set("DbConnection", os.Getenv("dbname=ts"))
 	db, err := DbConnect()
 	if err != nil {
 		os.Exit(1)

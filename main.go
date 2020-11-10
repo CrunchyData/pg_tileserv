@@ -39,9 +39,6 @@ const programName string = "pg_tileserv"
 //const programVersion string = "0.1"
 var programVersion string
 
-// worldMercWidth is the width of the Web Mercator plane
-const worldMercWidth float64 = 40075016.6855784
-
 // globalDb is a global database connection pointer
 var globalDb *pgxpool.Pool = nil
 
@@ -50,6 +47,10 @@ var globalVersions map[string]string = nil
 
 // globalPostGISVersion is numeric, sortable postgis version (3.2.1 => 3002001)
 var globalPostGISVersion int = 0
+
+// serverBounds are the coordinate reference system and extent from
+// which tiles are constructed
+var globalServerBounds *Bounds = nil
 
 /******************************************************************************/
 
@@ -72,8 +73,15 @@ func init() {
 	viper.SetDefault("DbPoolMaxConnLifeTime", "1h")
 	viper.SetDefault("DbPoolMaxConns", 4)
 	viper.SetDefault("DbTimeout", 10)
-	viper.SetDefault("CORSOrigins", "*")
+	viper.SetDefault("CORSOrigins", []string{"*"})
 	viper.SetDefault("BasePath", "/")
+
+	viper.SetDefault("CoordinateSystem.SRID", 3857)
+	// XMin, YMin, XMax, YMax, must be square
+	viper.SetDefault("CoordinateSystem.Xmin", -20037508.3427892)
+	viper.SetDefault("CoordinateSystem.Ymin", -20037508.3427892)
+	viper.SetDefault("CoordinateSystem.Xmax", 20037508.3427892)
+	viper.SetDefault("CoordinateSystem.Ymax", 20037508.3427892)
 }
 
 func main() {
@@ -377,14 +385,12 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 /******************************************************************************/
 
-
 func SetSchemeHTTPS(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        r.URL.Scheme = "https"
-        next.ServeHTTP(w, r)
-    })
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Scheme = "https"
+		next.ServeHTTP(w, r)
+	})
 }
-
 
 /******************************************************************************/
 

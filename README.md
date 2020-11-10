@@ -65,16 +65,37 @@ In general the defaults are fine, and the program autodetects things like the se
 ```toml
 # Database connection
 DbConnection = "user=you host=localhost dbname=yourdb"
+
 # Close pooled connections after this interval
 DbPoolMaxConnLifeTime = "1h"
+
 # Hold no more than this number of connections in the database pool
 DbPoolMaxConns = 4
+
 # Look to read html templates from this directory
 AssetsPath = "/usr/share/pg_tileserv/assets"
+
 # Accept connections on this subnet (default accepts on all)
 HttpHost = "0.0.0.0"
+
 # Accept connections on this port
 HttpPort = 7800
+HttpsPort = 7801
+
+# HTTPS configuration
+# TLS server certificate full chain and private key
+# If you do not specify both, the TLS server will not be started
+TlsServerCertificateFile = "server.crt"
+TlsServerPrivateKeyFile = "server.key"
+```
+
+For SSL support, you will need both a server private key and an authority certificate. For testing purposes you can generate a self-signed key/cert pair using `openssl`:
+
+```bash
+openssl req  -nodes -new -x509  -keyout server.key -out server.crt
+```
+
+```toml
 # Advertise URLs relative to this server name
 # default is to looke this up from incoming request headers
 # UrlBase = "http://yourserver.com/"
@@ -88,11 +109,22 @@ MaxFeaturesPerTile = 10000
 DefaultMinZoom = 0
 # Advertise this maximum zoom level
 DefaultMaxZoom = 22
+
 # Allow any page to consume these tiles
 CORSOrigins = ["*"]
+
 # Output extra logging information?
 Debug = false
+
+# Default CS is Web Mercator (EPSG:3857)
+[CoordinateSystem]
+SRID = 3857
+Xmin = -20037508.3427892
+Ymin = -20037508.3427892
+Xmax = 20037508.3427892
+Ymax = 20037508.3427892
 ```
+You can use the **CoordinateSystem** block to output files in a system other than the default [Web Mercator](http://epsg.io/3857) projection. In order to view a map with multiple layers in a non-standard projection, you will have to ensure that all layers share the same projection, otherwise the layers will not line up.
 
 # Operation
 
