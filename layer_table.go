@@ -331,6 +331,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	type sqlParameters struct {
 		TileSql        string
 		QuerySql       string
+		TileSrid       int
 		Resolution     int
 		Buffer         int
 		Properties     string
@@ -349,6 +350,10 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	queryBounds.Expand(tile.Width() * float64(qp.Buffer) / float64(qp.Resolution))
 	tileSql := tileBounds.SQL()
 	tileQuerySql := queryBounds.SQL()
+
+	// SRID of the tile we are going to generate, which might be different
+	// from the layer SRID in the database
+	tileSrid := tile.Bounds.SRID
 
 	// preserve case and special characters in column names
 	// of SQL query by double quoting names
@@ -371,6 +376,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	sp := sqlParameters{
 		TileSql:        tileSql,
 		QuerySql:       tileQuerySql,
+		TileSrid:       tileSrid,
 		Resolution:     qp.Resolution,
 		Buffer:         qp.Buffer,
 		Properties:     strings.Join(attrNames, ", "),
@@ -390,7 +396,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	tmplSql := `
 	SELECT ST_AsMVT(mvtgeom, {{ .MvtParams }}) FROM (
 		SELECT ST_AsMVTGeom(
-			ST_Transform(ST_Force2D(t."{{ .GeometryColumn }}"), 3857),
+			ST_Transform(ST_Force2D(t."{{ .GeometryColumn }}"), {{ .TileSrid }}),
 			bounds.geom_clip,
 			{{ .Resolution }},
 			{{ .Buffer }}
