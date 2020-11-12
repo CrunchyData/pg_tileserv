@@ -113,7 +113,16 @@ type queryParameters struct {
 // getRequestIntParameter ignores missing parameters and non-integer parameters,
 // returning the "unknown integer" value for this case, which is -1
 func getQueryIntParameter(q url.Values, param string) int {
-	sParam, ok := q[param]
+	ok := false
+	sParam := make([]string, 0)
+
+	for k, v := range q {
+		if strings.EqualFold(k, param) {
+			sParam = v
+			ok = true
+			break
+		}
+	}
 	if ok {
 		iParam, err := strconv.Atoi(sParam[0])
 		if err == nil {
@@ -128,7 +137,17 @@ func getQueryIntParameter(q url.Values, param string) int {
 // just those that occur in both, or a slice of all table properties
 // if there is not query parameter, or no matches
 func (lyr *LayerTable) getQueryPropertiesParameter(q url.Values) []string {
-	sAtts, haveProperties := q["properties"]
+	sAtts := make([]string, 0)
+	haveProperties := false
+
+	for k, v := range q {
+		if strings.EqualFold(k, "properties") {
+			sAtts = v
+			haveProperties = true
+			break
+		}
+	}
+
 	lyrAtts := (*lyr).Properties
 	queryAtts := make([]string, 0, len(lyrAtts))
 	haveIdColumn := false
