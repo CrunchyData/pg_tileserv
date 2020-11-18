@@ -21,7 +21,7 @@ Builds of the latest code:
 * [Linux](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_linux.zip)
 * [Windows](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_windows.zip)
 * [OSX](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_osx.zip)
-* [Docker](https://hub.docker.com/repository/docker/pramsey/pg_tileserv)
+* [Docker](https://hub.docker.com/r/pramsey/pg_tileserv)
 
 ## Basic Operation
 
