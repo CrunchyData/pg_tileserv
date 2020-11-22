@@ -1,7 +1,9 @@
+# Lightweight Alpine-based pg_tileserv Docker Image
+# Author: Just van den Broecke
 FROM golang:1.15.5-alpine3.12
 
 # Build ARGS
-ARG VERSION="latest"
+ARG VERSION="latest-alpine-3.12"
 
 RUN mkdir /app
 ADD . /app/
@@ -32,14 +34,13 @@ EXPOSE 7800
 ENTRYPOINT ["/app/pg_tileserv"]
 CMD []
 
-
-# To build
-# docker build --build-arg VERSION=1.0.2 -t justb4/pg_tileserv:1.0.2 .
-
-# To run
-# docker run -dt -e DATABASE_URL=postgres://user:pass@host/dbname -p 7800:7800 justb4/pg_tileserv:1.0.2
-
-# test
-
-# Load the Natural Earth [Admin 0](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/) boundaries into a table named `public.ne_50m_admin_0_countries` as the examples will attempt to load vectors from http://localhost:7800/public.ne_50m_admin_0_countries/{z}/{x}/{y}.pbf
-# shp2pgsql -D -s 4326 ne_50m_admin_0_countries.shp | psql -d mvt
+# To build and run specific version
+#
+# export VERSION="latest-alpine-3.12"
+# docker build --build-arg VERSION=${VERSION} -t pramsey/pg_tileserv:${VERSION} -f Dockerfile.alpine
+#
+# Best is to use another PostGIS Docker Container whoose host is reachable from the pg_tileserv Container.
+# docker run -dt -e DATABASE_URL=postgres://user:pass@host/dbname -p 7800:7800 pramsey/pg_tileserv:${VERSION}
+#
+# See a full example using Docker Compose under examples/docker
+#

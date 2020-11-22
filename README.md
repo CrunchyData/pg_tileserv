@@ -39,6 +39,11 @@ SET DATABASE_URL=postgresql://username:password@host/dbname
 pg_tileserv.exe
 ```
 
+### Docker
+
+Use [Dockerfile.alpine](Dockerfile.alpine) to build a lightweight (18MB expanded) Docker Image.
+See also [a full example with Docker Compose](examples/docker/README.md).
+
 ## Trouble-shooting
 
 To get more information about what is going on behind the scenes, run with the `--debug` commandline parameter on, or turn on debugging in the configuration file:
