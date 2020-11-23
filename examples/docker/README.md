@@ -29,36 +29,41 @@ You will see an regular error message like *"Unable to get layer 'public.ne_50m_
 
 ## Load Data
 
-Load Natural Earth [Admin 0 Countries](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/) boundaries into a table
-named `public.ne_50m_admin_0_countries`. Download and unzip `ne_50m_admin_0_countries.zip`.
+We load all sample data using `shp2pgsql` and `psql` within the PostGIS Docker Container, so we don't need to install any Postgres/PostGIS tools locally.
+The `./data` dir is mapped into the Docker Container at `/work`.
 
-Our Postgres/PostGIS container is running on external port 5433 (which is mapped to internal Container standard PG port 5432)
-hence we pipe `shp2pgsql` to `psql -U tileserv -p 5433 -h 0.0.0.0 -d tileserv`
+First Download these files into the `./data` subdir:
 
-* `shp2pgsql -D -s 4326 ne_50m_admin_0_countries.shp | psql -U tileserv -p 5433 -h 0.0.0.0 -d tileserv`
+* Natural Earth [Admin 0 Countries](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/).
+* [fire hydrant data](https://opendata.vancouver.ca/explore/dataset/water-hydrants/download/?format=shp&timezone=America/Los_Angeles&lang=en&epsg=26910)"
 
-Provide the password (see [pg.env](pg.env) and restart Docker compose.
+Unzip these two zip-files within the `./data` subdir.
+
+To run also the [OpenLayers Voronoi example](../openlayers/openlayers-function-click.md) using Docker, we apply
+the [OpenLayers Function-click SQL](../openlayers/openlayers-function-click.sql). This example demonstrates the powerful "Function" capability of `pg_tileserv`,
+creating the `public.hydrants_delaunay()` function in your database.
+
+To load the two datasets and Function SQL, use the [load-data.sh helper script](load-data.sh)
+
+* `./load-data.sh`
+* restart the docker-compose stack
+
+The above data-loading script `exec`s the running PostGIS Docker Container `pg_tileserv_db` as for example:
+
+* `docker-compose exec pg_tileserv_db sh -c "shp2pgsql -d -D -s 4326 /work/ne_50m_admin_0_countries.shp | psql -U tileserv -d tileserv"`
 
 ## Run Webviewers
 
-As the `pg_tileserv` container has a Docker port-mapping to localhost:7800, you can use the standard webviewer examples.
-like [Leaflet](../leaflet/leaflet-tiles.html), [MapBox](../mapbox-gl-js/mapbox-gl-js-tiles.html) and [OpenLayers](../openlayers/openlayers-tiles.html).
+As the `pg_tileserv` container has a Docker port-mapping to localhost:7800, you can use the standard HTML examples locally in your browser.
+In a real-world application you would run these in a web-server container like `nginx` or `Apache httpd`.
 
-## Next
-Run also the [OpenLayers Voronoi example](../openlayers/openlayers-function-click.md) but with Docker. This example demonstrates
-the powerful "Function" capability of `pg_tileserv`.
+See [Leaflet](../leaflet/leaflet-tiles.html), [MapBox](../mapbox-gl-js/mapbox-gl-js-tiles.html) and [OpenLayers](../openlayers/openlayers-tiles.html).
+And the  [openlayers-function-click.html](../openlayers/openlayers-function-click.html) for the Voronoi Function example.
 
-Download "[fire hydrant data](https://opendata.vancouver.ca/explore/dataset/water-hydrants/download/?format=shp&timezone=America/Los_Angeles&lang=en&epsg=26910)"
-as a shape file from the City of Vancouver open data site.
+## Clean/Restart
 
-Unzip and load the data into the database like above for Countries:
+If something goes wrong along the way, or you want a clean restart, run this script:
 
-* `shp2pgsql -s 26910 -D -I water-hydrants.shp hydrants | psql -U tileserv -p 5433 -h 0.0.0.0 -d tileserv`
+* `./cleanup.sh`
 
-Create the `public.hydrants_delaunay()` function in your database by loading the [openlayers-function-click.sql](../openlayers/openlayers-function-click.sql) file:
-
-In this Docker example directory do:
-
-* `cat ../openlayers/openlayers-function-click.sql | psql -U tileserv -p 5433 -h 0.0.0.0 -d tileserv`
-
-Restart the Docker Compose process and load the [openlayers-function-click.html](../openlayers/openlayers-function-click.html) file in your browser.
+This will delete dangling Docker Containers and and Images and the DB volume

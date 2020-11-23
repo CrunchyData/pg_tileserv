@@ -18,9 +18,6 @@ services:
     env_file:
       - pg_tileserv.env
 
-    links:
-      - pg_tileserv_db
-
     depends_on:
       - pg_tileserv_db
 
@@ -33,13 +30,11 @@ services:
     container_name: pg_tileserv_db
 
     volumes:
+      - ./data:/work
       - pg_tileserv_db:/var/lib/postgresql/data
 
     env_file:
       - pg.env
-
-    ports:
-      - 5433:5432
 
 volumes:
   pg_tileserv_db:
