@@ -1,6 +1,6 @@
 
 APPVERSION := latest
-GOVERSION := 1.13
+GOVERSION := 1.15
 PROGRAM := pg_tileserv
 CONTAINER := pramsey/$(PROGRAM)
 
@@ -23,6 +23,7 @@ clean:  ##         This will clean all local build artifacts
 	$(info Cleaning project...)
 	@rm -f $(PROGRAM)
 	@rm -rf docs/*
+	docker image prune --force
 
 docs:   ##          Generate docs
 	@rm -rf docs/* && cd hugo && hugo && cd ..
@@ -35,7 +36,6 @@ bin-docker:  ##    Build a local binary based off of a golang base docker image
 
 build-docker: $(PROGRAM) Dockerfile  ##  Generate a CentOS 7 container with APPVERSION tag, using binary from current environment
 	docker build -f Dockerfile --build-arg VERSION=$(APPVERSION) -t $(CONTAINER):$(APPVERSION) .
-	docker image prune --force
 
 release: clean docs build build-docker  ##       Generate the docs, a local build, and then uses the local build to generate a CentOS 7 container
 
