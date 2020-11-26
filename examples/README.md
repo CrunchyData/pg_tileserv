@@ -1,8 +1,8 @@
 # Web Map Tile Examples
 
 * [Openlayers](./openlayers/openlayers-tiles.html)
-* [Leaflet](./mapbox-gl-js/mapbox-gl-js-tiles.html)
-* [Mapbox GL JS](./leaflet/leaflet-tiles.html)
+* [Leaflet](./leaflet/leaflet-tiles.html)
+* [Mapbox GL JS](./mapbox-gl-js/mapbox-gl-js-tiles.html)
 
 ## Data
 
