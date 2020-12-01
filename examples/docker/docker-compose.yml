@@ -1,0 +1,40 @@
+# pg-tileserv Docker Compose example setup.
+#
+# To build/run, see README.md
+#
+version: "3"
+
+services:
+  pg_tileserv:
+    image: pramsey/pg_tileserv:latest-alpine-3.12
+    build:
+      context: ../..
+      dockerfile: Dockerfile.alpine
+      args:
+        VERSION: latest-alpine-3.12
+
+    container_name: pg_tileserv
+
+    env_file:
+      - pg_tileserv.env
+
+    depends_on:
+      - pg_tileserv_db
+
+    ports:
+      - 7800:7800
+
+  pg_tileserv_db:
+    image: postgis/postgis:13-3.0-alpine
+
+    container_name: pg_tileserv_db
+
+    volumes:
+      - ./data:/work
+      - pg_tileserv_db:/var/lib/postgresql/data
+
+    env_file:
+      - pg.env
+
+volumes:
+  pg_tileserv_db:
