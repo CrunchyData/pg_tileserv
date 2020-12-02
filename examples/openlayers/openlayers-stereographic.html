@@ -1,0 +1,127 @@
+<!doctype html>
+
+<!--
+  Download data from:
+    https://data.bas.ac.uk/items/38f95030-09dd-4097-a97a-745fbbe27891/
+
+  Load into PostGIS:
+    shp2pgsql -s 3031 -D add_coastline_medium_res_line_v7.3.shp coast | psql YOURDB
+
+  Edit the pg_tileserv.toml config to use 3031 as the CoordinateSystem:
+
+    [CoordinateSystem]
+    SRID = 3031
+    Xmin = -3000000
+    Ymin = -3000000
+    Xmax =  3000000
+    Ymax =  3000000
+
+-->
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenLayers Vector Tiles</title>
+
+  <!-- CSS/JS for OpenLayers map  -->
+  <link rel="stylesheet" href="https://openlayers.org/en/v6.1.1/css/ol.css" type="text/css">
+  <script src="https://openlayers.org/en/v6.1.1/build/ol.js"></script>
+
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    html, body, #map {
+      height: 100%;
+      width: 100%;
+      font-family: sans-serif;
+    }
+    #meta {
+      background-color: rgba(255,255,255,0.75);
+      color: black;
+      z-index: 2;
+      position: absolute;
+      top: 20px;
+      left: 60px;
+      padding: 10px 20px;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="meta">
+  <h2>OpenLayers Stereographic Map</h2>
+  <ul>
+    <li><a href="https://openlayers.org/">OpenLayers</a></li>
+    <li><a href="https://epsg.io/3031">Antarctic Polar Stereographic</a></li>
+  </ul>
+</div>
+
+<div id="map"></div>
+
+<script>
+
+var vectorServer = "http://localhost:7800/";
+var vectorSourceLayer = "public.coast";
+var vectorProps = "?properties=surface,sourcedate,source"
+var vectorUrl = vectorServer + vectorSourceLayer + "/{z}/{x}/{y}.pbf" + vectorProps;
+
+var viewProjection = new ol.proj.Projection({
+      code: 'EPSG:3031',
+      units: 'm',
+      extent: [-3000000, -3000000, 3000000, 3000000]
+    });
+
+var vectorStyle = new ol.style.Style({
+  stroke: new ol.style.Stroke({
+    width: 2,
+    color: "#ff00ff99"
+  }),
+  fill: new ol.style.Fill({
+    color: "#ff00ff33"
+  })
+});
+
+// Vector tiles of the coastline table
+var vectorLayer = new ol.layer.VectorTile({
+  source: new ol.source.VectorTile({
+    format: new ol.format.MVT(),
+    projection: viewProjection,
+    tileSize: 512,
+    url: vectorUrl
+  }),
+  style: vectorStyle
+});
+
+// Satellite image from the SCAR WMS
+var baseLayer = new ol.layer.Tile({
+  source: new ol.source.TileWMS({
+    url: "https://www.add.scar.org/ogc/80/wms",
+    crossOrigin: "anonymous",
+    projection: viewProjection,
+    params: {
+      "LAYERS": "moa125_2009_hp1",
+      "FORMAT": "image/png",
+      "VERSION": "1.3.0",
+      "TILED": "true"
+    }
+  })
+});
+
+var map = new ol.Map({
+  target: 'map',
+  view: new ol.View({
+    center: [0, 0],
+    zoom: 2,
+    projection: viewProjection
+  }),
+  layers: [baseLayer, vectorLayer]
+});
+
+</script>
+</body>
+</html>
