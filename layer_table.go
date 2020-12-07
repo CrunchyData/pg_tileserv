@@ -451,7 +451,7 @@ func GetTableLayers() ([]LayerTable, error) {
 		a.attname AS geometry_column,
 		postgis_typmod_srid(a.atttypmod) AS srid,
 		trim(trailing 'ZM' from postgis_typmod_type(a.atttypmod)) AS geometry_type,
-		coalesce(ia.attname, '') AS id_column,
+		coalesce(case when it.typname is not null then ia.attname else null end, '') AS id_column,
 		(
 			SELECT array_agg(ARRAY[sa.attname, st.typname, coalesce(da.description,''), sa.attnum::text]::text[] ORDER BY sa.attnum)
 			FROM pg_attribute sa
