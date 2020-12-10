@@ -1,0 +1,28 @@
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
+
+ifeq ($(uname_M),x86_64)
+    ARCH=amd64
+endif
+
+ifeq ($(uname_S),Linux)
+    ARCH=$(shell sh -c 'dpkg --print-architecture 2>/dev/null || echo not')
+endif
+
+TARGET_GOAL := $(firstword $(subst " ", ,$(wordlist 1,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))))
+
+REPO := $(firstword $(subst " ", ,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))))
+$(eval $(REPO):;@:)
+ifeq ($(REPO),)
+    REPO=pramsey
+endif
+
+APPVERSION := $(firstword $(subst " ", ,$(wordlist 3,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))))
+$(eval $(APPVERSION):;@:)
+ifeq ($(APPVERSION),)
+    APPVERSION=latest
+endif
+
+ifeq ($(TARGET_GOAL),buildx-docker)
+    ARCH=linux/amd64,linux/arm64
+endif

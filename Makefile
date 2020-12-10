@@ -1,8 +1,8 @@
+include cnf.mak.docker
 
-APPVERSION := latest
 GOVERSION := 1.15
 PROGRAM := pg_tileserv
-CONTAINER := pramsey/$(PROGRAM)
+CONTAINER := $(REPO)/$(PROGRAM)
 
 RM = /bin/rm
 CP = /bin/cp
@@ -36,6 +36,9 @@ bin-docker:  ##    Build a local binary based off of a golang base docker image
 
 build-docker: $(PROGRAM) Dockerfile  ##  Generate a CentOS 7 container with APPVERSION tag, using binary from current environment
 	docker build -f Dockerfile --build-arg VERSION=$(APPVERSION) -t $(CONTAINER):$(APPVERSION) .
+
+buildx-docker:	## Compiles multi-arch images and pushes them to a custom repository
+	docker buildx build --platform $(ARCH) -t $(CONTAINER):$(APPVERSION) --push .
 
 release: clean docs build build-docker  ##       Generate the docs, a local build, and then uses the local build to generate a CentOS 7 container
 
