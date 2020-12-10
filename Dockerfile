@@ -1,11 +1,22 @@
+# Lightweight Alpine-based pg_tileserv Docker Image
+# Author: Just van den Broecke
+FROM golang:1.15.5
+
+# Build ARGS
+ARG VERSION
+
+RUN mkdir /app
+ADD . /app/
+WORKDIR /app
+RUN go build -v -ldflags "-s -w -X main.programVersion=${VERSION}" \
+    && chmod +x ./pg_tileserv
+
 # copy build result to a centos base image to match other
 # crunchy containers
 FROM centos:7
 RUN mkdir /app
-ADD ./pg_tileserv /app/
-ADD ./assets /app/assets
-
-ARG VERSION
+COPY --from=0 /app/assets /app/assets
+COPY --from=0 /app/pg_tileserv /app/pg_tileserv
 
 LABEL vendor="Crunchy Data" \
 	url="https://crunchydata.com" \
