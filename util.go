@@ -61,8 +61,8 @@ func serverURLHost(r *http.Request) string {
 
 	// Preferred scheme
 	ps := "http"
-	if r.URL.Scheme != "" {
-		ps = r.URL.Scheme
+	if r.TLS != nil {
+		ps = "https"
 	}
 
 	// Preferred host:port

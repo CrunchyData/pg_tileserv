@@ -27,8 +27,8 @@
 
 # HTTPS configuration - TLS server certificate full chain and key
 # If you do not specify these, the TLS server will not be started
-# TlsServerCertificateFile = "ca.crt"
-# TlsServerPrivateKeyFile = "ca.key"
+# TlsServerCertificateFile = "server.crt"
+# TlsServerPrivateKeyFile = "server.key"
 
 # Advertise URLs relative to this server name
 # default is to look this up from incoming request headers

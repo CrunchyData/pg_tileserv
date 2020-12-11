@@ -385,9 +385,9 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 /******************************************************************************/
 
-func SetSchemeHTTPS(next http.Handler) http.Handler {
+func SetCacheControl(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Scheme = "https"
+		w.Header().Set("Cache-Control", "*")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -468,7 +468,7 @@ func handleRequests() {
 			ReadTimeout:  1 * time.Second,
 			WriteTimeout: writeTimeout,
 			Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpsPort")),
-			Handler:      SetSchemeHTTPS(handlers.CompressHandler(handlers.CORS(corsOpt)(r))),
+			Handler:      handlers.CompressHandler(handlers.CORS(corsOpt)(r)),
 			TLSConfig: &tls.Config{
 				MinVersion: tls.VersionTLS12, // Secure TLS versions only
 			},
