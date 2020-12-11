@@ -159,3 +159,10 @@ func getServerBounds() (b *Bounds, e error) {
 	globalServerBounds = &Bounds{srid, xmin, ymin, xmax, ymax}
 	return globalServerBounds, nil
 }
+
+func getTTL() (ttl int) {
+	if globalTimeToLive < 0 {
+		globalTimeToLive = viper.GetInt("CacheTTL")
+	}
+	return globalTimeToLive
+}

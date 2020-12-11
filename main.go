@@ -52,6 +52,10 @@ var globalPostGISVersion int = 0
 // which tiles are constructed
 var globalServerBounds *Bounds = nil
 
+// timeToLive is the Cache-Control timeout value that will be advertised
+// in the response headers
+var globalTimeToLive = -1
+
 /******************************************************************************/
 
 func init() {
@@ -75,6 +79,7 @@ func init() {
 	viper.SetDefault("DbTimeout", 10)
 	viper.SetDefault("CORSOrigins", []string{"*"})
 	viper.SetDefault("BasePath", "/")
+	viper.SetDefault("CacheTTL", 0) // cache timeout in seconds
 
 	viper.SetDefault("CoordinateSystem.SRID", 3857)
 	// XMin, YMin, XMax, YMax, must be square
@@ -385,9 +390,13 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 /******************************************************************************/
 
-func SetCacheControl(next http.Handler) http.Handler {
+func setCacheControl(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "*")
+		ttl := getTTL()
+		if ttl > 0 {
+			ccVal := fmt.Sprintf("max-age=%d", ttl)
+			w.Header().Set("Cache-Control", ccVal)
+		}
 		next.ServeHTTP(w, r)
 	})
 }
@@ -439,7 +448,7 @@ func handleRequests() {
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: writeTimeout,
 		Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort")),
-		Handler:      handlers.CompressHandler(handlers.CORS(corsOpt)(r)),
+		Handler:      setCacheControl(handlers.CompressHandler(handlers.CORS(corsOpt)(r))),
 	}
 
 	// start http service
@@ -468,7 +477,7 @@ func handleRequests() {
 			ReadTimeout:  1 * time.Second,
 			WriteTimeout: writeTimeout,
 			Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpsPort")),
-			Handler:      handlers.CompressHandler(handlers.CORS(corsOpt)(r)),
+			Handler:      setCacheControl(handlers.CompressHandler(handlers.CORS(corsOpt)(r))),
 			TLSConfig: &tls.Config{
 				MinVersion: tls.VersionTLS12, // Secure TLS versions only
 			},

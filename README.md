@@ -105,6 +105,11 @@ openssl req  -nodes -new -x509  -keyout server.key -out server.crt
 ```
 
 ```toml
+# Cache control configuration. TTL is time in seconds to request
+# that responses be cached by any downstream caching services.
+# Zero means no cache control header will be set.
+CacheTTL = 60
+
 # Advertise URLs relative to this server name
 # default is to looke this up from incoming request headers
 # UrlBase = "http://yourserver.com/"
