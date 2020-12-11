@@ -25,6 +25,10 @@ Builds of the latest code:
 
 ## Basic Operation
 
+The executable will read user/connection information from the `DATABASE_URL` and connect to the database, exposing all functions and tables the database user has read and execute permissions on.
+
+For **production deployment**, place an HTTP proxy caching layer (eg [Varnish](https://varnish-cache.org/)) in between the tile server and clients to reduce database load and increase application performance.
+
 ### Linux/OSX
 
 ```sh
