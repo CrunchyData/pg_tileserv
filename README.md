@@ -374,12 +374,16 @@ In the detail JSON, each function declares information relevant to setting up a 
 
 This simple example returns just a filtered subset of a table ([ne_50m_admin_0_countries](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/cultural/ne_50m_admin_0_countries.zip) [EPSG:4326](https://epsg.io/4326)). The filter in this case is the first letters of the name. Note that the `name_prefix` parameter includes a **default value**: this is useful for clients (like the preview interface for this server) that read arbitrary function definitions and need a default value to fill into interface fields.
 ```sql
+
 CREATE OR REPLACE
 FUNCTION public.countries_name(
             z integer, x integer, y integer,
             name_prefix text default 'B')
 RETURNS bytea
 AS $$
+DECLARE
+    result bytea;
+BEGIN
     WITH
     bounds AS (
       SELECT ST_TileEnvelope(z, x, y) AS geom
@@ -391,9 +395,14 @@ AS $$
       WHERE ST_Intersects(t.geom, ST_Transform(bounds.geom, 4326))
       AND upper(t.name) LIKE (upper(name_prefix) || '%')
     )
-    SELECT ST_AsMVT(mvtgeom, 'public.countries_name') FROM mvtgeom;
+    SELECT ST_AsMVT(mvtgeom, 'public.countries_name')
+    INTO result
+    FROM mvtgeom;
+
+    RETURN result;
+END;
 $$
-LANGUAGE 'sql'
+LANGUAGE 'plpgsql'
 STABLE
 PARALLEL SAFE;
 
@@ -446,6 +455,9 @@ FUNCTION public.parcels_in_radius(
                     radius float8 default 500.0)
 RETURNS bytea
 AS $$
+DECLARE
+    result bytea;
+BEGIN
     WITH
     args AS (
       SELECT
@@ -467,9 +479,14 @@ AS $$
       AND ST_DWithin(p.geom, args.click, radius)
       LIMIT 10000
     )
-    SELECT ST_AsMVT(mvtgeom, 'public.parcels_in_radius') FROM mvtgeom
+    SELECT ST_AsMVT(mvtgeom, 'public.parcels_in_radius')
+    INTO result
+    FROM mvtgeom;
+
+    RETURN result;
+END;
 $$
-LANGUAGE 'sql'
+LANGUAGE 'plpgsql'
 STABLE
 PARALLEL SAFE;
 
@@ -669,34 +686,42 @@ CREATE OR REPLACE
 FUNCTION public.hexpopulationsummary(z integer, x integer, y integer, step integer default 4)
 RETURNS bytea
 AS $$
-WITH
-bounds AS (
-    -- Convert tile coordinates to web mercator tile bounds
-    SELECT ST_TileEnvelope(z, x, y) AS geom
-),
-rows AS (
-    -- Summary of populated places grouped by hex
-    SELECT Sum(pop_max) AS pop_max, Sum(pop_min) AS pop_min, h.i, h.j, h.geom
-    -- All the hexes that interact with this tile
-    FROM TileHexagons(z, x, y, step) h
-    -- All the populated places
-    JOIN ne_50m_populated_places n
-    -- Transform the hex into the SRS (4326 in this case)
-    -- of the table of interest
-    ON ST_Intersects(n.geom, ST_Transform(h.geom, 4326))
-    GROUP BY h.i, h.j, h.geom
-),
-mvt AS (
-    -- Usual tile processing, ST_AsMVTGeom simplifies, quantizes,
-    -- and clips to tile boundary
-    SELECT ST_AsMVTGeom(rows.geom, bounds.geom) AS geom,
-           rows.pop_max, rows.pop_min, rows.i, rows.j
-    FROM rows, bounds
-)
--- Generate MVT encoding of final input record
-SELECT ST_AsMVT(mvt, 'public.hexpopulationsummary') FROM mvt
+DECLARE
+    result bytea;
+BEGIN
+    WITH
+    bounds AS (
+        -- Convert tile coordinates to web mercator tile bounds
+        SELECT ST_TileEnvelope(z, x, y) AS geom
+    ),
+    rows AS (
+        -- Summary of populated places grouped by hex
+        SELECT Sum(pop_max) AS pop_max, Sum(pop_min) AS pop_min, h.i, h.j, h.geom
+        -- All the hexes that interact with this tile
+        FROM TileHexagons(z, x, y, step) h
+        -- All the populated places
+        JOIN ne_50m_populated_places n
+        -- Transform the hex into the SRS (4326 in this case)
+        -- of the table of interest
+        ON ST_Intersects(n.geom, ST_Transform(h.geom, 4326))
+        GROUP BY h.i, h.j, h.geom
+    ),
+    mvt AS (
+        -- Usual tile processing, ST_AsMVTGeom simplifies, quantizes,
+        -- and clips to tile boundary
+        SELECT ST_AsMVTGeom(rows.geom, bounds.geom) AS geom,
+               rows.pop_max, rows.pop_min, rows.i, rows.j
+        FROM rows, bounds
+    )
+    -- Generate MVT encoding of final input record
+    SELECT ST_AsMVT(mvt, 'public.hexpopulationsummary')
+    INTO result
+    FROM mvt;
+
+    RETURN result;
+END:
 $$
-LANGUAGE 'sql'
+LANGUAGE 'plpgsql'
 STABLE
 STRICT
 PARALLEL SAFE;
@@ -711,27 +736,35 @@ CREATE OR REPLACE
 FUNCTION public.hexagons(z integer, x integer, y integer, step integer default 4)
 RETURNS bytea
 AS $$
-WITH
-bounds AS (
-    -- Convert tile coordinates to web mercator tile bounds
-    SELECT ST_TileEnvelope(z, x, y) AS geom
-),
-rows AS (
-    -- All the hexes that interact with this tile
-    SELECT h.i, h.j, h.geom
-    FROM TileHexagons(z, x, y, step) h
-),
-mvt AS (
-    -- Usual tile processing, ST_AsMVTGeom simplifies, quantizes,
-    -- and clips to tile boundary
-    SELECT ST_AsMVTGeom(rows.geom, bounds.geom) AS geom,
-           rows.i, rows.j
-    FROM rows, bounds
-)
--- Generate MVT encoding of final input record
-SELECT ST_AsMVT(mvt, 'public.hexagons') FROM mvt
+DECLARE
+    result bytea;
+BEGIN
+    WITH
+    bounds AS (
+        -- Convert tile coordinates to web mercator tile bounds
+        SELECT ST_TileEnvelope(z, x, y) AS geom
+    ),
+    rows AS (
+        -- All the hexes that interact with this tile
+        SELECT h.i, h.j, h.geom
+        FROM TileHexagons(z, x, y, step) h
+    ),
+    mvt AS (
+        -- Usual tile processing, ST_AsMVTGeom simplifies, quantizes,
+        -- and clips to tile boundary
+        SELECT ST_AsMVTGeom(rows.geom, bounds.geom) AS geom,
+               rows.i, rows.j
+        FROM rows, bounds
+    )
+    -- Generate MVT encoding of final input record
+    SELECT ST_AsMVT(mvt, 'public.hexagons')
+    INTO result
+    FROM mvt;
+
+    RETURN result;
+END;
 $$
-LANGUAGE 'sql'
+LANGUAGE 'plpgsql'
 STABLE
 STRICT
 PARALLEL SAFE;
