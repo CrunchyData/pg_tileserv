@@ -108,6 +108,9 @@ func main() {
 		os.Exit(0)
 	}
 
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("ts")
+
 	// Commandline over-rides config file for debugging
 	if *flagDebugOn {
 		viper.Set("Debug", true)
