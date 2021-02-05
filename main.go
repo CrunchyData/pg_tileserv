@@ -124,7 +124,7 @@ func main() {
 		viper.SetConfigType("toml")
 		viper.AddConfigPath("./config")
 		viper.AddConfigPath("/config")
-		viper.AddConfigPath("./etc")
+		viper.AddConfigPath("/etc")
 	}
 
 	// Report our status
