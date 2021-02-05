@@ -53,7 +53,7 @@ install: $(PROGRAM) docs $(CONFIG) ##        This will install the program local
 	$(MKDIR) -p $(DESTDIR)/usr/share/$(PROGRAM)
 	$(MKDIR) -p $(DESTDIR)/etc
 	$(CP) $(PROGRAM) $(DESTDIR)/usr/bin/$(PROGRAM)
-	$(CP) config/$(CONFIG) $(DESTDIR)/etc/$(CONFIG)
+	$(CP) $(CONFIG) $(DESTDIR)/etc/
 	$(CP) -r assets $(DESTDIR)/usr/share/$(PROGRAM)/assets
 	$(CP) -r docs $(DESTDIR)/usr/share/$(PROGRAM)/docs
 
