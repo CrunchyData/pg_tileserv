@@ -121,9 +121,10 @@ func main() {
 		viper.SetConfigFile(*flagConfigFile)
 	} else {
 		viper.SetConfigName(programName)
+		viper.SetConfigType("toml")
 		viper.AddConfigPath("./config")
 		viper.AddConfigPath("/config")
-		viper.AddConfigPath("/etc")
+		viper.AddConfigPath("./etc")
 	}
 
 	// Report our status

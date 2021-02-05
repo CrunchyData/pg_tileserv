@@ -2,6 +2,7 @@ include .cnf.makefile
 
 GOVERSION := 1.15
 PROGRAM := pg_tileserv
+CONFIG := config/$(PROGRAM).toml
 
 RM = /bin/rm
 CP = /bin/cp
@@ -44,12 +45,15 @@ release: clean docs build build-docker  ##        Generate the docs, a local bui
 test:  ##           Run the tests locally
 	go test -v
 
-install: $(PROGRAM) docs  ##        This will install the program locally
+$(CONFIG): $(CONFIG).example
+	sed 's/# AssetsPath/AssetsPath/' $< > $@
+
+install: $(PROGRAM) docs $(CONFIG) ##        This will install the program locally
 	$(MKDIR) -p $(DESTDIR)/usr/bin
 	$(MKDIR) -p $(DESTDIR)/usr/share/$(PROGRAM)
 	$(MKDIR) -p $(DESTDIR)/etc
 	$(CP) $(PROGRAM) $(DESTDIR)/usr/bin/$(PROGRAM)
-	$(CP) config/$(PROGRAM).toml.example $(DESTDIR)/etc/$(PROGRAM).toml
+	$(CP) config/$(CONFIG) $(DESTDIR)/etc/$(CONFIG)
 	$(CP) -r assets $(DESTDIR)/usr/share/$(PROGRAM)/assets
 	$(CP) -r docs $(DESTDIR)/usr/share/$(PROGRAM)/docs
 
