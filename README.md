@@ -239,7 +239,7 @@ table was created using a `SELECT` query from another geometry table.
 For example, to set the geometry as a `Point` type:
 
 ```SQL
-ALTER TABLE mytable ALTER COLUMN geom TYPE geometry (Point, 4326);
+ALTER TABLE mytable ALTER COLUMN geometry TYPE geometry (Point, 4326);
 ```
 
 ### Table Layer Detail JSON
