@@ -22,7 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func DbConnect() (*pgxpool.Pool, error) {
+func dbConnect() (*pgxpool.Pool, error) {
 	if globalDb == nil {
 		var err error
 		var config *pgxpool.Config
@@ -67,8 +67,8 @@ func DbConnect() (*pgxpool.Pool, error) {
 	return globalDb, nil
 }
 
-func LoadVersions() error {
-	db, err := DbConnect()
+func loadVersions() error {
+	db, err := dbConnect()
 	if err != nil {
 		return err
 	}
@@ -105,13 +105,13 @@ func LoadVersions() error {
 	return nil
 }
 
-func DBTileRequest(ctx context.Context, tr *TileRequest) ([]byte, error) {
-	db, err := DbConnect()
+func dBTileRequest(ctx context.Context, tr *TileRequest) ([]byte, error) {
+	db, err := dbConnect()
 	if err != nil {
 		log.Error(err)
 		return nil, err
 	}
-	row := db.QueryRow(ctx, tr.Sql, tr.Args...)
+	row := db.QueryRow(ctx, tr.SQL, tr.Args...)
 	var mvtTile []byte
 	err = row.Scan(&mvtTile)
 	if err != nil {
@@ -123,13 +123,13 @@ func DBTileRequest(ctx context.Context, tr *TileRequest) ([]byte, error) {
 		if pgconn.Timeout(err) {
 			return nil, tileAppError{
 				SrcErr:  err,
-				Message: fmt.Sprintf("Timeout: deadline exceeded on %s/%s", tr.LayerId, tr.Tile.String()),
+				Message: fmt.Sprintf("Timeout: deadline exceeded on %s/%s", tr.LayerID, tr.Tile.String()),
 			}
 		}
 
 		return nil, tileAppError{
 			SrcErr:  err,
-			Message: fmt.Sprintf("SQL error on %s/%s", tr.LayerId, tr.Tile.String()),
+			Message: fmt.Sprintf("SQL error on %s/%s", tr.LayerID, tr.Tile.String()),
 		}
 
 	}

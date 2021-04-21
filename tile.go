@@ -38,7 +38,7 @@ func makeTile(vars map[string]string) (Tile, error) {
 	return tile, e
 }
 
-func (tile *Tile) Width() float64 {
+func (tile *Tile) width() float64 {
 	return math.Abs(tile.Bounds.Xmax - tile.Bounds.Xmin)
 }
 

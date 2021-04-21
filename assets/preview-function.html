@@ -1,7 +1,7 @@
 <html>
   <head>
     <meta charset='utf-8' />
-    <title>pg_tileserv: {{.Id}}</title>
+    <title>pg_tileserv: {{.ID}}</title>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.13.0/mapbox-gl.js'></script>
     <link href='https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.13.0/mapbox-gl.css' rel='stylesheet' />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -15,7 +15,7 @@
 <body>
 
   <div id="meta">
-    <h1>{{ .Id }}</h1>
+    <h1>{{ .ID }}</h1>
     {{ if .Description }}
     <p>{{ .Description }}</p>
     {{ end }}
@@ -44,9 +44,9 @@
     var map;
     var mapcolor = "blue";
 
-    $.getJSON("{{ .Id }}.json", function(layer) {
+    $.getJSON("{{ .ID }}.json", function(layer) {
       // A little info for explorers
-      console.log("{{ .Id }}.json");
+      console.log("{{ .ID }}.json");
       console.log(layer);
 
       layer["arguments"].forEach(function (item, i) {

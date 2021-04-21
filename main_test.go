@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 
 	// viper.Set("DbConnection", os.Getenv("TEST_DATABASE_URL"))
 	viper.Set("DbConnection", os.Getenv("dbname=ts"))
-	db, err := DbConnect()
+	db, err := dbConnect()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -39,15 +39,15 @@ func TestDBNoTables(t *testing.T) {
 	if !dbsetup {
 		t.Skip("DB integration test suite setup failed, skipping")
 	}
-	r := TileRouter()
+	r := tileRouter()
 	request, _ := http.NewRequest("GET", "/index.json", nil)
 	response := httptest.NewRecorder()
 	r.ServeHTTP(response, request)
 	assert.Equal(t, 200, response.Code, "OK response is expected")
 
-	json_result := strings.TrimSpace(response.Body.String())
-	json_expect := "{}"
-	assert.Equal(t, json_expect, json_result, "empty json response is expected")
+	jsonResult := strings.TrimSpace(response.Body.String())
+	jsonExpect := "{}"
+	assert.Equal(t, jsonExpect, jsonResult, "empty json response is expected")
 }
 
 // TestBasePath sets an alternate base path to check that handlers are
@@ -63,7 +63,7 @@ func TestBasePath(t *testing.T) {
 
 	for _, path := range paths {
 		viper.Set("BasePath", path)
-		r := TileRouter()
+		r := tileRouter()
 		request, _ := http.NewRequest("GET", "/test/index.json", nil)
 		response := httptest.NewRecorder()
 		r.ServeHTTP(response, request)

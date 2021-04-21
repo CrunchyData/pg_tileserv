@@ -16,9 +16,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-// type LayerTable struct {
+// LayerFunction provides metadata about the function
 type LayerFunction struct {
-	Id          string
+	ID          string
 	Schema      string
 	Function    string
 	Description string
@@ -28,6 +28,8 @@ type LayerFunction struct {
 	Tiles       string
 }
 
+// FunctionArgument provides the metadata and order
+// of arguments in function call.
 type FunctionArgument struct {
 	Name    string `json:"name"`
 	Type    string `json:"type"`
@@ -35,27 +37,29 @@ type FunctionArgument struct {
 	order   int
 }
 
-type FunctionDetailJson struct {
-	Id          string             `json:"id"`
+// FunctionDetailJSON gives the output structure for
+// the function.
+type FunctionDetailJSON struct {
+	ID          string             `json:"id"`
 	Schema      string             `json:"schema"`
 	Name        string             `json:"name"`
 	Description string             `json:"description,omitempty"`
 	Arguments   []FunctionArgument `json:"arguments"`
 	MinZoom     int                `json:"minzoom"`
 	MaxZoom     int                `json:"maxzoom"`
-	TileUrl     string             `json:"tileurl"`
+	TileURL     string             `json:"tileurl"`
 }
 
 /********************************************************************************
  * Layer Interface
  */
 
-func (lyr LayerFunction) GetType() layerType {
-	return layerTypeFunction
+func (lyr LayerFunction) GetType() LayerType {
+	return LayerTypeFunction
 }
 
-func (lyr LayerFunction) GetId() string {
-	return lyr.Id
+func (lyr LayerFunction) GetID() string {
+	return lyr.ID
 }
 
 func (lyr LayerFunction) GetDescription() string {
@@ -73,19 +77,19 @@ func (lyr LayerFunction) GetSchema() string {
 func (lyr LayerFunction) GetTileRequest(tile Tile, r *http.Request) TileRequest {
 
 	procArgs := lyr.getFunctionArgs(r.URL.Query())
-	sql, data, _ := lyr.requestSql(tile, procArgs)
+	sql, data, _ := lyr.requestSQL(tile, procArgs)
 
 	tr := TileRequest{
-		LayerId: lyr.Id,
+		LayerID: lyr.ID,
 		Tile:    tile,
-		Sql:     sql,
+		SQL:     sql,
 		Args:    data,
 	}
 	return tr
 }
 
-func (lyr LayerFunction) WriteLayerJson(w http.ResponseWriter, req *http.Request) error {
-	jsonTableDetail, err := lyr.getFunctionDetailJson(req)
+func (lyr LayerFunction) WriteLayerJSON(w http.ResponseWriter, req *http.Request) error {
+	jsonTableDetail, err := lyr.getFunctionDetailJSON(req)
 	if err != nil {
 		return err
 	}
@@ -97,7 +101,7 @@ func (lyr LayerFunction) WriteLayerJson(w http.ResponseWriter, req *http.Request
 
 /********************************************************************************/
 
-func (lyr *LayerFunction) requestSql(tile Tile, args map[string]string) (string, []interface{}, error) {
+func (lyr *LayerFunction) requestSQL(tile Tile, args map[string]string) (string, []interface{}, error) {
 	// Need ordered list of named parameters and values to
 	// pass into the Query
 	keys := []string{"x => $1", "y => $2", "z => $3"}
@@ -106,7 +110,7 @@ func (lyr *LayerFunction) requestSql(tile Tile, args map[string]string) (string,
 	for k, v := range args {
 		keys = append(keys, fmt.Sprintf("%s => $%d", k, i))
 		vals = append(vals, v)
-		i += 1
+		i++
 	}
 
 	// Build the SQL
@@ -136,10 +140,10 @@ func (lyr *LayerFunction) getFunctionArgs(vals url.Values) map[string]string {
 	return funcArgs
 }
 
-func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDetailJson, error) {
+func (lyr *LayerFunction) getFunctionDetailJSON(req *http.Request) (FunctionDetailJSON, error) {
 
-	td := FunctionDetailJson{
-		Id:          lyr.Id,
+	td := FunctionDetailJSON{
+		ID:          lyr.ID,
 		Schema:      lyr.Schema,
 		Name:        lyr.Function,
 		Description: lyr.Description,
@@ -148,7 +152,7 @@ func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDeta
 		MaxZoom:     viper.GetInt("DefaultMaxZoom"),
 	}
 	// TileURL is relative to server base
-	td.TileUrl = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.Id)
+	td.TileURL = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.ID)
 
 	tmpMap := make(map[int]FunctionArgument)
 	tmpKeys := make([]int, 0, len(lyr.Arguments))
@@ -163,11 +167,11 @@ func (lyr *LayerFunction) getFunctionDetailJson(req *http.Request) (FunctionDeta
 	return td, nil
 }
 
-func GetFunctionLayers() ([]LayerFunction, error) {
+func getFunctionLayers() ([]LayerFunction, error) {
 
 	// Valid functions **must** have signature of
 	// function(z integer, x integer, y integer) returns bytea
-	layerSql := `
+	layerSQL := `
 		SELECT
 			Format('%s.%s', n.nspname, p.proname) AS id,
 			n.nspname,
@@ -186,12 +190,12 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 		ORDER BY 1
 		`
 
-	db, connerr := DbConnect()
+	db, connerr := dbConnect()
 	if connerr != nil {
 		return nil, connerr
 	}
 
-	rows, err := db.Query(context.Background(), layerSql)
+	rows, err := db.Query(context.Background(), layerSQL)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +232,7 @@ func GetFunctionLayers() ([]LayerFunction, error) {
 		}
 
 		lyr := LayerFunction{
-			Id:          id,
+			ID:          id,
 			Schema:      schema,
 			Function:    function,
 			Description: description,

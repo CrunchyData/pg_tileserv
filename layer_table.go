@@ -21,13 +21,13 @@ import (
 )
 
 type LayerTable struct {
-	Id             string
+	ID             string
 	Schema         string
 	Table          string
 	Description    string
 	Properties     map[string]TableProperty
 	GeometryType   string
-	IdColumn       string
+	IDColumn       string
 	GeometryColumn string
 	Srid           int
 }
@@ -39,8 +39,8 @@ type TableProperty struct {
 	order       int
 }
 
-type TableDetailJson struct {
-	Id           string          `json:"id"`
+type TableDetailJSON struct {
+	ID           string          `json:"id"`
 	Schema       string          `json:"schema"`
 	Name         string          `json:"name"`
 	Description  string          `json:"description,omitempty"`
@@ -50,19 +50,19 @@ type TableDetailJson struct {
 	Bounds       [4]float64      `json:"bounds"`
 	MinZoom      int             `json:"minzoom"`
 	MaxZoom      int             `json:"maxzoom"`
-	TileUrl      string          `json:"tileurl"`
+	TileURL      string          `json:"tileurl"`
 }
 
 /********************************************************************************
  * Layer Interface
  */
 
-func (lyr LayerTable) GetType() layerType {
-	return layerTypeTable
+func (lyr LayerTable) GetType() LayerType {
+	return LayerTypeTable
 }
 
-func (lyr LayerTable) GetId() string {
-	return lyr.Id
+func (lyr LayerTable) GetID() string {
+	return lyr.ID
 }
 
 func (lyr LayerTable) GetDescription() string {
@@ -77,8 +77,8 @@ func (lyr LayerTable) GetSchema() string {
 	return lyr.Schema
 }
 
-func (lyr LayerTable) WriteLayerJson(w http.ResponseWriter, req *http.Request) error {
-	jsonTableDetail, err := lyr.getTableDetailJson(req)
+func (lyr LayerTable) WriteLayerJSON(w http.ResponseWriter, req *http.Request) error {
+	jsonTableDetail, err := lyr.getTableDetailJSON(req)
 	if err != nil {
 		return err
 	}
@@ -90,12 +90,12 @@ func (lyr LayerTable) WriteLayerJson(w http.ResponseWriter, req *http.Request) e
 
 func (lyr LayerTable) GetTileRequest(tile Tile, r *http.Request) TileRequest {
 	rp := lyr.getQueryParameters(r.URL.Query())
-	sql, _ := lyr.requestSql(&tile, &rp)
+	sql, _ := lyr.requestSQL(&tile, &rp)
 
 	tr := TileRequest{
-		LayerId: lyr.Id,
+		LayerID: lyr.ID,
 		Tile:    tile,
-		Sql:     sql,
+		SQL:     sql,
 		Args:    nil,
 	}
 	return tr
@@ -150,7 +150,7 @@ func (lyr *LayerTable) getQueryPropertiesParameter(q url.Values) []string {
 
 	lyrAtts := (*lyr).Properties
 	queryAtts := make([]string, 0, len(lyrAtts))
-	haveIdColumn := false
+	haveIDColumn := false
 
 	if haveProperties {
 		aAtts := strings.Split(sAtts[0], ",")
@@ -160,8 +160,8 @@ func (lyr *LayerTable) getQueryPropertiesParameter(q url.Values) []string {
 				decAtt = strings.Trim(decAtt, " ")
 				att, ok := lyrAtts[decAtt]
 				if ok {
-					if att.Name == lyr.IdColumn {
-						haveIdColumn = true
+					if att.Name == lyr.IDColumn {
+						haveIDColumn = true
 					}
 					queryAtts = append(queryAtts, att.Name)
 				}
@@ -175,8 +175,8 @@ func (lyr *LayerTable) getQueryPropertiesParameter(q url.Values) []string {
 			queryAtts = append(queryAtts, v.Name)
 		}
 	}
-	if (!haveIdColumn) && lyr.IdColumn != "" {
-		queryAtts = append(queryAtts, lyr.IdColumn)
+	if (!haveIDColumn) && lyr.IDColumn != "" {
+		queryAtts = append(queryAtts, lyr.IDColumn)
 	}
 	return queryAtts
 }
@@ -205,9 +205,9 @@ func (lyr *LayerTable) getQueryParameters(q url.Values) queryParameters {
 
 /********************************************************************************/
 
-func (lyr *LayerTable) getTableDetailJson(req *http.Request) (TableDetailJson, error) {
-	td := TableDetailJson{
-		Id:           lyr.Id,
+func (lyr *LayerTable) getTableDetailJSON(req *http.Request) (TableDetailJSON, error) {
+	td := TableDetailJSON{
+		ID:           lyr.ID,
 		Schema:       lyr.Schema,
 		Name:         lyr.Table,
 		Description:  lyr.Description,
@@ -216,7 +216,7 @@ func (lyr *LayerTable) getTableDetailJson(req *http.Request) (TableDetailJson, e
 		MaxZoom:      viper.GetInt("DefaultMaxZoom"),
 	}
 	// TileURL is relative to server base
-	td.TileUrl = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.Id)
+	td.TileURL = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.ID)
 
 	// Want to add the properties to the Json representation
 	// in table order, which is fiddly
@@ -248,7 +248,7 @@ func (lyr *LayerTable) getTableDetailJson(req *http.Request) (TableDetailJson, e
 
 func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 	bounds := Bounds{}
-	extentSql := fmt.Sprintf(`
+	extentSQL := fmt.Sprintf(`
 	WITH ext AS (
 		SELECT
 			coalesce(
@@ -265,7 +265,7 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 	FROM ext
 	`, lyr.GeometryColumn, lyr.Srid, lyr.Schema, lyr.Table)
 
-	db, err := DbConnect()
+	db, err := dbConnect()
 	if err != nil {
 		return bounds, err
 	}
@@ -275,7 +275,7 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 		ymin pgtype.Float8
 		ymax pgtype.Float8
 	)
-	err = db.QueryRow(context.Background(), extentSql).Scan(&xmin, &ymin, &xmax, &ymax)
+	err = db.QueryRow(context.Background(), extentSQL).Scan(&xmin, &ymin, &xmax, &ymax)
 	if err != nil {
 		return bounds, tileAppError{
 			SrcErr:  err,
@@ -294,7 +294,7 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 
 func (lyr *LayerTable) GetBounds() (Bounds, error) {
 	bounds := Bounds{}
-	extentSql := fmt.Sprintf(`
+	extentSQL := fmt.Sprintf(`
 		WITH ext AS (
 			SELECT ST_Transform(ST_SetSRID(ST_EstimatedExtent('%s', '%s', '%s'), %d), 4326) AS geom
 		)
@@ -306,7 +306,7 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 		FROM ext
 		`, lyr.Schema, lyr.Table, lyr.GeometryColumn, lyr.Srid)
 
-	db, err := DbConnect()
+	db, err := dbConnect()
 	if err != nil {
 		return bounds, err
 	}
@@ -317,7 +317,7 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 		ymin pgtype.Float8
 		ymax pgtype.Float8
 	)
-	err = db.QueryRow(context.Background(), extentSql).Scan(&xmin, &ymin, &xmax, &ymax)
+	err = db.QueryRow(context.Background(), extentSQL).Scan(&xmin, &ymin, &xmax, &ymax)
 	if err != nil {
 		return bounds, tileAppError{
 			SrcErr:  err,
@@ -345,11 +345,11 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 	return bounds, nil
 }
 
-func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, error) {
+func (lyr *LayerTable) requestSQL(tile *Tile, qp *queryParameters) (string, error) {
 
 	type sqlParameters struct {
-		TileSql        string
-		QuerySql       string
+		TileSQL        string
+		QuerySQL       string
 		TileSrid       int
 		Resolution     int
 		Buffer         int
@@ -366,9 +366,9 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	// expanded version for querying
 	tileBounds := tile.Bounds
 	queryBounds := tile.Bounds
-	queryBounds.Expand(tile.Width() * float64(qp.Buffer) / float64(qp.Resolution))
-	tileSql := tileBounds.SQL()
-	tileQuerySql := queryBounds.SQL()
+	queryBounds.Expand(tile.width() * float64(qp.Buffer) / float64(qp.Resolution))
+	tileSQL := tileBounds.SQL()
+	tileQuerySQL := queryBounds.SQL()
 
 	// SRID of the tile we are going to generate, which might be different
 	// from the layer SRID in the database
@@ -383,18 +383,18 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 
 	// only specify MVT format parameters we have configured
 	mvtParams := make([]string, 0)
-	mvtParams = append(mvtParams, fmt.Sprintf("'%s', %d", lyr.Id, qp.Resolution))
+	mvtParams = append(mvtParams, fmt.Sprintf("'%s', %d", lyr.ID, qp.Resolution))
 	if lyr.GeometryColumn != "" {
 		mvtParams = append(mvtParams, fmt.Sprintf("'%s'", lyr.GeometryColumn))
 	}
 	// The idColumn parameter is PostGIS3+ only
-	if globalPostGISVersion >= 3000000 && lyr.IdColumn != "" {
-		mvtParams = append(mvtParams, fmt.Sprintf("'%s'", lyr.IdColumn))
+	if globalPostGISVersion >= 3000000 && lyr.IDColumn != "" {
+		mvtParams = append(mvtParams, fmt.Sprintf("'%s'", lyr.IDColumn))
 	}
 
 	sp := sqlParameters{
-		TileSql:        tileSql,
-		QuerySql:       tileQuerySql,
+		TileSQL:        tileSQL,
+		QuerySQL:       tileQuerySQL,
 		TileSrid:       tileSrid,
 		Resolution:     qp.Resolution,
 		Buffer:         qp.Buffer,
@@ -412,7 +412,7 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 
 	// TODO: Remove ST_Force2D when fixes to line clipping are common
 	// in GEOS. See https://trac.osgeo.org/postgis/ticket/4690
-	tmplSql := `
+	tmplSQL := `
 	SELECT ST_AsMVT(mvtgeom, {{ .MvtParams }}) FROM (
 		SELECT ST_AsMVTGeom(
 			ST_Transform(ST_Force2D(t."{{ .GeometryColumn }}"), {{ .TileSrid }}),
@@ -424,8 +424,8 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 		  , {{ .Properties }}
 		  {{ end }}
 		FROM "{{ .Schema }}"."{{ .Table }}" t, (
-			SELECT {{ .TileSql }}  AS geom_clip,
-					{{ .QuerySql }} AS geom_query
+			SELECT {{ .TileSQL }}  AS geom_clip,
+					{{ .QuerySQL }} AS geom_query
 			) bounds
 		WHERE ST_Intersects(t."{{ .GeometryColumn }}",
 							ST_Transform(bounds.geom_query, {{ .Srid }}))
@@ -433,16 +433,16 @@ func (lyr *LayerTable) requestSql(tile *Tile, qp *queryParameters) (string, erro
 	) mvtgeom
 	`
 
-	sql, err := renderSqlTemplate("tableTileSql", tmplSql, sp)
+	sql, err := renderSQLTemplate("tabletilesql", tmplSQL, sp)
 	if err != nil {
 		return "", err
 	}
 	return sql, err
 }
 
-func GetTableLayers() ([]LayerTable, error) {
+func getTableLayers() ([]LayerTable, error) {
 
-	layerSql := `
+	layerSQL := `
 	SELECT
 		Format('%s.%s', n.nspname, c.relname) AS id,
 		n.nspname AS schema,
@@ -478,12 +478,12 @@ func GetTableLayers() ([]LayerTable, error) {
 	ORDER BY 1
 	`
 
-	db, connerr := DbConnect()
+	db, connerr := dbConnect()
 	if connerr != nil {
 		return nil, connerr
 	}
 
-	rows, err := db.Query(context.Background(), layerSql)
+	rows, err := db.Query(context.Background(), layerSQL)
 	if err != nil {
 		return nil, connerr
 	}
@@ -493,14 +493,14 @@ func GetTableLayers() ([]LayerTable, error) {
 	for rows.Next() {
 
 		var (
-			id, schema, table, description, geometry_column string
-			srid                                            int
-			geometry_type, id_column                        string
-			atts                                            pgtype.TextArray
+			id, schema, table, description, geometryColumn string
+			srid                                           int
+			geometryType, idColumn                         string
+			atts                                           pgtype.TextArray
 		)
 
-		err := rows.Scan(&id, &schema, &table, &description, &geometry_column,
-			&srid, &geometry_type, &id_column, &atts)
+		err := rows.Scan(&id, &schema, &table, &description, &geometryColumn,
+			&srid, &geometryType, &idColumn, &atts)
 		if err != nil {
 			return nil, err
 		}
@@ -519,27 +519,27 @@ func GetTableLayers() ([]LayerTable, error) {
 			elmLen := atts.Dimensions[1].Length
 			for i := arrStart; i < arrLen; i++ {
 				pos := i * elmLen
-				elmId := atts.Elements[pos].String
+				elmID := atts.Elements[pos].String
 				elm := TableProperty{
-					Name:        elmId,
+					Name:        elmID,
 					Type:        atts.Elements[pos+1].String,
 					Description: atts.Elements[pos+2].String,
 				}
 				elm.order, _ = strconv.Atoi(atts.Elements[pos+3].String)
-				properties[elmId] = elm
+				properties[elmID] = elm
 			}
 		}
 
 		// "schema.tablename" is our unique key for table layers
 		lyr := LayerTable{
-			Id:             id,
+			ID:             id,
 			Schema:         schema,
 			Table:          table,
 			Description:    description,
-			GeometryColumn: geometry_column,
+			GeometryColumn: geometryColumn,
 			Srid:           srid,
-			GeometryType:   geometry_type,
-			IdColumn:       id_column,
+			GeometryType:   geometryType,
+			IDColumn:       idColumn,
 			Properties:     properties,
 		}
 

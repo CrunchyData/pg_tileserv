@@ -8,12 +8,17 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"text/template"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/theckman/httpforwarded"
 )
+
+// cache SQL/HTML templates so repeated filesystem reads are not required
+var globalTemplates map[string](*template.Template) = make(map[string](*template.Template))
+var globalTemplatesMutex = &sync.Mutex{}
 
 // formatBaseURL takes a hostname (baseHost) and a base path
 // and joins them.  Both are parsed as URLs (using net/url) and
@@ -54,9 +59,9 @@ func serverURLBase(r *http.Request) string {
 // configuration option.
 func serverURLHost(r *http.Request) string {
 	// Use configuration file settings if we have them
-	configUrl := viper.GetString("UrlBase")
-	if configUrl != "" {
-		return configUrl
+	configURL := viper.GetString("UrlBase")
+	if configURL != "" {
+		return configURL
 	}
 
 	// Preferred scheme
@@ -95,9 +100,7 @@ func serverURLHost(r *http.Request) string {
 	return fmt.Sprintf("%v://%v", ps, ph)
 }
 
-var globalTemplates map[string](*template.Template) = make(map[string](*template.Template))
-
-func getSqlTemplate(name string, tmpl string) *template.Template {
+func getSQLTemplate(name string, tmpl string) *template.Template {
 	tp, ok := globalTemplates[name]
 	if ok {
 		return tp
@@ -107,13 +110,15 @@ func getSqlTemplate(name string, tmpl string) *template.Template {
 	if err != nil {
 		log.Fatal(err)
 	}
+	globalTemplatesMutex.Lock()
 	globalTemplates[name] = tp
+	globalTemplatesMutex.Unlock()
 	return tp
 }
 
-func renderSqlTemplate(name string, tmpl string, data interface{}) (string, error) {
+func renderSQLTemplate(name string, tmpl string, data interface{}) (string, error) {
 	var buf bytes.Buffer
-	t := getSqlTemplate(name, tmpl)
+	t := getSQLTemplate(name, tmpl)
 	err := t.Execute(&buf, data)
 	if err != nil {
 		return string(buf.Bytes()), err

@@ -23,7 +23,7 @@
   {{ range $key, $value := . }}
   {{ if eq $value.Type "table" }}
   <li>
-    <strong class="layer-name">{{ $value.Id }}</strong> (<a href='{{ $value.DetailUrl | replace ".json" ".html"}}'>preview</a> | <a href="{{ $value.DetailUrl }}">json</a>)
+    <strong class="layer-name">{{ $value.ID }}</strong> (<a href='{{ $value.DetailURL | replace ".json" ".html"}}'>preview</a> | <a href="{{ $value.DetailURL }}">json</a>)
     {{ if $value.Description }}<br/><span class="layer-description">{{ $value.Description }}</span> {{ end }}
   </li>
   {{ end }}
@@ -35,7 +35,7 @@
   {{ range $key, $value := . }}
   {{ if eq $value.Type "function" }}
   <li>
-    <strong class="layer-name">{{ $value.Id }}</strong> (<a href='{{$value.DetailUrl | replace ".json" ".html"}}'>preview</a> | <a href="{{ $value.DetailUrl }}">json</a>)
+    <strong class="layer-name">{{ $value.ID }}</strong> (<a href='{{$value.DetailURL | replace ".json" ".html"}}'>preview</a> | <a href="{{ $value.DetailURL }}">json</a>)
     {{ if $value.Description }}<br/><span class="layer-description">{{ $value.Description }}</span> {{ end }}
   </li>
   {{ end }}

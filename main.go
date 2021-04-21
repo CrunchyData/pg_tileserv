@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"time"
 
 	// REST routing
@@ -55,6 +56,12 @@ var globalServerBounds *Bounds = nil
 // timeToLive is the Cache-Control timeout value that will be advertised
 // in the response headers
 var globalTimeToLive = -1
+
+// A global array of Layer where the state is held for performance
+// Refreshed when LoadLayerTableList is called
+// Key is of the form: schemaname.tablename
+var globalLayers map[string]Layer
+var globalLayersMutex = &sync.Mutex{}
 
 /******************************************************************************/
 
@@ -132,8 +139,8 @@ func main() {
 	log.Info("Run with --help parameter for commandline options")
 
 	// Read environment configuration first
-	if dbUrl := os.Getenv("DATABASE_URL"); dbUrl != "" {
-		viper.Set("DbConnection", dbUrl)
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		viper.Set("DbConnection", dbURL)
 		log.Info("Using database connection info from environment variable DATABASE_URL")
 	}
 
@@ -165,13 +172,13 @@ func main() {
 
 	// Load the global layer list right away
 	// Also connects to database
-	if err := LoadLayers(); err != nil {
+	if err := loadLayers(); err != nil {
 		log.Fatal(err)
 	}
 
 	// Read the postgis_full_version string and store
 	// in a global for version testing
-	if errv := LoadVersions(); errv != nil {
+	if errv := loadVersions(); errv != nil {
 		log.Fatal(errv)
 	}
 	log.WithFields(log.Fields{
@@ -190,12 +197,12 @@ func main() {
 /******************************************************************************/
 
 func requestPreview(w http.ResponseWriter, r *http.Request) error {
-	lyrId := mux.Vars(r)["name"]
+	lyrID := mux.Vars(r)["name"]
 	log.WithFields(log.Fields{
 		"event": "request",
 		"topic": "layerpreview",
-		"key":   lyrId,
-	}).Tracef("requestPreview: %s", lyrId)
+		"key":   lyrID,
+	}).Tracef("requestPreview: %s", lyrID)
 
 	// reqProperties := r.FormValue("properties")
 	// reqLimit := r.FormValue("limit")
@@ -203,11 +210,11 @@ func requestPreview(w http.ResponseWriter, r *http.Request) error {
 	// reqBuffer := r.FormValue("buffer")
 
 	// Refresh the layers list
-	if err := LoadLayers(); err != nil {
+	if err := loadLayers(); err != nil {
 		return err
 	}
 	// Get the requested layer
-	lyr, errLyr := GetLayer(lyrId)
+	lyr, errLyr := getLayer(lyrID)
 	if errLyr != nil {
 		return errLyr
 	}
@@ -233,17 +240,17 @@ func requestPreview(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func requestListHtml(w http.ResponseWriter, r *http.Request) error {
+func requestListHTML(w http.ResponseWriter, r *http.Request) error {
 	log.WithFields(log.Fields{
 		"event": "request",
 		"topic": "layerlist",
 	}).Trace("requestListHtml")
 	// Update the global in-memory list from
 	// the database
-	if err := LoadLayers(); err != nil {
+	if err := loadLayers(); err != nil {
 		return err
 	}
-	jsonLayers := GetJsonLayers(r)
+	jsonLayers := getJSONLayers(r)
 
 	content, err := ioutil.ReadFile(fmt.Sprintf("%s/index.html", viper.GetString("AssetsPath")))
 
@@ -260,40 +267,40 @@ func requestListHtml(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func requestListJson(w http.ResponseWriter, r *http.Request) error {
+func requestListJSON(w http.ResponseWriter, r *http.Request) error {
 	log.WithFields(log.Fields{
 		"event": "request",
 		"topic": "layerlist",
 	}).Trace("requestListJson")
 	// Update the global in-memory list from
 	// the database
-	if err := LoadLayers(); err != nil {
+	if err := loadLayers(); err != nil {
 		return err
 	}
 	w.Header().Add("Content-Type", "application/json")
-	jsonLayers := GetJsonLayers(r)
+	jsonLayers := getJSONLayers(r)
 	json.NewEncoder(w).Encode(jsonLayers)
 	return nil
 }
 
-func requestDetailJson(w http.ResponseWriter, r *http.Request) error {
-	lyrId := mux.Vars(r)["name"]
+func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
+	lyrID := mux.Vars(r)["name"]
 	log.WithFields(log.Fields{
 		"event": "request",
 		"topic": "layerdetail",
-	}).Tracef("requestDetailJson(%s)", lyrId)
+	}).Tracef("requestDetailJson(%s)", lyrID)
 
 	// Refresh the layers list
-	if err := LoadLayers(); err != nil {
+	if err := loadLayers(); err != nil {
 		return err
 	}
 
-	lyr, errLyr := GetLayer(lyrId)
+	lyr, errLyr := getLayer(lyrID)
 	if errLyr != nil {
 		return errLyr
 	}
 
-	errWrite := lyr.WriteLayerJson(w, r)
+	errWrite := lyr.WriteLayerJSON(w, r)
 	if errWrite != nil {
 		return errWrite
 	}
@@ -302,7 +309,7 @@ func requestDetailJson(w http.ResponseWriter, r *http.Request) error {
 
 func requestTile(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
-	lyr, errLyr := GetLayer(vars["name"])
+	lyr, errLyr := getLayer(vars["name"])
 	if errLyr != nil {
 		return errLyr
 	}
@@ -315,13 +322,13 @@ func requestTile(w http.ResponseWriter, r *http.Request) error {
 		"event": "request",
 		"topic": "tile",
 		"key":   tile.String(),
-	}).Tracef("RequestLayerTile: %s", tile.String())
+	}).Tracef("requestTile: %s", tile.String())
 
 	ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("DbTimeout")*time.Second)
 	defer cancel()
 
 	tilerequest := lyr.GetTileRequest(tile, r)
-	mvt, errMvt := DBTileRequest(ctx, &tilerequest)
+	mvt, errMvt := dBTileRequest(ctx, &tilerequest)
 	if errMvt != nil {
 		return errMvt
 	}
@@ -341,7 +348,7 @@ func requestTile(w http.ResponseWriter, r *http.Request) error {
 // if they want to specify the particular HTTP error code to be used
 // in their error return
 type tileAppError struct {
-	HttpCode int
+	HTTPCode int
 	SrcErr   error
 	Topic    string
 	Message  string
@@ -375,8 +382,8 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.WithField("correlation-id", hdr[0])
 		}
 		if e, ok := err.(tileAppError); ok {
-			if e.HttpCode == 0 {
-				e.HttpCode = 500
+			if e.HTTPCode == 0 {
+				e.HTTPCode = 500
 			}
 			if e.Topic != "" {
 				log.WithField("topic", e.Topic)
@@ -384,7 +391,7 @@ func (fn tileAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.WithField("key", e.Message)
 			log.WithField("src", e.SrcErr.Error())
 			log.Error(err)
-			http.Error(w, e.Error(), e.HttpCode)
+			http.Error(w, e.Error(), e.HTTPCode)
 		} else {
 			log.Error(err)
 			http.Error(w, err.Error(), 500)
@@ -407,7 +414,7 @@ func setCacheControl(next http.Handler) http.Handler {
 
 /******************************************************************************/
 
-func TileRouter() *mux.Router {
+func tileRouter() *mux.Router {
 	// creates a new instance of a mux router
 	r := mux.NewRouter().
 		StrictSlash(true).
@@ -418,12 +425,12 @@ func TileRouter() *mux.Router {
 		Subrouter()
 
 	// Front page and layer list
-	r.Handle("/", tileAppHandler(requestListHtml))
-	r.Handle("/index.html", tileAppHandler(requestListHtml))
-	r.Handle("/index.json", tileAppHandler(requestListJson))
+	r.Handle("/", tileAppHandler(requestListHTML))
+	r.Handle("/index.html", tileAppHandler(requestListHTML))
+	r.Handle("/index.json", tileAppHandler(requestListJSON))
 	// Layer detail and demo pages
 	r.Handle("/{name}.html", tileAppHandler(requestPreview))
-	r.Handle("/{name}.json", tileAppHandler(requestDetailJson))
+	r.Handle("/{name}.json", tileAppHandler(requestDetailJSON))
 	// Tile requests
 	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileAppHandler(requestTile))
 	return r
@@ -432,7 +439,7 @@ func TileRouter() *mux.Router {
 func handleRequests() {
 
 	// Get a configured router
-	r := TileRouter()
+	r := tileRouter()
 
 	// Allow CORS from anywhere
 	corsOrigins := viper.GetStringSlice("CORSOrigins")

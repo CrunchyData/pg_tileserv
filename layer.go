@@ -7,18 +7,21 @@ import (
 	"net/http"
 )
 
-type layerType int
+// LayerType is the table/function type of a layer
+type LayerType int
 
 const (
-	layerTypeTable    = 1
-	layerTypeFunction = 2
+	// LayerTypeTable is a table layer
+	LayerTypeTable = 1
+	// LayerTypeFunction is a function layer
+	LayerTypeFunction = 2
 )
 
-func (lt layerType) String() string {
+func (lt LayerType) String() string {
 	switch lt {
-	case layerTypeTable:
+	case LayerTypeTable:
 		return "table"
-	case layerTypeFunction:
+	case LayerTypeFunction:
 		return "function"
 	default:
 		return "unknown"
@@ -30,80 +33,77 @@ func (lt layerType) String() string {
 // a TileRequest containing SQL to produce tiles
 // given an input tile
 type Layer interface {
-	GetType() layerType
-	GetId() string
+	GetType() LayerType
+	GetID() string
 	GetDescription() string
 	GetName() string
 	GetSchema() string
 	GetTileRequest(tile Tile, r *http.Request) TileRequest
-	WriteLayerJson(w http.ResponseWriter, req *http.Request) error
+	WriteLayerJSON(w http.ResponseWriter, req *http.Request) error
 }
 
 type TileRequest struct {
-	LayerId string
+	LayerID string
 	Tile    Tile
-	Sql     string
+	SQL     string
 	Args    []interface{}
 }
 
-// A global array of Layer where the state is held for performance
-// Refreshed when LoadLayerTableList is called
-// Key is of the form: schemaname.tablename
-var globalLayers map[string]Layer
-
-func GetLayer(lyrId string) (Layer, error) {
-	if lyr, ok := globalLayers[lyrId]; ok {
+func getLayer(lyrID string) (Layer, error) {
+	lyr, ok := globalLayers[lyrID]
+	if ok {
 		return lyr, nil
-	} else {
-		return lyr, errors.New(fmt.Sprintf("Unable to get layer '%s'", lyrId))
 	}
+	return lyr, errors.New(fmt.Sprintf("Unable to get layer '%s'", lyrID))
 }
 
-func LoadLayers() error {
+func loadLayers() error {
 	_, errBnd := getServerBounds()
 	if errBnd != nil {
 		return errBnd
 	}
-	tableLayers, errTl := GetTableLayers()
+	tableLayers, errTl := getTableLayers()
 	if errTl != nil {
 		return errTl
 	}
-	functionLayers, errFl := GetFunctionLayers()
+	functionLayers, errFl := getFunctionLayers()
 	if errFl != nil {
 		return errFl
 	}
 	// Empty the global layer map
+	globalLayersMutex.Lock()
 	globalLayers = make(map[string]Layer)
 	for _, lyr := range tableLayers {
-		globalLayers[lyr.GetId()] = lyr
+		globalLayers[lyr.GetID()] = lyr
 	}
 	for _, lyr := range functionLayers {
-		globalLayers[lyr.GetId()] = lyr
+		globalLayers[lyr.GetID()] = lyr
 	}
+	globalLayersMutex.Unlock()
 
 	return nil
 }
 
-type LayerJson struct {
+type layerJSON struct {
 	Type        string `json:"type"`
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Schema      string `json:"schema"`
 	Description string `json:"description"`
-	DetailUrl   string `json:"detailurl"`
+	DetailURL   string `json:"detailurl"`
 }
 
-func GetJsonLayers(r *http.Request) map[string]LayerJson {
-	json := make(map[string]LayerJson)
+func getJSONLayers(r *http.Request) map[string]layerJSON {
+	json := make(map[string]layerJSON)
 	urlBase := serverURLBase(r)
 	for k, v := range globalLayers {
-		json[k] = LayerJson{
+		json[k] = layerJSON{
 			Type:        v.GetType().String(),
-			Id:          v.GetId(),
+			ID:          v.GetID(),
 			Name:        v.GetName(),
 			Schema:      v.GetSchema(),
 			Description: v.GetDescription(),
-			DetailUrl:   fmt.Sprintf("%s/%s.json", urlBase, v.GetId()),
+			DetailURL:   fmt.Sprintf("%s/%s.json", urlBase, v.GetID()),
 		}
 	}
 	return json
