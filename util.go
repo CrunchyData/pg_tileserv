@@ -246,6 +246,11 @@ func tileMetrics(h http.Handler) http.Handler {
 			// call the next handler
 			h.ServeHTTP(mrw, r)
 
+			// track metrics only for valid layers
+			if mrw.StatusCode == http.StatusNotFound {
+				return
+			}
+
 			// tile processed.
 			// get the counter for this request and then increment it
 			counter, err := tilesProcessed.GetMetricWith(
