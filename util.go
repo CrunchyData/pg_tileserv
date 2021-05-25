@@ -7,13 +7,19 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/theckman/httpforwarded"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // cache SQL/HTML templates so repeated filesystem reads are not required
@@ -172,4 +178,103 @@ func getTTL() (ttl int) {
 		globalTimeToLive = viper.GetInt("CacheTTL")
 	}
 	return globalTimeToLive
+}
+
+/*****************************************************************************/
+//Prometheus metrics collection
+
+var (
+	tilesProcessed = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "pg_tileserv_tile_requests_total",
+		Help: "The total number of tiles processed",
+	},
+		[]string{
+			"layer",
+			"status_code",
+		})
+	tilesDurationHistogram = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "pg_tileserv_tile_requests_duration",
+			Help:    "Tile request processing duration distribution",
+			Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10},
+		},
+		[]string{
+			"layer",
+		},
+	)
+)
+
+// metricsResponseWriter helps capture the HTTP status code
+// of responses.
+// Credit to github.com/Boerworz for the sample code
+// https://gist.github.com/Boerworz/b683e46ae0761056a636
+type metricsResponseWriter struct {
+	http.ResponseWriter
+	StatusCode int
+}
+
+func NewMetricsResponseWriter(w http.ResponseWriter) *metricsResponseWriter {
+	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
+	// we default to that status code.
+	return &metricsResponseWriter{w, http.StatusOK}
+}
+
+func (mrw *metricsResponseWriter) WriteHeader(code int) {
+	mrw.StatusCode = code
+	mrw.ResponseWriter.WriteHeader(code)
+}
+
+// prometheusTileMetrics returns a middleware that collects metrics for tile set endpoints.
+// If EnableMetrics = false, a blank middleware is returned. This is to avoid all the Prometheus
+// metrics operations from occuring if metrics are disabled.
+func prometheusTileMetrics(h http.Handler) http.Handler {
+	if viper.GetBool("EnableMetrics") {
+		basePath := viper.GetString("BasePath")
+		log.Infof("Prometheus metrics enabled at %s/metrics", formatBaseURL(fmt.Sprintf("http://%s:%d",
+			viper.GetString("HttpHost"), viper.GetInt("HttpPort")), basePath))
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// start a timer for the duration histogram.
+			start := time.Now()
+
+			mrw := NewMetricsResponseWriter(w)
+
+			// get path variables from the router to determine the layer name
+			// and zoom level.
+			vars := mux.Vars(r)
+			layer := vars["name"]
+
+			// call the next handler
+			h.ServeHTTP(mrw, r)
+
+			// tile processed.
+			// get the counter for this request and then increment it
+			counter, err := tilesProcessed.GetMetricWith(
+				map[string]string{
+					"layer":       layer,
+					"status_code": strconv.Itoa(mrw.StatusCode),
+				},
+			)
+			if err != nil {
+				log.Warn("Unable to get tilesProcessed Prometheus counter.")
+			}
+			counter.Inc()
+
+			// get the histogram metric and make an observation of the
+			// response time.
+			histogram, err := tilesDurationHistogram.GetMetricWith(
+				map[string]string{
+					"layer": layer,
+				},
+			)
+			if err != nil {
+				log.Warn("Unable to get tilesDurationHistogram Prometheus histogram.")
+			}
+
+			duration := time.Since(start)
+			histogram.Observe(duration.Seconds())
+		})
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
+	})
 }

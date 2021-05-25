@@ -1,7 +1,12 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_formatBaseURL(t *testing.T) {
@@ -32,4 +37,21 @@ func Test_formatBaseURL(t *testing.T) {
 			t.Errorf("Test failed: input: %v, expected: %s, recieved: %s", test.input, test.output, output)
 		}
 	}
+}
+
+func TestMetrics(t *testing.T) {
+
+	if !dbsetup {
+		t.Skip("DB integration test suite setup failed, skipping")
+	}
+
+	viper.Set("EnableMetrics", true)
+
+	// paths to check
+
+	r := tileRouter()
+	request, _ := http.NewRequest("GET", "/metrics", nil)
+	response := httptest.NewRecorder()
+	r.ServeHTTP(response, request)
+	assert.Equal(t, 200, response.Code, "OK response is expected")
 }

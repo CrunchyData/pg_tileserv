@@ -31,6 +31,9 @@ import (
 
 	// Template functions
 	"github.com/Masterminds/sprig/v3"
+
+	// Prometheus metrics
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // programName is the name string we use
@@ -86,7 +89,8 @@ func init() {
 	viper.SetDefault("DbTimeout", 10)
 	viper.SetDefault("CORSOrigins", []string{"*"})
 	viper.SetDefault("BasePath", "/")
-	viper.SetDefault("CacheTTL", 0) // cache timeout in seconds
+	viper.SetDefault("CacheTTL", 0)          // cache timeout in seconds
+	viper.SetDefault("EnableMetrics", false) // Prometheus metrics
 
 	viper.SetDefault("CoordinateSystem.SRID", 3857)
 	// XMin, YMin, XMax, YMax, must be square
@@ -432,7 +436,11 @@ func tileRouter() *mux.Router {
 	r.Handle("/{name}.html", tileAppHandler(requestPreview))
 	r.Handle("/{name}.json", tileAppHandler(requestDetailJSON))
 	// Tile requests
-	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileAppHandler(requestTile))
+	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", prometheusTileMetrics(tileAppHandler(requestTile)))
+
+	if viper.GetBool("EnableMetrics") {
+		r.Handle("/metrics", promhttp.Handler())
+	}
 	return r
 }
 
