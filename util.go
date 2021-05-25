@@ -224,14 +224,18 @@ func (mrw *metricsResponseWriter) WriteHeader(code int) {
 	mrw.ResponseWriter.WriteHeader(code)
 }
 
-// prometheusTileMetrics returns a middleware that collects metrics for tile set endpoints.
+// tileMetrics returns a middleware that collects metrics for tile set endpoints.
 // If EnableMetrics = false, a blank middleware is returned. This is to avoid all the Prometheus
 // metrics operations from occuring if metrics are disabled.
-func prometheusTileMetrics(h http.Handler) http.Handler {
+func tileMetrics(h http.Handler) http.Handler {
 	if viper.GetBool("EnableMetrics") {
+
+		// log metrics URL at startup
 		basePath := viper.GetString("BasePath")
 		log.Infof("Prometheus metrics enabled at %s/metrics", formatBaseURL(fmt.Sprintf("http://%s:%d",
 			viper.GetString("HttpHost"), viper.GetInt("HttpPort")), basePath))
+
+		// create the handler that will track metrics for tile requests.
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// start a timer for the duration histogram.
 			start := time.Now()
@@ -274,6 +278,8 @@ func prometheusTileMetrics(h http.Handler) http.Handler {
 			histogram.Observe(duration.Seconds())
 		})
 	}
+	// if metrics are disabled, return a handler without any of the
+	// metric operations.
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 	})

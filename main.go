@@ -436,7 +436,7 @@ func tileRouter() *mux.Router {
 	r.Handle("/{name}.html", tileAppHandler(requestPreview))
 	r.Handle("/{name}.json", tileAppHandler(requestDetailJSON))
 	// Tile requests
-	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", prometheusTileMetrics(tileAppHandler(requestTile)))
+	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileMetrics(tileAppHandler(requestTile)))
 
 	if viper.GetBool("EnableMetrics") {
 		r.Handle("/metrics", promhttp.Handler())
