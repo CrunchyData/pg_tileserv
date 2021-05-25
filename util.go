@@ -207,15 +207,12 @@ var (
 // metricsResponseWriter helps capture the HTTP status code
 // of responses.
 // Credit to github.com/Boerworz for the sample code
-// https://gist.github.com/Boerworz/b683e46ae0761056a636
 type metricsResponseWriter struct {
 	http.ResponseWriter
 	StatusCode int
 }
 
 func NewMetricsResponseWriter(w http.ResponseWriter) *metricsResponseWriter {
-	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
-	// we default to that status code.
 	return &metricsResponseWriter{w, http.StatusOK}
 }
 

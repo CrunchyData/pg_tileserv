@@ -47,8 +47,6 @@ func TestMetrics(t *testing.T) {
 
 	viper.Set("EnableMetrics", true)
 
-	// paths to check
-
 	r := tileRouter()
 	request, _ := http.NewRequest("GET", "/metrics", nil)
 	response := httptest.NewRecorder()
