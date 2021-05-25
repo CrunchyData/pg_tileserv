@@ -243,7 +243,6 @@ func tileMetrics(h http.Handler) http.Handler {
 			mrw := NewMetricsResponseWriter(w)
 
 			// get path variables from the router to determine the layer name
-			// and zoom level.
 			vars := mux.Vars(r)
 			layer := vars["name"]
 
