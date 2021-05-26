@@ -224,6 +224,12 @@ func (mrw *metricsResponseWriter) WriteHeader(code int) {
 // tileMetrics returns a middleware that collects metrics for tile set endpoints.
 // If EnableMetrics = false, a blank middleware is returned. This is to avoid all the Prometheus
 // metrics operations from occuring if metrics are disabled.
+//
+// Requests that return an HTTP status in the range 400-499 are considered bad
+// requests and are not tracked. This includes layers that do not exist (404) and
+// invalid tiles (400). Server errors (500) will still be tracked.
+// 404 and 400 errors cannot be tracked because label values would no longer be
+// constrained to valid layers.
 func tileMetrics(h http.Handler) http.Handler {
 	if viper.GetBool("EnableMetrics") {
 
@@ -246,8 +252,8 @@ func tileMetrics(h http.Handler) http.Handler {
 			// call the next handler
 			h.ServeHTTP(mrw, r)
 
-			// track metrics only for valid layers
-			if mrw.StatusCode == http.StatusNotFound {
+			// Do not track metrics for invalid user requests (4xx errors)
+			if mrw.StatusCode/100 == 4 {
 				return
 			}
 
