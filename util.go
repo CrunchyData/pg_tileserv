@@ -257,7 +257,6 @@ func tileMetrics(h http.Handler) http.Handler {
 				return
 			}
 
-			// tile processed.
 			// get the counter for this request and then increment it
 			counter, err := tilesProcessed.GetMetricWith(
 				map[string]string{
@@ -267,9 +266,8 @@ func tileMetrics(h http.Handler) http.Handler {
 			)
 			if err != nil {
 				log.Warn("Unable to get tilesProcessed Prometheus counter.")
+				return
 			}
-			counter.Inc()
-
 			// get the histogram metric and make an observation of the
 			// response time.
 			histogram, err := tilesDurationHistogram.GetMetricWith(
@@ -279,7 +277,10 @@ func tileMetrics(h http.Handler) http.Handler {
 			)
 			if err != nil {
 				log.Warn("Unable to get tilesDurationHistogram Prometheus histogram.")
+				return
 			}
+
+			counter.Inc()
 
 			duration := time.Since(start)
 			histogram.Observe(duration.Seconds())
