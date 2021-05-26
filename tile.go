@@ -32,7 +32,11 @@ func makeTile(vars map[string]string) (Tile, error) {
 	// No tile numbers outside the tile grid implied
 	// by the zoom?
 	if !tile.IsValid() {
-		return tile, errors.New(fmt.Sprintf("invalid tile address %s", tile.String()))
+		invalidTileError := tileAppError{
+			HTTPCode: 400,
+			SrcErr:   errors.New(fmt.Sprintf("invalid tile address %s", tile.String())),
+		}
+		return tile, invalidTileError
 	}
 	e := tile.CalculateBounds()
 	return tile, e

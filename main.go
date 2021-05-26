@@ -218,8 +218,12 @@ func requestPreview(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	// Get the requested layer
-	lyr, errLyr := getLayer(lyrID)
-	if errLyr != nil {
+	lyr, err := getLayer(lyrID)
+	if err != nil {
+		errLyr := tileAppError{
+			HTTPCode: 404,
+			SrcErr:   err,
+		}
 		return errLyr
 	}
 
@@ -299,8 +303,12 @@ func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	lyr, errLyr := getLayer(lyrID)
-	if errLyr != nil {
+	lyr, err := getLayer(lyrID)
+	if err != nil {
+		errLyr := tileAppError{
+			HTTPCode: 404,
+			SrcErr:   err,
+		}
 		return errLyr
 	}
 
@@ -311,12 +319,19 @@ func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// requestTile handles a tile request for a given layer
 func requestTile(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
-	lyr, errLyr := getLayer(vars["name"])
-	if errLyr != nil {
+
+	lyr, err := getLayer(vars["name"])
+	if err != nil {
+		errLyr := tileAppError{
+			HTTPCode: 404,
+			SrcErr:   err,
+		}
 		return errLyr
 	}
+
 	tile, errTile := makeTile(vars)
 	if errTile != nil {
 		return errTile
