@@ -130,6 +130,10 @@ CORSOrigins = ["*"]
 # Output extra logging information?
 Debug = false
 
+# Enable Prometheus metrics
+# Metrics will be exported at `/metrics`.
+EnableMetrics = false
+
 # Default CS is Web Mercator (EPSG:3857)
 [CoordinateSystem]
 SRID = 3857

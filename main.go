@@ -31,6 +31,9 @@ import (
 
 	// Template functions
 	"github.com/Masterminds/sprig/v3"
+
+	// Prometheus metrics
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // programName is the name string we use
@@ -86,7 +89,8 @@ func init() {
 	viper.SetDefault("DbTimeout", 10)
 	viper.SetDefault("CORSOrigins", []string{"*"})
 	viper.SetDefault("BasePath", "/")
-	viper.SetDefault("CacheTTL", 0) // cache timeout in seconds
+	viper.SetDefault("CacheTTL", 0)          // cache timeout in seconds
+	viper.SetDefault("EnableMetrics", false) // Prometheus metrics
 
 	viper.SetDefault("CoordinateSystem.SRID", 3857)
 	// XMin, YMin, XMax, YMax, must be square
@@ -214,8 +218,12 @@ func requestPreview(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	// Get the requested layer
-	lyr, errLyr := getLayer(lyrID)
-	if errLyr != nil {
+	lyr, err := getLayer(lyrID)
+	if err != nil {
+		errLyr := tileAppError{
+			HTTPCode: 404,
+			SrcErr:   err,
+		}
 		return errLyr
 	}
 
@@ -295,8 +303,12 @@ func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	lyr, errLyr := getLayer(lyrID)
-	if errLyr != nil {
+	lyr, err := getLayer(lyrID)
+	if err != nil {
+		errLyr := tileAppError{
+			HTTPCode: 404,
+			SrcErr:   err,
+		}
 		return errLyr
 	}
 
@@ -307,12 +319,19 @@ func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// requestTile handles a tile request for a given layer
 func requestTile(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
-	lyr, errLyr := getLayer(vars["name"])
-	if errLyr != nil {
+
+	lyr, err := getLayer(vars["name"])
+	if err != nil {
+		errLyr := tileAppError{
+			HTTPCode: 404,
+			SrcErr:   err,
+		}
 		return errLyr
 	}
+
 	tile, errTile := makeTile(vars)
 	if errTile != nil {
 		return errTile
@@ -432,7 +451,11 @@ func tileRouter() *mux.Router {
 	r.Handle("/{name}.html", tileAppHandler(requestPreview))
 	r.Handle("/{name}.json", tileAppHandler(requestDetailJSON))
 	// Tile requests
-	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileAppHandler(requestTile))
+	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileMetrics(tileAppHandler(requestTile)))
+
+	if viper.GetBool("EnableMetrics") {
+		r.Handle("/metrics", promhttp.Handler())
+	}
 	return r
 }
 
