@@ -144,6 +144,14 @@ Ymax = 20037508.3427892
 ```
 You can use the **CoordinateSystem** block to output files in a system other than the default [Web Mercator](http://epsg.io/3857) projection. In order to view a map with multiple layers in a non-standard projection, you will have to ensure that all layers share the same projection, otherwise the layers will not line up.
 
+### Configuration Using Environment Variables
+
+Any parameter in the configuration file can be over-ridden at run-time in the environment. Prepend the upper-cased parameter name with `TS_` to set the value. For example, to change the HTTP port using the environment:
+```bash
+export TS_HTTPPORT=8889
+```
+
+
 # Operation
 
 The purpose of `pg_tileserv` is to turn a set of spatial records into tiles, on the fly. The tile server reads two different layers of data:
