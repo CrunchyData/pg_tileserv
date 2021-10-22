@@ -186,6 +186,7 @@ func getFunctionLayers() ([]LayerFunction, error) {
 		WHERE p.proargtypes[0:2] = ARRAY[23::oid, 23::oid, 23::oid]
 		AND p.proargnames[1:3] = ARRAY['z'::text, 'x'::text, 'y'::text]
 		AND prorettype = 17
+		AND has_schema_privilege(n.oid, 'usage')
 		AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute')
 		ORDER BY 1
 		`
