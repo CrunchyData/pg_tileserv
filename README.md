@@ -332,6 +332,14 @@ For example:
 
 For property names that include commas (why did you do that?) [URL encode](https://en.wikipedia.org/wiki/Percent-encoding) the comma in the name string before composing the comma-separated string of all names.
 
+### Multi-Layer Tile Requests
+
+For more complex applications, multi-layer tiles can be useful to cut down on the amount of HTTP requests to pull in vector tiles. Doing this with `pg_tileserv` is easy, just add additional tables to your request. You can add as many tables as you like to your request, just separate them with a comma.
+
+For example:
+
+    http://localhost:7800/public.ne_50m_admin_0_countries,public.ne_50m_airports/{z}/{x}/{y}.pbf
+
 ## Function Layers
 
 By default, `pg_tileserv` will provide access to **only** those functions:
