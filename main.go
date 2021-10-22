@@ -320,21 +320,21 @@ func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
 }
 
 // requestTile handles a tile request for a given layer
-func requestTile(w http.ResponseWriter, r *http.Request) error {
+func requestTile(r *http.Request, source string) ([]byte, error) {
 	vars := mux.Vars(r)
 
-	lyr, err := getLayer(vars["name"])
+	lyr, err := getLayer(source)
 	if err != nil {
 		errLyr := tileAppError{
 			HTTPCode: 404,
 			SrcErr:   err,
 		}
-		return errLyr
+		return nil, errLyr
 	}
 
 	tile, errTile := makeTile(vars)
 	if errTile != nil {
-		return errTile
+		return nil, errTile
 	}
 
 	log.WithFields(log.Fields{
@@ -349,12 +349,29 @@ func requestTile(w http.ResponseWriter, r *http.Request) error {
 	tilerequest := lyr.GetTileRequest(tile, r)
 	mvt, errMvt := dBTileRequest(ctx, &tilerequest)
 	if errMvt != nil {
-		return errMvt
+		return nil, errMvt
+	}
+
+	return mvt, nil
+}
+
+// requestTiles handles a tile request for a given layer, including multi layer tile requests
+func requestTiles(w http.ResponseWriter, r *http.Request) error {
+	var layers []byte
+	vars := mux.Vars(r)
+
+	sources := strings.Split(vars["name"], ",")
+	for _, source := range sources {
+		layer, err := requestTile(r, source)
+		if err != nil {
+			return err
+		}
+		layers = append(layers, layer...)
 	}
 
 	w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
 
-	if _, errWrite := w.Write(mvt); errWrite != nil {
+	if _, errWrite := w.Write(layers); errWrite != nil {
 		return errWrite
 	}
 
@@ -451,7 +468,7 @@ func tileRouter() *mux.Router {
 	r.Handle("/{name}.html", tileAppHandler(requestPreview))
 	r.Handle("/{name}.json", tileAppHandler(requestDetailJSON))
 	// Tile requests
-	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileMetrics(tileAppHandler(requestTile)))
+	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileMetrics(tileAppHandler(requestTiles)))
 
 	if viper.GetBool("EnableMetrics") {
 		r.Handle("/metrics", promhttp.Handler())
