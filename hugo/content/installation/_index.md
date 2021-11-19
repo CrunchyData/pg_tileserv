@@ -136,6 +136,6 @@ DefaultMinZoom = 0
 DefaultMaxZoom = 22
 # Allow any page to consume these tiles
 CORSOrigins = *
-tra logging information?
+# Output extra logging information?
 Debug = false
 ```
