@@ -26,4 +26,6 @@ jobs:
         DOCKER_USER: ${{ secrets.DOCKER_USER }}
         DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
         DOCKER_REPO: pramsey/pg_tileserv
-      run: ./ci/github-docker.sh
+      run: |
+        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+        docker push $DOCKER_REPO
