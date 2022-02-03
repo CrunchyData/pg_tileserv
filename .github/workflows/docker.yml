@@ -7,7 +7,7 @@ jobs:
   docker:
     name: Docker
     runs-on: ubuntu-latest
-    if: github.repository == 'Crunchydata/pg_tileserv'
+    if: github.repository == 'CrunchyData/pg_tileserv'
     steps:
 
     - name: Install Go

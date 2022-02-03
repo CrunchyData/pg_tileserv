@@ -21,14 +21,14 @@ jobs:
       run: make build
 
     - name: 'Bundle Zip'
-      if: github.repository == 'Crunchydata/pg_tileserv' && github.ref_name == 'master'
+      if: github.repository == 'CrunchyData/pg_tileserv' && github.ref_name == 'master'
       env:
         MATRIX_OS: ${{ matrix.os }}
       run: ./ci/github-bundle.sh
       shell: bash
 
     - name: 'Login to AWS'
-      if: github.repository == 'Crunchydata/pg_tileserv' && github.ref_name == 'master'
+      if: github.repository == 'CrunchyData/pg_tileserv' && github.ref_name == 'master'
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -36,5 +36,5 @@ jobs:
         aws-region: us-east-1
 
     - name: 'Upload Zip'
-      if: github.repository == 'Crunchydata/pg_tileserv' && github.ref_name == 'master'
+      if: github.repository == 'CrunchyData/pg_tileserv' && github.ref_name == 'master'
       run: aws s3 sync ./upload s3://postgisftw
