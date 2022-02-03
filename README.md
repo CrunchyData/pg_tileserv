@@ -20,7 +20,7 @@ Builds of the latest code:
 
 * [Linux](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_linux.zip)
 * [Windows](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_windows.zip)
-* [OSX](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_osx.zip)
+* [MacOS](https://postgisftw.s3.amazonaws.com/pg_tileserv_latest_macos.zip)
 * [Docker](https://hub.docker.com/r/pramsey/pg_tileserv)
 
 ## Basic Operation
@@ -29,7 +29,7 @@ The executable will read user/connection information from the `DATABASE_URL` and
 
 For **production deployment**, place an HTTP proxy caching layer (eg [Varnish](https://varnish-cache.org/)) in between the tile server and clients to reduce database load and increase application performance.
 
-### Linux/OSX
+### Linux/MacOS
 
 ```sh
 export DATABASE_URL=postgresql://username:password@host/dbname

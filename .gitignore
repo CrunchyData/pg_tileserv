@@ -3,3 +3,6 @@ pg_tileserv.exe
 *.code-workspace
 docs/
 public/
+config/pg_tileserv*.toml
+server.crt
+server.key

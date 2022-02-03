@@ -1,0 +1,40 @@
+on: [push, pull_request]
+jobs:
+  ci:
+    name: CI
+    strategy:
+      matrix:
+        go-version: [1.16.x]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+
+    - name: 'Install Go'
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build
+      run: make build
+
+    - name: 'Bundle Zip'
+      if: github.repository == 'Crunchydata/pg_tileserv' && github.ref_name == 'master'
+      env:
+        MATRIX_OS: ${{ matrix.os }}
+      run: ./ci/github-bundle.sh
+      shell: bash
+
+    - name: 'Login to AWS'
+      if: github.repository == 'Crunchydata/pg_tileserv' && github.ref_name == 'master'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: 'Upload Zip'
+      if: github.repository == 'Crunchydata/pg_tileserv' && github.ref_name == 'master'
+      run: aws s3 sync ./upload s3://postgisftw
