@@ -216,7 +216,7 @@ func (lyr *LayerTable) getTableDetailJSON(req *http.Request) (TableDetailJSON, e
 		MaxZoom:      viper.GetInt("DefaultMaxZoom"),
 	}
 	// TileURL is relative to server base
-	td.TileURL = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.ID)
+	td.TileURL = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), url.PathEscape(lyr.ID))
 
 	// Want to add the properties to the Json representation
 	// in table order, which is fiddly

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"net/http"
+	"net/url"
 )
 
 // LayerType is the table/function type of a layer
@@ -103,7 +104,7 @@ func getJSONLayers(r *http.Request) map[string]layerJSON {
 			Name:        v.GetName(),
 			Schema:      v.GetSchema(),
 			Description: v.GetDescription(),
-			DetailURL:   fmt.Sprintf("%s/%s.json", urlBase, v.GetID()),
+			DetailURL:   fmt.Sprintf("%s/%s.json", urlBase, url.PathEscape(v.GetID())),
 		}
 	}
 	return json

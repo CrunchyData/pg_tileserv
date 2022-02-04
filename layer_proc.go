@@ -152,7 +152,7 @@ func (lyr *LayerFunction) getFunctionDetailJSON(req *http.Request) (FunctionDeta
 		MaxZoom:     viper.GetInt("DefaultMaxZoom"),
 	}
 	// TileURL is relative to server base
-	td.TileURL = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), lyr.ID)
+	td.TileURL = fmt.Sprintf("%s/%s/{z}/{x}/{y}.pbf", serverURLBase(req), url.PathEscape(lyr.ID))
 
 	tmpMap := make(map[int]FunctionArgument)
 	tmpKeys := make([]int, 0, len(lyr.Arguments))
@@ -174,8 +174,8 @@ func getFunctionLayers() ([]LayerFunction, error) {
 	layerSQL := `
 		SELECT
 			Format('%s.%s', n.nspname, p.proname) AS id,
-			n.nspname,
-			p.proname,
+			n.nspname AS nspname,
+			p.proname AS proname,
 			coalesce(d.description, '') AS description,
 			coalesce(p.proargnames, ARRAY[]::text[]) AS argnames,
 			coalesce(string_to_array(oidvectortypes(p.proargtypes),', '), ARRAY[]::text[]) AS argtypes,
@@ -187,7 +187,7 @@ func getFunctionLayers() ([]LayerFunction, error) {
 		AND p.proargnames[1:3] = ARRAY['z'::text, 'x'::text, 'y'::text]
 		AND prorettype = 17
 		AND has_schema_privilege(n.oid, 'usage')
-		AND has_function_privilege(Format('%s.%s(%s)', n.nspname, p.proname, oidvectortypes(proargtypes)), 'execute')
+		AND has_function_privilege(Format('%s.%s(%s)', quote_ident(n.nspname), quote_ident(p.proname), oidvectortypes(proargtypes)), 'execute')
 		ORDER BY 1
 		`
 

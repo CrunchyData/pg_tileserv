@@ -279,7 +279,7 @@ func requestListJSON(w http.ResponseWriter, r *http.Request) error {
 	log.WithFields(log.Fields{
 		"event": "request",
 		"topic": "layerlist",
-	}).Trace("requestListJson")
+	}).Trace("requestListJSON")
 	// Update the global in-memory list from
 	// the database
 	if err := loadLayers(); err != nil {
@@ -296,7 +296,7 @@ func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
 	log.WithFields(log.Fields{
 		"event": "request",
 		"topic": "layerdetail",
-	}).Tracef("requestDetailJson(%s)", lyrID)
+	}).Tracef("requestDetailJSON(%s)", lyrID)
 
 	// Refresh the layers list
 	if err := loadLayers(); err != nil {
