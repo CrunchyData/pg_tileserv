@@ -195,6 +195,9 @@
       map.on("load", function() {
         // pass query params thru to tile requests
         queryParam = new URLSearchParams(window.location.search).toString();
+        if (queryParam.length <= 1) {
+          queryParam = "";
+        }
         tileUrl = layer["tileurl"] + "?" + queryParam;
         addLayers(layer["id"], layer["geometrytype"], tileUrl);
       });
