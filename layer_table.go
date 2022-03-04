@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	// Database
+	"github.com/CrunchyData/pg_tileserv/cql"
 	"github.com/jackc/pgtype"
 
 	// Logging
@@ -108,6 +109,8 @@ type queryParameters struct {
 	Properties []string
 	Resolution int
 	Buffer     int
+	Filter     string
+	FilterCrs  int
 }
 
 // getRequestIntParameter ignores missing parameters and non-integer parameters,
@@ -130,6 +133,14 @@ func getQueryIntParameter(q url.Values, param string) int {
 		}
 	}
 	return -1
+}
+
+func getQueryStringParameter(q url.Values, param string) string {
+	vals := q[param]
+	if vals != nil {
+		return vals[0]
+	}
+	return ""
 }
 
 // getRequestPropertiesParameter compares the properties in the request
@@ -190,6 +201,8 @@ func (lyr *LayerTable) getQueryParameters(q url.Values) queryParameters {
 		Resolution: getQueryIntParameter(q, "resolution"),
 		Buffer:     getQueryIntParameter(q, "buffer"),
 		Properties: lyr.getQueryPropertiesParameter(q),
+		Filter:     getQueryStringParameter(q, "filter"),
+		FilterCrs:  getQueryIntParameter(q, "filter-crs"),
 	}
 	if rp.Limit < 0 {
 		rp.Limit = viper.GetInt("MaxFeaturesPerTile")
@@ -199,6 +212,9 @@ func (lyr *LayerTable) getQueryParameters(q url.Values) queryParameters {
 	}
 	if rp.Buffer < 0 {
 		rp.Buffer = viper.GetInt("DefaultBuffer")
+	}
+	if rp.FilterCrs < 0 {
+		rp.FilterCrs = 4326
 	}
 	return rp
 }
@@ -350,6 +366,7 @@ func (lyr *LayerTable) requestSQL(tile *Tile, qp *queryParameters) (string, erro
 	type sqlParameters struct {
 		TileSQL        string
 		QuerySQL       string
+		FilterSQL      string
 		TileSrid       int
 		Resolution     int
 		Buffer         int
@@ -369,6 +386,11 @@ func (lyr *LayerTable) requestSQL(tile *Tile, qp *queryParameters) (string, erro
 	queryBounds.Expand(tile.width() * float64(qp.Buffer) / float64(qp.Resolution))
 	tileSQL := tileBounds.SQL()
 	tileQuerySQL := queryBounds.SQL()
+
+	filterSQL, err := lyr.filterSQL(qp)
+	if err != nil {
+		return "", err
+	}
 
 	// SRID of the tile we are going to generate, which might be different
 	// from the layer SRID in the database
@@ -395,6 +417,7 @@ func (lyr *LayerTable) requestSQL(tile *Tile, qp *queryParameters) (string, erro
 	sp := sqlParameters{
 		TileSQL:        tileSQL,
 		QuerySQL:       tileQuerySQL,
+		FilterSQL:      filterSQL,
 		TileSrid:       tileSrid,
 		Resolution:     qp.Resolution,
 		Buffer:         qp.Buffer,
@@ -429,6 +452,7 @@ func (lyr *LayerTable) requestSQL(tile *Tile, qp *queryParameters) (string, erro
 			) bounds
 		WHERE ST_Intersects(t."{{ .GeometryColumn }}",
 							ST_Transform(bounds.geom_query, {{ .Srid }}))
+			{{ .FilterSQL }}
 		{{ .Limit }}
 	) mvtgeom
 	`
@@ -438,6 +462,19 @@ func (lyr *LayerTable) requestSQL(tile *Tile, qp *queryParameters) (string, erro
 		return "", err
 	}
 	return sql, err
+}
+
+func (lyr *LayerTable) filterSQL(qp *queryParameters) (string, error) {
+	//filter := "pop_est < 2000000"
+	filter := qp.Filter
+	sql, err := cql.TranspileToSQL(filter, qp.FilterCrs, lyr.Srid)
+	if err != nil {
+		return "", err
+	}
+	if sql != "" {
+		sql = "AND " + sql
+	}
+	return sql, nil
 }
 
 func getTableLayers() ([]LayerTable, error) {
