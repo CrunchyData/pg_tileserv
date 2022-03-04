@@ -193,7 +193,13 @@
       map = new mapboxgl.Map(mapConfig);
       map.addControl(new mapboxgl.NavigationControl());
       map.on("load", function() {
-        addLayers(layer["id"], layer["geometrytype"], layer["tileurl"]);
+        // pass query params thru to tile requests
+        queryParam = new URLSearchParams(window.location.search).toString();
+        if (queryParam.length <= 1) {
+          queryParam = "";
+        }
+        tileUrl = layer["tileurl"] + "?" + queryParam;
+        addLayers(layer["id"], layer["geometrytype"], tileUrl);
       });
 
     });
