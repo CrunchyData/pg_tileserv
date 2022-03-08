@@ -98,6 +98,9 @@ For example:
 
 We recommend avoiding commas in property names. If necessary, you can [URL encode](https://en.wikipedia.org/wiki/Percent-encoding) the comma in the name string before composing the comma-separated string of all names.
 
+* `filter` is an expression in [CQL](../cql) specifying what features are included in the tile
+* `filter-crs` is the SRID of the coordinate reference system of any geometry literals in the CQL expression (the default is 4326)
+
 ## Multi-Layer Tile Requests
 
 For more complex applications, multi-layer tiles can be useful to cut down on the amount of HTTP requests to pull in vector tiles. Doing this with `pg_tileserv` is easy, just add additional tables to your request. You can add as many tables as you like to your request, just separate them with a comma.
