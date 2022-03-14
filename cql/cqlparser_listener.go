@@ -34,6 +34,9 @@ type CQLParserListener interface {
 	// EnterBetweenPredicate is called when entering the betweenPredicate production.
 	EnterBetweenPredicate(c *BetweenPredicateContext)
 
+	// EnterInPredicate is called when entering the inPredicate production.
+	EnterInPredicate(c *InPredicateContext)
+
 	// EnterIsNullPredicate is called when entering the isNullPredicate production.
 	EnterIsNullPredicate(c *IsNullPredicateContext)
 
@@ -54,6 +57,9 @@ type CQLParserListener interface {
 
 	// EnterBooleanLiteral is called when entering the booleanLiteral production.
 	EnterBooleanLiteral(c *BooleanLiteralContext)
+
+	// EnterTemporalLiteral is called when entering the temporalLiteral production.
+	EnterTemporalLiteral(c *TemporalLiteralContext)
 
 	// EnterSpatialPredicate is called when entering the spatialPredicate production.
 	EnterSpatialPredicate(c *SpatialPredicateContext)
@@ -103,9 +109,6 @@ type CQLParserListener interface {
 	// EnterCoordinate is called when entering the coordinate production.
 	EnterCoordinate(c *CoordinateContext)
 
-	// EnterInPredicate is called when entering the inPredicate production.
-	EnterInPredicate(c *InPredicateContext)
-
 	// ExitCqlFilter is called when exiting the cqlFilter production.
 	ExitCqlFilter(c *CqlFilterContext)
 
@@ -133,6 +136,9 @@ type CQLParserListener interface {
 	// ExitBetweenPredicate is called when exiting the betweenPredicate production.
 	ExitBetweenPredicate(c *BetweenPredicateContext)
 
+	// ExitInPredicate is called when exiting the inPredicate production.
+	ExitInPredicate(c *InPredicateContext)
+
 	// ExitIsNullPredicate is called when exiting the isNullPredicate production.
 	ExitIsNullPredicate(c *IsNullPredicateContext)
 
@@ -153,6 +159,9 @@ type CQLParserListener interface {
 
 	// ExitBooleanLiteral is called when exiting the booleanLiteral production.
 	ExitBooleanLiteral(c *BooleanLiteralContext)
+
+	// ExitTemporalLiteral is called when exiting the temporalLiteral production.
+	ExitTemporalLiteral(c *TemporalLiteralContext)
 
 	// ExitSpatialPredicate is called when exiting the spatialPredicate production.
 	ExitSpatialPredicate(c *SpatialPredicateContext)
@@ -201,7 +210,4 @@ type CQLParserListener interface {
 
 	// ExitCoordinate is called when exiting the coordinate production.
 	ExitCoordinate(c *CoordinateContext)
-
-	// ExitInPredicate is called when exiting the inPredicate production.
-	ExitInPredicate(c *InPredicateContext)
 }

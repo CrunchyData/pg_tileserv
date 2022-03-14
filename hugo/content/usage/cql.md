@@ -200,3 +200,27 @@ The `DWITHIN` predicate allows testing whether a geometry lies within a given di
 ```
 DWITHIN(geom, POINT(-100 49), 0.1)
 ```
+
+## Temporal filters
+
+Temporal filtering in CQL supports date-time literals and the ability to use
+them in conditions against temporal-valued properties
+(PostgreSQL [dates or timestamps](https://www.postgresql.org/docs/current/datatype-datetime.html)).
+
+Date-time literals specifiy a date, or a timestamp including a date and time (with optional seconds value):
+```
+2001-01-01
+2001-01-01T10:23
+2001-01-01T10:23:45
+```
+
+Temporal values can be compared using the conditional operators `<`,`<=`,`>`,`>=`,`=`,`<>`:
+
+```
+t > 2001-01-01T00:00 AND t <= 2002-12-31T11:59:59
+```
+
+They can also be used in the `BETWEEN` predicate:
+```
+t BETWEEN 2001-01-01 AND 2001-12-31
+```

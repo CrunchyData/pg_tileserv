@@ -108,6 +108,15 @@ func TestBooleanExpression(t *testing.T) {
 	checkCQL(t, "NOT x IS NOT NULL", "NOT  \"x\" IS NOT NULL")
 }
 
+func TestTemporal(t *testing.T) {
+	checkCQL(t, "p BETWEEN 1991-01-01 AND 2000-12-31T01:59:59",
+		"\"p\" BETWEEN timestamp '1991-01-01' AND timestamp '2000-12-31T01:59:59'")
+	checkCQL(t, "1991-01-01 > p", "timestamp '1991-01-01' > \"p\"")
+	checkCQL(t, "p > 1991-01-01T01:23:45.678", "\"p\" > timestamp '1991-01-01T01:23:45.678'")
+	checkCQL(t, "p > 1991-01-01T01:23", "\"p\" > timestamp '1991-01-01T01:23'")
+	checkCQL(t, "p > NOW()", "\"p\" > timestamp 'NOW'")
+}
+
 func TestSyntaxErrors(t *testing.T) {
 	checkCQLError(t, "x y")
 	checkCQLError(t, "x == y")
@@ -117,6 +126,10 @@ func TestSyntaxErrors(t *testing.T) {
 	checkCQLError(t, "equals(geom, ENVELOPE(1,2,3,4)))")
 	// comma between ordinates
 	checkCQLError(t, "equals(geom, POINT(0,0))")
+	// bad temporal values
+	checkCQLError(t, "p > 200-01")
+	checkCQLError(t, "p > 2000-01")
+	checkCQLError(t, "p > 2000-01-01T01")
 }
 
 func checkCQL(t *testing.T, cqlStr string, sql string) {

@@ -176,22 +176,22 @@ Sign : PLUS | MINUS;
 # Definition of TEMPORAL literals
 #============================================================================*/
 
-/*
-TemporalLiteral : Instant | Interval;
+TemporalLiteral : Instant
+    // | Interval
+    ;
 Instant : FullDate | FullDate 'T' UtcTime | NOW LEFTPAREN RIGHTPAREN;
-Interval : (InstantInInterval)? SOLIDUS (InstantInInterval)?;
-InstantInInterval : '..' | Instant;
+//Interval : (InstantInInterval)? SOLIDUS (InstantInInterval)?;
+//InstantInInterval : '..' | Instant;
 FullDate : DateYear '-' DateMonth '-' DateDay;
 DateYear : DIGIT DIGIT DIGIT DIGIT;
 DateMonth : DIGIT DIGIT;
 DateDay : DIGIT DIGIT;
-UtcTime : TimeHour ':' TimeMinute ':' TimeSecond (TimeZoneOffset)?;
+UtcTime : TimeHour ':' TimeMinute  (':' TimeSecond)? (TimeZoneOffset)?;
 TimeZoneOffset : 'Z' | Sign TimeHour ':' TimeMinute;
 TimeHour : DIGIT DIGIT;
 TimeMinute : DIGIT DIGIT;
 TimeSecond : DIGIT DIGIT (PERIOD (DIGIT)+)?;
 NOW : N O W;
-*/
 
 /*============================================================================
 # ANTLR ignore whitespace

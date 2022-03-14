@@ -2,7 +2,7 @@
 # CQL2 Antlr grammar, with small modifications.
 # - Additions: ILIKE
 
-# Build: in this dir: antlr -Dlanguage=Go -package cql CQL.g4 CqlLexer.g4
+# Build: in this dir: antlr -Dlanguage=Go -package cql CQLParser.g4 CqlLexer.g4
 #
 # See examples:
 # https://portal.ogc.org/files/96288#cql-bnf
@@ -51,7 +51,12 @@ likePredicate :  propertyName (NOT)? ( LIKE | ILIKE ) characterLiteral;
 
 betweenPredicate : propertyName (NOT)? BETWEEN
                              scalarExpression AND scalarExpression ;
-//                             (scalarValue | temporalExpression) AND (scalarValue | temporalExpression);
+//                             (scalarExpression | temporalExpression) AND (scalarExpression | temporalExpression);
+
+inPredicate : propertyName NOT? IN LEFTPAREN (
+        characterLiteral (COMMA characterLiteral)*
+        | numericLiteral (COMMA numericLiteral)*
+    ) RIGHTPAREN;
 
 isNullPredicate : propertyName IS (NOT)? NULL;
 
@@ -68,16 +73,18 @@ scalarExpression : scalarValue
                     ;
 
 scalarValue : propertyName
-                    | characterLiteral
-                    | numericLiteral
-                    | booleanLiteral
-//                    | function
-                    ;
+            | characterLiteral
+            | numericLiteral
+            | booleanLiteral
+            | temporalLiteral
+//                   | function
+             ;
 
 propertyName: Identifier;
 characterLiteral: CharacterStringLiteral;
 numericLiteral: NumericLiteral;
 booleanLiteral: BooleanLiteral;
+temporalLiteral: TemporalLiteral;
 
 /*============================================================================
 # A spatial predicate evaluates if two spatial expressions satisfy the
@@ -124,27 +131,3 @@ envelope: ENVELOPE LEFTPAREN NumericLiteral COMMA NumericLiteral COMMA NumericLi
 
 coordList: LEFTPAREN coordinate (COMMA coordinate)* RIGHTPAREN;
 coordinate : NumericLiteral NumericLiteral;
-
-/*============================================================================
-# A temporal predicate evaluates if two temporal expressions satisfy the
-# specified temporal operator.
-#============================================================================*/
-/*
-temporalPredicate : temporalExpression (TemporalOperator | ComparisonOperator) temporalExpression;
-
-temporalExpression : propertyName
-                   | temporalLiteral
-                   //| function
-                   ;
-
-temporalLiteral: TemporalLiteral;
-*/
-
-/*============================================================================
-# The IN predicate
-#============================================================================*/
-
-inPredicate : propertyName NOT? IN LEFTPAREN (
-        characterLiteral (COMMA characterLiteral)*
-        | numericLiteral (COMMA numericLiteral)*
-    ) RIGHTPAREN;
