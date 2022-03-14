@@ -323,6 +323,7 @@ Most developers will just use the `tileurl` as is, but it possible to add some p
 * `resolution` controls the resolution of a tile, the default is 4096 units per side for a tile.
 * `buffer` controls the size of the extra data buffer for a tile, the default is 256 units.
 * `properties` is a comma-separated list of properties to include in the tile. For wide tables with large numbers of columns, this allows a slimmer tile to be composed.
+* `filter` is a CQL logical expression which specifies the features to be included in the tile.  See the [CQL documentation](hugo/content/usage/cql.md).
 
 For example:
 
@@ -825,4 +826,3 @@ REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM public;
 -- Just to be sure, also revoke execute from the user
 REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM tileserver;
 ```
-
