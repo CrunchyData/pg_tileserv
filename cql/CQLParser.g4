@@ -49,9 +49,8 @@ binaryComparisonPredicate : scalarExpression ComparisonOperator scalarExpression
 
 likePredicate :  propertyName (NOT)? ( LIKE | ILIKE ) characterLiteral;
 
-betweenPredicate : propertyName (NOT)? BETWEEN
+betweenPredicate : scalarExpression (NOT)? BETWEEN
                              scalarExpression AND scalarExpression ;
-//                             (scalarExpression | temporalExpression) AND (scalarExpression | temporalExpression);
 
 inPredicate : propertyName NOT? IN LEFTPAREN (
         characterLiteral (COMMA characterLiteral)*

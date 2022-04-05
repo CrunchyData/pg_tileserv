@@ -22,6 +22,10 @@ import (
 	"testing"
 )
 
+func TestDebug(t *testing.T) {
+	checkCQL(t, "1990-01-01 BETWEEN time_start AND time_end", "timestamp '1990-01-01' BETWEEN \"time_start\" AND \"time_end\"")
+}
+
 func TestPredicate(t *testing.T) {
 	checkCQL(t, "", "")
 	checkCQL(t, "id > tt", "\"id\" > \"tt\"")
@@ -111,6 +115,7 @@ func TestBooleanExpression(t *testing.T) {
 func TestTemporal(t *testing.T) {
 	checkCQL(t, "p BETWEEN 1991-01-01 AND 2000-12-31T01:59:59",
 		"\"p\" BETWEEN timestamp '1991-01-01' AND timestamp '2000-12-31T01:59:59'")
+	checkCQL(t, "1990-01-01 BETWEEN time_start AND time_end", "timestamp '1990-01-01' BETWEEN \"time_start\" AND \"time_end\"")
 	checkCQL(t, "1991-01-01 > p", "timestamp '1991-01-01' > \"p\"")
 	checkCQL(t, "p > 1991-01-01T01:23:45.678", "\"p\" > timestamp '1991-01-01T01:23:45.678'")
 	checkCQL(t, "p > 1991-01-01T01:23", "\"p\" > timestamp '1991-01-01T01:23'")

@@ -82,7 +82,7 @@ var parserATN = []uint16{
 	5, 24, 13, 2, 119, 15, 3, 2, 2, 2, 120, 122, 5, 28, 15, 2, 121, 123, 7,
 	13, 2, 2, 122, 121, 3, 2, 2, 2, 122, 123, 3, 2, 2, 2, 123, 124, 3, 2, 2,
 	2, 124, 125, 9, 2, 2, 2, 125, 126, 5, 30, 16, 2, 126, 17, 3, 2, 2, 2, 127,
-	129, 5, 28, 15, 2, 128, 130, 7, 13, 2, 2, 129, 128, 3, 2, 2, 2, 129, 130,
+	129, 5, 24, 13, 2, 128, 130, 7, 13, 2, 2, 129, 128, 3, 2, 2, 2, 129, 130,
 	3, 2, 2, 2, 130, 131, 3, 2, 2, 2, 131, 132, 7, 16, 2, 2, 132, 133, 5, 24,
 	13, 2, 133, 134, 7, 11, 2, 2, 134, 135, 5, 24, 13, 2, 135, 19, 3, 2, 2,
 	2, 136, 138, 5, 28, 15, 2, 137, 139, 7, 13, 2, 2, 138, 137, 3, 2, 2, 2,
@@ -1517,20 +1517,6 @@ func NewBetweenPredicateContext(parser antlr.Parser, parent antlr.ParserRuleCont
 
 func (s *BetweenPredicateContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *BetweenPredicateContext) PropertyName() IPropertyNameContext {
-	var t = s.GetTypedRuleContext(reflect.TypeOf((*IPropertyNameContext)(nil)).Elem(), 0)
-
-	if t == nil {
-		return nil
-	}
-
-	return t.(IPropertyNameContext)
-}
-
-func (s *BetweenPredicateContext) BETWEEN() antlr.TerminalNode {
-	return s.GetToken(CQLParserBETWEEN, 0)
-}
-
 func (s *BetweenPredicateContext) AllScalarExpression() []IScalarExpressionContext {
 	var ts = s.GetTypedRuleContexts(reflect.TypeOf((*IScalarExpressionContext)(nil)).Elem())
 	var tst = make([]IScalarExpressionContext, len(ts))
@@ -1552,6 +1538,10 @@ func (s *BetweenPredicateContext) ScalarExpression(i int) IScalarExpressionConte
 	}
 
 	return t.(IScalarExpressionContext)
+}
+
+func (s *BetweenPredicateContext) BETWEEN() antlr.TerminalNode {
+	return s.GetToken(CQLParserBETWEEN, 0)
 }
 
 func (s *BetweenPredicateContext) AND() antlr.TerminalNode {
@@ -1606,7 +1596,7 @@ func (p *CQLParser) BetweenPredicate() (localctx IBetweenPredicateContext) {
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(125)
-		p.PropertyName()
+		p.scalarExpression(0)
 	}
 	p.SetState(127)
 	p.GetErrorHandler().Sync(p)

@@ -322,30 +322,14 @@ func (l *cqlListener) ExitLikePredicate(ctx *LikePredicateContext) {
 }
 
 func (l *cqlListener) ExitBetweenPredicate(ctx *BetweenPredicateContext) {
-	prop := quotedName(getText(ctx.PropertyName()))
+	lhs := sqlFor(ctx.ScalarExpression(0))
 	not := ""
 	if ctx.NOT() != nil {
 		not = " NOT"
 	}
-	var expr1 string
-	if ctx.ScalarExpression(0) != nil {
-		expr1 = sqlFor(ctx.ScalarExpression(0))
-	}
-	/*
-		if ctx.TemporalExpression(0) != nil {
-			expr1 = sqlFor(ctx.TemporalExpression(0))
-		}
-	*/
-	var expr2 string
-	if ctx.ScalarExpression(0) != nil {
-		expr2 = sqlFor(ctx.ScalarExpression(1))
-	}
-	/*
-		if ctx.TemporalExpression(0) != nil {
-			expr2 = sqlFor(ctx.TemporalExpression(1))
-		}
-	*/
-	sql := " " + prop + not + " BETWEEN " + expr1 + " AND " + expr2
+	expr1 := sqlFor(ctx.ScalarExpression(1))
+	expr2 := sqlFor(ctx.ScalarExpression(2))
+	sql := " " + lhs + not + " BETWEEN " + expr1 + " AND " + expr2
 	ctx.SetSql(sql)
 }
 
