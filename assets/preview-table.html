@@ -1,9 +1,13 @@
 <html>
   <head>
     <meta charset='utf-8' />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
     <title>pg_tileserv: {{.ID}}</title>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.13.0/mapbox-gl.js'></script>
-    <link href='https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.13.0/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://unpkg.com/maplibre-gl@2.1.9/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.1.9/dist/maplibre-gl.css" rel="stylesheet" />
+
+<!--     <script src='https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.13.0/mapbox-gl.js'></script>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.13.0/mapbox-gl.css' rel='stylesheet' /> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <style type="text/css">
       body {margin:0;padding:0;font-family:sans-serif;}
@@ -147,7 +151,7 @@
         // When a click event occurs on a feature in the states layer, open a popup at the
         // location of the click, with description HTML from its properties.
         map.on('click', id, function(e) {
-          new mapboxgl.Popup()
+          new maplibregl.Popup()
           .setLngLat(e.lngLat)
           .setHTML(featureHtml(e.features[0]))
           .addTo(map);
@@ -190,8 +194,8 @@
       }
 
       // set up the mapbox gl js map object
-      map = new mapboxgl.Map(mapConfig);
-      map.addControl(new mapboxgl.NavigationControl());
+      map = new maplibregl.Map(mapConfig);
+      map.addControl(new maplibregl.NavigationControl());
       map.on("load", function() {
         // pass query params thru to tile requests
         queryParam = new URLSearchParams(window.location.search).toString();
