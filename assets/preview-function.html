@@ -154,7 +154,9 @@
         return {
           "id": layerId(id, gtype, paint),
           "source": id,
-          "source-layer": id,
+          // function layers implementor will decide of an arbitrary layer name inside the tile.
+          // most often, they will keep the name "default" as it is st_asmvt default value for this parameter.
+          "source-layer": "default",
           "type": paint,
           "paint": paints[paint],
           "filter": ["match", ["geometry-type"], [gtype, "Multi"+gtype], true, false]
