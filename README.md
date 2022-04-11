@@ -739,7 +739,7 @@ BEGIN
     FROM mvt;
 
     RETURN result;
-END:
+END;
 $$
 LANGUAGE 'plpgsql'
 STABLE
