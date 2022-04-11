@@ -414,7 +414,7 @@ BEGIN
       WHERE ST_Intersects(t.geom, ST_Transform(bounds.geom, 4326))
       AND upper(t.name) LIKE (upper(name_prefix) || '%')
     )
-    SELECT ST_AsMVT(mvtgeom, 'public.countries_name')
+    SELECT ST_AsMVT(mvtgeom, 'default')
     INTO result
     FROM mvtgeom;
 
@@ -435,6 +435,7 @@ Some notes about this function:
 * The `LIMIT` is hard-coded in this example. If you want a user-defined limit you need to add another parameter to your function definition.
 * The function "[volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html)" is declared as `STABLE` because within one transaction context, multiple runs with the same inputs will return the same outputs. It is not marked as `IMMUTABLE` because changes in the base table can change the outputs over time, even for the same inputs.
 * The function is declared as `PARALLEL SAFE` because it doesn't depend on any global state that might get confused by running multiple copies of the function at once.
+* The "name" in the [ST_AsMVT()](https://postgis.net/docs/ST_AsMVT.html) function has been set to "default". That means that the rendering client will be expected to have a rendering rule for a layer with a name of "default". In MapLibre, the tile layer name is set in the `source-layer` attribute of a layer.
 * The `ST_TileEnvelope()` function used here is a utility function available in PostGIS 3.0 and higher. For earlier versions, you will probably want to add a custom function to emulate the behavior.
   ```sql
   CREATE OR REPLACE
@@ -498,7 +499,7 @@ BEGIN
       AND ST_DWithin(p.geom, args.click, radius)
       LIMIT 10000
     )
-    SELECT ST_AsMVT(mvtgeom, 'public.parcels_in_radius')
+    SELECT ST_AsMVT(mvtgeom, 'default')
     INTO result
     FROM mvtgeom;
 
@@ -557,7 +558,7 @@ BEGIN
         -- generate_series setup
         FROM generate_series(1, depth) a, generate_series(1, depth) b
         )
-    SELECT ST_AsMVT(mvtgeom.*, 'public.squares')
+    SELECT ST_AsMVT(mvtgeom.*, 'default')
     -- Put the query result into the result variale.
     INTO result FROM mvtgeom;
 
@@ -733,7 +734,7 @@ BEGIN
         FROM rows, bounds
     )
     -- Generate MVT encoding of final input record
-    SELECT ST_AsMVT(mvt, 'public.hexpopulationsummary')
+    SELECT ST_AsMVT(mvt, 'default')
     INTO result
     FROM mvt;
 
@@ -776,7 +777,7 @@ BEGIN
         FROM rows, bounds
     )
     -- Generate MVT encoding of final input record
-    SELECT ST_AsMVT(mvt, 'public.hexagons')
+    SELECT ST_AsMVT(mvt, 'default')
     INTO result
     FROM mvt;
 

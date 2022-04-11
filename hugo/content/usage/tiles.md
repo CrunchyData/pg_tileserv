@@ -33,3 +33,10 @@ The tile server can automatically populate the "id" element, but only in cases w
 * The table being published has a integer primary key defined. This key will be used as the "id" automatically.
 
 For function layers, the "id" can be populated, but that task is left to the function author, who will be calling the `ST_AsMVT()` function in their code, and must remember to populate the feature id name field. The column that is chosen to populate the "id" element **must** be unique per feature.
+
+## Layer Name
+
+The [ST_AsMVT()](https://postgis.net/docs/ST_AsMVT.html) function includes a parameter for the "name". This is the "layer name" that client rendering engines will use to identify this particular set of features, to apply a style to those features.
+
+For example, in MapLibre, the `source-layer` attribute for a layer must match the layer name that is in the vector tile source, in order for the rendering rules in that layer to be applied. If you leave the "name" attribute blank in your [ST_AsMVT()](https://postgis.net/docs/ST_AsMVT.html) call, the name will be set to "default", and so your `source-layer` must **also** be set to "default" in order for your tile layer to render.
+

@@ -226,7 +226,7 @@ mvt AS (
     FROM rows, bounds
 )
 -- Generate MVT encoding of final input record
-SELECT ST_AsMVT(mvt, 'public.hexpopulationsummary') FROM mvt
+SELECT ST_AsMVT(mvt, 'default') FROM mvt
 $$
 LANGUAGE 'sql'
 STABLE

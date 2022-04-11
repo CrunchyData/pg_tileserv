@@ -70,7 +70,7 @@ AS $$
       WHERE ST_Intersects(t.geom, ST_Transform(bounds.geom, 4326))
       AND upper(t.name) LIKE (upper(name_prefix) || '%')
     )
-    SELECT ST_AsMVT(mvtgeom, 'public.countries_name') FROM mvtgeom;
+    SELECT ST_AsMVT(mvtgeom, 'default') FROM mvtgeom;
 $$
 LANGUAGE 'sql'
 STABLE
@@ -146,7 +146,7 @@ AS $$
       AND ST_DWithin(p.geom, args.click, radius)
       LIMIT 10000
     )
-    SELECT ST_AsMVT(mvtgeom, 'public.parcels_in_radius') FROM mvtgeom
+    SELECT ST_AsMVT(mvtgeom, 'default') FROM mvtgeom
 $$
 LANGUAGE 'sql'
 STABLE
