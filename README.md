@@ -57,9 +57,9 @@ To get more information about what is going on behind the scenes, run with the `
 
 The [configuration file](config/pg_tileserv.toml.example) will be automatically read from the following locations, if it exists:
 
-* In the system configuration directory, at `/etc/pg_tileserv.toml`
 * Relative to the directory from which the program is run, `./config/pg_tileserv.toml`
 * In a root volume at `/config/pg_tileserv.toml`
+* In the system configuration directory, at `/etc/pg_tileserv.toml`
 
 If you want to pass a path directly to the configuration file, use the `--config` commandline parameter to pass in a pull path to configuration file. When using the `--config` option, configuration files in other locations will be ignored.
 
