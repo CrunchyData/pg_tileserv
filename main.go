@@ -78,7 +78,7 @@ func init() {
 	viper.SetDefault("UrlBase", "")
 	viper.SetDefault("DefaultResolution", 4096)
 	viper.SetDefault("DefaultBuffer", 256)
-	viper.SetDefault("MaxFeaturesPerTile", 10000)
+	viper.SetDefault("MaxFeaturesPerTile", 50000)
 	viper.SetDefault("DefaultMinZoom", 0)
 	viper.SetDefault("DefaultMaxZoom", 22)
 	viper.SetDefault("Debug", false)
