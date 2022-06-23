@@ -28,4 +28,4 @@ jobs:
         DOCKER_REPO: pramsey/pg_tileserv
       run: |
         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-        docker push $DOCKER_REPO
+        docker push --all-tags $DOCKER_REPO
