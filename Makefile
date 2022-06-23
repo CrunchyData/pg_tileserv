@@ -4,6 +4,7 @@ GOVERSION := 1.15
 PROGRAM := pg_tileserv
 CONFIG := config/$(PROGRAM).toml
 CONTAINER := pramsey/$(PROGRAM)
+DATE := $(shell date +%Y%m%d)
 
 RM = /bin/rm
 CP = /bin/cp
@@ -36,7 +37,7 @@ bin-docker:  ##    Build a local binary based off of a golang base docker image
 	sudo docker run --rm -v "$(PWD)":/usr/src/myapp:z -w /usr/src/myapp golang:$(GOVERSION) make APPVERSION=$(APPVERSION) build
 
 build-docker: $(PROGRAM) Dockerfile  ##  Generate a CentOS 7 container with APPVERSION tag, using binary from current environment
-	docker build -f Dockerfile --build-arg VERSION=$(APPVERSION) -t $(CONTAINER):$(APPVERSION) .
+	docker build -f Dockerfile --build-arg VERSION=$(APPVERSION) -t $(CONTAINER):$(APPVERSION) -t $(CONTAINER):$(DATE) .
 
 release: clean docs build build-docker  ##       Generate the docs, a local build, and then uses the local build to generate a CentOS 7 container
 
