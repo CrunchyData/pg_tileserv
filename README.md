@@ -437,31 +437,41 @@ Some notes about this function:
 * The function is declared as `PARALLEL SAFE` because it doesn't depend on any global state that might get confused by running multiple copies of the function at once.
 * The "name" in the [ST_AsMVT()](https://postgis.net/docs/ST_AsMVT.html) function has been set to "default". That means that the rendering client will be expected to have a rendering rule for a layer with a name of "default". In MapLibre, the tile layer name is set in the `source-layer` attribute of a layer.
 * The `ST_TileEnvelope()` function used here is a utility function available in PostGIS 3.0 and higher. For earlier versions, you will probably want to add a custom function to emulate the behavior.
-  ```sql
-  CREATE OR REPLACE
-  FUNCTION ST_TileEnvelope(z integer, x integer, y integer)
-  RETURNS geometry
-  AS $$
-    DECLARE
-      size float8;
-      zp integer = pow(2, z);
-      gx float8;
-      gy float8;
-    BEGIN
-      IF y >= zp OR y < 0 OR x >= zp OR x < 0 THEN
-          RAISE EXCEPTION 'invalid tile coordinate (%, %, %)', z, x, y;
-      END IF;
-      size := 40075016.6855784 / zp;
-      gx := (size * x) - (40075016.6855784/2);
-      gy := (40075016.6855784/2) - (size * y);
-      RETURN ST_SetSRID(ST_MakeEnvelope(gx, gy, gx + size, gy - size), 3857);
-    END;
-  $$
-  LANGUAGE 'plpgsql'
-  IMMUTABLE
-  STRICT
-  PARALLEL SAFE;
-  ```
+```sql
+  CREATE OR REPLACE FUNCTION ST_TileEnvelope(
+    tileZoom integer,
+    tileX integer,
+    tileY integer,
+    bounds geometry = ST_MakeEnvelope(-20037508.342789, -20037508.342789, 20037508.342789, 20037508.342789, 3857),
+    margin float = 0.0
+  ) RETURNS geometry AS $$
+  DECLARE
+    worldXMax float = ST_XMax(bounds);
+    worldXMin float = ST_XMin(bounds);
+    worldYMax float = ST_YMax(bounds);
+    worldYMin float = ST_YMin(bounds);
+    worldXSize float = worldXMax - worldXMin;
+    worldYSize float = worldYMax - worldYMin;
+
+    worldTileSize integer = power(2, tileZoom);
+    XResolution float = worldXSize / worldTileSize;
+    YResolution float = worldYSize / worldTileSize;
+
+    xmin float = worldXMin + XResolution * (tileX - margin);
+    xmax float = worldXMin + XResolution * (tileX + 1 + margin);
+    ymin float = worldYMax - YResolution * (tileY + 1 + margin);
+    ymax float = worldYMax - YResolution * (tileY - margin);
+
+    srid integer = ST_Srid(bounds);
+  BEGIN
+    IF tileZoom < 0 OR tileX < 0 OR tileX >= worldTileSize OR tileY < 0 OR tileY >= worldTileSize THEN
+      RAISE EXCEPTION 'invalid tile coordinate (%, %, %)', tileZoom, tileX, tileY;
+    END IF;
+
+    RETURN ST_MakeEnvelope(xmin, ymin, xmax, ymax, srid);
+  END;
+  $$ Language 'plpgsql' IMMUTABLE STRICT PARALLEL SAFE;
+```
 
 #### Spatial Processing Example
 
