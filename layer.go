@@ -97,6 +97,7 @@ type layerJSON struct {
 func getJSONLayers(r *http.Request) map[string]layerJSON {
 	json := make(map[string]layerJSON)
 	urlBase := serverURLBase(r)
+	globalLayersMutex.Lock()
 	for k, v := range globalLayers {
 		json[k] = layerJSON{
 			Type:        v.GetType().String(),
@@ -107,5 +108,6 @@ func getJSONLayers(r *http.Request) map[string]layerJSON {
 			DetailURL:   fmt.Sprintf("%s/%s.json", urlBase, url.PathEscape(v.GetID())),
 		}
 	}
+	globalLayersMutex.Unlock()
 	return json
 }
