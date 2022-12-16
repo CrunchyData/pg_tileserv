@@ -1,9 +1,9 @@
 # Lightweight Alpine-based pg_tileserv Docker Image
 # Author: Just van den Broecke
-FROM golang:1.15.5-alpine3.12
+FROM golang:1.19.4-alpine3.17
 
 # Build ARGS
-ARG VERSION="latest-alpine-3.12"
+ARG VERSION="latest-alpine-3.17"
 
 RUN mkdir /app
 ADD . /app/
@@ -11,7 +11,7 @@ WORKDIR /app
 RUN go build -v -ldflags "-s -w -X main.programVersion=${VERSION}"
 
 # Multi-stage build: only copy build result and resources
-FROM alpine:3.12
+FROM alpine:3.17
 
 LABEL original_developer="Crunchy Data" \
     contributor="Just van den Broecke <justb4@gmail.com>" \
@@ -19,7 +19,7 @@ LABEL original_developer="Crunchy Data" \
 	url="https://crunchydata.com" \
 	release="${VERSION}" \
 	org.opencontainers.image.vendor="Crunchy Data" \
-	os.version="3.12"
+	os.version="3.17"
 
 RUN apk --no-cache add ca-certificates && mkdir /app
 WORKDIR /app/
@@ -36,7 +36,7 @@ CMD []
 
 # To build and run specific version
 #
-# export VERSION="latest-alpine-3.12"
+# export VERSION="latest-alpine-3.17"
 # docker build --build-arg VERSION=${VERSION} -t pramsey/pg_tileserv:${VERSION} -f Dockerfile.alpine
 #
 # Best is to use another PostGIS Docker Container whoose host is reachable from the pg_tileserv Container.
