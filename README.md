@@ -41,6 +41,14 @@ SET DATABASE_URL=postgresql://username:password@host/dbname
 pg_tileserv.exe
 ```
 
+### PostgreSQL not on 5432
+
+If your PostgreSQL is not running on unix socket or 5432 port, you can specify the port as part of the URL
+
+```
+DATABASE_URL=postgresql://username:password@host:port/dbname
+```
+
 ### Docker
 
 Use [Dockerfile.alpine](Dockerfile.alpine) to build a lightweight (18MB expanded) Docker Image.
@@ -68,6 +76,9 @@ If you want to pass a path directly to the configuration file, use the `--config
 ```
 
 In general the defaults are fine, and the program autodetects things like the server name.
+If you are not running PostgreSQL on 5432 port, you may need to add the port to the DbConnection parameter
+
+`user=you host=localhost dbname=yourdb port=yourdbport`
 
 ```toml
 # Database connection
