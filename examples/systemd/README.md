@@ -5,17 +5,17 @@ by: Regina Obe - lr (@) pcorp.us
 This example demonstrates how to run pg_tileserv as a Linux systemd service
 To use:
 
-Copy the pg_tileserv.service file to services directory
-On Debian/Ubuntu this would be  `/etc/systemd/system/`
-On Redhat / CentOS based probably `/usr/lib/systemd/system`
-
-Make edits as necessary. Things you might want to change:
-
 Create a user that will run this service, making sure that user has rights
 to the working directory and executable e.g.
 ```
 sudo useradd pgtileserv
 ```
+
+Copy the pg_tileserv.service file to services directory
+On Debian/Ubuntu this would be  `/etc/systemd/system/`
+On Redhat / CentOS based probably `/usr/lib/systemd/system`
+
+Make edits as necessary. Things you might want to change:
 
 The account it runs under, change to whatever account you want
 ```
