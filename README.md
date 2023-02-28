@@ -350,6 +350,8 @@ For example:
 
     http://localhost:7800/public.ne_50m_admin_0_countries,public.ne_50m_airports/{z}/{x}/{y}.pbf
 
+When you style those combined layers with Maplibre GL JS (["Layers" Docs](https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/)) or Mapbox GL JS, use the original layer `id` as `source-layer`.
+
 ## Function Layers
 
 By default, `pg_tileserv` will provide access to **only** those functions:
