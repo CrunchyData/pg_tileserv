@@ -507,7 +507,7 @@ func getTableLayers() ([]LayerTable, error) {
 	LEFT JOIN pg_index i ON (c.oid = i.indrelid AND i.indisprimary AND i.indnatts = 1)
 	LEFT JOIN pg_attribute ia ON (ia.attrelid = i.indexrelid)
 	LEFT JOIN pg_type it ON (ia.atttypid = it.oid AND it.typname in ('int2', 'int4', 'int8'))
-	WHERE c.relkind IN ('r', 'v', 'm', 'p')
+	WHERE c.relkind IN ('r', 'v', 'm', 'p', 'f')
 		AND t.typname = 'geometry'
 		AND has_table_privilege(c.oid, 'select')
 		AND has_schema_privilege(n.oid, 'usage')
