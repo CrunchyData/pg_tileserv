@@ -43,5 +43,5 @@ To stop and start
 sudo systemctl stop pg_tileserv
 sudo systemctl restart pg_tileserv
 #confirm it's running
-sudo systemctl status pg_tilese
+sudo systemctl status pg_tileserv
 ```
