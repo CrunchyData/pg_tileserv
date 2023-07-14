@@ -136,11 +136,11 @@
 
       // Convert feature properties into html
       function featureHtml(f) {
-        var p = f.properties;
+        var sortedPropertyKeys = Object.keys(f.properties).sort((a,b) => a.localeCompare(b))
         var h = "<p>";
-        for (var k in p) {
-          h += "<b>" + k + ":</b> " + p[k] + "<br/>"
-        }
+        sortedPropertyKeys.forEach(k => {
+          h += "<b>" + k + ":</b> " + f.properties[k] + "<br/>"
+        })
         h += "</p>";
         return h
       }
