@@ -54,26 +54,34 @@ type FunctionDetailJSON struct {
  * Layer Interface
  */
 
+// GetType disambiguates between function and table layers
 func (lyr LayerFunction) GetType() LayerType {
 	return LayerTypeFunction
 }
 
+// GetID returns the complete ID (schema.name) by which to reference a given layer
 func (lyr LayerFunction) GetID() string {
 	return lyr.ID
 }
 
+// GetDescription returns the text description for a layer
+// or an empty string if no description is set
 func (lyr LayerFunction) GetDescription() string {
 	return lyr.Description
 }
 
+// GetName returns just the name of a given layer
 func (lyr LayerFunction) GetName() string {
 	return lyr.Function
 }
 
+// GetSchema returns just the schema for a given layer
 func (lyr LayerFunction) GetSchema() string {
 	return lyr.Schema
 }
 
+// GetTileRequest takes tile and request parameters as input and returns a TileRequest
+// specifying the SQL and any additional arguments to fetch appropriate data
 func (lyr LayerFunction) GetTileRequest(tile Tile, r *http.Request) TileRequest {
 
 	procArgs := lyr.getFunctionArgs(r.URL.Query())
@@ -88,6 +96,7 @@ func (lyr LayerFunction) GetTileRequest(tile Tile, r *http.Request) TileRequest 
 	return tr
 }
 
+// WriteLayerJSON outputs parameters and optional arguments for the function layer
 func (lyr LayerFunction) WriteLayerJSON(w http.ResponseWriter, req *http.Request) error {
 	jsonTableDetail, err := lyr.getFunctionDetailJSON(req)
 	if err != nil {
