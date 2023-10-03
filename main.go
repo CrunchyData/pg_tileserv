@@ -40,7 +40,7 @@ import (
 const programName string = "pg_tileserv"
 
 // programVersion is the version string we use
-//const programVersion string = "0.1"
+// const programVersion string = "0.1"
 var programVersion string
 
 // globalDb is a global database connection pointer

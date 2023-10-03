@@ -77,7 +77,7 @@ func syntaxErrorMsg(input string, col int) string {
 	return msg
 }
 
-//======================================
+// ======================================
 type CqlErrorListener struct {
 	*antlr.DefaultErrorListener
 	errorCount int
@@ -162,7 +162,7 @@ func getNodeText(node antlr.TerminalNode) string {
 	return node.GetText()
 }
 
-//========================================
+// ========================================
 type CqlContext struct {
 	*antlr.BaseParserRuleContext
 	// SQL fragment for the context subtree
