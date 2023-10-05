@@ -40,21 +40,21 @@ import (
 const programName string = "pg_tileserv"
 
 // programVersion is the version string we use
-//const programVersion string = "0.1"
+// const programVersion string = "0.1"
 var programVersion string
 
 // globalDb is a global database connection pointer
-var globalDb *pgxpool.Pool = nil
+var globalDb *pgxpool.Pool
 
 // globalVersions holds the parsed output of postgis_full_version()
-var globalVersions map[string]string = nil
+var globalVersions map[string]string
 
 // globalPostGISVersion is numeric, sortable postgis version (3.2.1 => 3002001)
-var globalPostGISVersion int = 0
+var globalPostGISVersion int
 
 // serverBounds are the coordinate reference system and extent from
 // which tiles are constructed
-var globalServerBounds *Bounds = nil
+var globalServerBounds *Bounds
 
 // timeToLive is the Cache-Control timeout value that will be advertised
 // in the response headers

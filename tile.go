@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -34,7 +33,7 @@ func makeTile(vars map[string]string) (Tile, error) {
 	if !tile.IsValid() {
 		invalidTileError := tileAppError{
 			HTTPCode: 400,
-			SrcErr:   errors.New(fmt.Sprintf("invalid tile address %s", tile.String())),
+			SrcErr:   fmt.Errorf("invalid tile address %s", tile.String()),
 		}
 		return tile, invalidTileError
 	}

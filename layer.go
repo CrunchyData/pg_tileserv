@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
 	"net/http"
@@ -43,6 +42,7 @@ type Layer interface {
 	WriteLayerJSON(w http.ResponseWriter, req *http.Request) error
 }
 
+// A TileRequest specifies what to fetch from the database for a single tile
 type TileRequest struct {
 	LayerID string
 	Tile    Tile
@@ -55,7 +55,7 @@ func getLayer(lyrID string) (Layer, error) {
 	if ok {
 		return lyr, nil
 	}
-	return lyr, errors.New(fmt.Sprintf("Unable to get layer '%s'", lyrID))
+	return lyr, fmt.Errorf("Unable to get layer '%s'", lyrID)
 }
 
 func loadLayers() error {
