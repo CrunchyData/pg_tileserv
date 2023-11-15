@@ -8,6 +8,8 @@ import (
 func Test_makeTile(t *testing.T) {
 	// func makeTile(vars map[string]string) (Tile, error) {
 
+	serverBounds, _ := getServerBounds()
+
 	var tests = []struct {
 		input   map[string]string
 		outtile Tile
@@ -15,7 +17,7 @@ func Test_makeTile(t *testing.T) {
 	}{
 		{
 			map[string]string{"x": "0", "y": "0", "z": "0", "ext": "pbf"},
-			Tile{X: 0, Y: 0, Zoom: 0, Ext: "pbf"},
+			Tile{X: 0, Y: 0, Zoom: 0, Ext: "pbf", Bounds: *serverBounds},
 			nil,
 		},
 	}
