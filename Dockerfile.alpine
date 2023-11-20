@@ -1,6 +1,6 @@
 # Lightweight Alpine-based pg_tileserv Docker Image
 # Author: Just van den Broecke
-FROM golang:1.19.4-alpine3.17
+FROM golang:1.21.3-alpine3.17
 
 # Build ARGS
 ARG VERSION="latest-alpine-3.17"
