@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -361,12 +362,18 @@ func requestTiles(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 
 	sources := strings.Split(vars["name"], ",")
+	var extant []string
 	for _, source := range sources {
-		layer, err := requestTile(r, source)
-		if err != nil {
-			return err
+		if !slices.Contains(extant, source) {
+			layer, err := requestTile(r, source)
+			if err != nil {
+				return err
+			}
+			layers = append(layers, layer...)
+			extant = append(extant, source)
+		} else {
+			log.Debugf("Skipping duplicate layer %s in request %s", source, sources)
 		}
-		layers = append(layers, layer...)
 	}
 
 	w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
