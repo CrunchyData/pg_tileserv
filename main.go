@@ -83,6 +83,7 @@ func init() {
 	viper.SetDefault("DefaultMinZoom", 0)
 	viper.SetDefault("DefaultMaxZoom", 22)
 	viper.SetDefault("Debug", false)
+	viper.SetDefault("ShowPreview", true)
 	viper.SetDefault("AssetsPath", "./assets")
 	// 1d, 1h, 1m, 1s, see https://golang.org/pkg/time/#ParseDuration
 	viper.SetDefault("DbPoolMaxConnLifeTime", "1h")
@@ -108,6 +109,7 @@ func main() {
 	flagConfigFile := getopt.StringLong("config", 'c', "", "full path to config file", "config.toml")
 	flagHelpOn := getopt.BoolLong("help", 'h', "display help output")
 	flagVersionOn := getopt.BoolLong("version", 'v', "display version number")
+	flagHidePreview := getopt.BoolLong("no-preview", 'n', "hide web interface")
 	getopt.Parse()
 
 	if *flagHelpOn {
@@ -137,6 +139,10 @@ func main() {
 		viper.AddConfigPath("./config")
 		viper.AddConfigPath("/config")
 		viper.AddConfigPath("/etc")
+	}
+
+	if *flagHidePreview {
+		viper.Set("ShowPreview", false)
 	}
 
 	// Report our status
@@ -468,12 +474,14 @@ func tileRouter() *mux.Router {
 		Subrouter()
 
 	// Front page and layer list
-	r.Handle("/", tileAppHandler(requestListHTML))
-	r.Handle("/index.html", tileAppHandler(requestListHTML))
-	r.Handle("/index.json", tileAppHandler(requestListJSON))
-	// Layer detail and demo pages
-	r.Handle("/{name}.html", tileAppHandler(requestPreview))
-	r.Handle("/{name}.json", tileAppHandler(requestDetailJSON))
+	if viper.GetBool("ShowPreview") {
+		r.Handle("/", tileAppHandler(requestListHTML))
+		r.Handle("/index.html", tileAppHandler(requestListHTML))
+		r.Handle("/index.json", tileAppHandler(requestListJSON))
+		// Layer detail and demo pages
+		r.Handle("/{name}.html", tileAppHandler(requestPreview))
+		r.Handle("/{name}.json", tileAppHandler(requestDetailJSON))
+	}
 	// Tile requests
 	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileMetrics(tileAppHandler(requestTiles)))
 

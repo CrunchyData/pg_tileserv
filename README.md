@@ -174,6 +174,8 @@ After start-up you can connect to the server and explore the published tables an
 
 * http://localhost:7800
 
+To disable the web interface, supply the run time flag `--no-preview`
+
 ## Layers List
 
 A list of layers is available in JSON at:
