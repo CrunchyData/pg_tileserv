@@ -840,3 +840,9 @@ REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM public;
 -- Just to be sure, also revoke execute from the user
 REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM tileserver;
 ```
+
+
+# Running Go tests locally
+
+* Create a database and store its connection string as the `TEST_DATABASE_URL` environment variable
+* `go test`
