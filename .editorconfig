@@ -37,3 +37,7 @@ indent_size = 2
 # .bat files want CRLF
 [*.bat]
 end_of_line = crlf
+
+# Tabs for Makefiles ...
+[Makefile*]
+indent_style = tab

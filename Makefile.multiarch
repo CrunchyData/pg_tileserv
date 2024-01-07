@@ -1,0 +1,117 @@
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
+.DELETE_ON_ERROR:
+MAKEFLAGS += --warn-undefined-variables
+MAKEFLAGS += --no-builtin-rules
+MAKEFILE := $(CURDIR)/$(firstword $(MAKEFILE_LIST))
+
+ifeq ($(.DEFAULT_GOAL),)
+ifneq ($(shell test -f .env; echo $$?), 0)
+$(error Cannot find a .env file; copy .env.sample and customise)
+endif
+endif
+
+# Wrap the build in a check for an existing .env file
+ifeq ($(shell test -f .env; echo $$?), 0)
+include .env
+ENVVARS := $(shell sed -ne 's/ *\#.*$$//; /./ s/=.*$$// p' .env )
+$(foreach var,$(ENVVARS),$(eval $(shell echo export $(var)="$($(var))")))
+
+.DEFAULT_GOAL := help
+
+VERSION := $(shell cat ./VERSION)
+COMMIT_HASH := $(shell git log -1 --pretty=format:"sha-%h")
+PLATFORMS := "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64"
+
+ECR_REPO := refdata/pg_tileserv
+
+PG_TILESERV := pg_tileserv
+PG_TILESERV_REPO := ${GITHUB_REGISTRY}/${GITHUB_USER}
+PG_TILESERV_IMAGE := $(PG_TILESERV)
+PG_TILESERV_BUILDER := $(PG_TILESERV)-builder
+PG_TILESERV_DOCKERFILE := Dockerfile.multiarch
+
+HADOLINT_IMAGE := hadolint/hadolint
+
+.PHONY: help
+help: ## Show this help message
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+BUILD_TARGETS := build_pg_tileserv
+REBUILD_TARGETS := rebuild_pg_tileserv
+RELEASE_TARGETS := release_pg_tileserv
+
+.PHONY: build
+build: $(BUILD_TARGETS)	## Build all images
+
+.PHONY: rebuild
+rebuild: $(REBUILD_TARGETS)	## Rebuild all images without the cache
+
+.PHONY: release
+release: $(RELEASE_TARGETS)	## Release and tag all images
+
+build_pg_tileserv:	## Build the pg_tileserv image
+	$(MAKE) -f $(MAKEFILE) _build_image \
+		-e BUILD_DOCKERFILE=./$(PG_TILESERV_DOCKERFILE) \
+		-e BUILD_REPO=$(PG_TILESERV_REPO) \
+		-e BUILD_IMAGE=$(PG_TILESERV_IMAGE) \
+		-e BUILD_FLAGS="--build-arg=OWNER=${GITHUB_USER} --build-arg=VERSION=${VERSION}"
+
+rebuild_pg_tileserv:	## Rebuild the pg_tileserv image without the cache
+	$(MAKE) -f $(MAKEFILE) _build_image \
+		-e BUILD_DOCKERFILE=./$(PG_TILESERV_DOCKERFILE) \
+		-e BUILD_REPO=$(PG_TILESERV_REPO) \
+		-e BUILD_IMAGE=$(PG_TILESERV_IMAGE) \
+		-e BUILD_FLAGS="--build-arg=OWNER=${GITHUB_USER} --build-arg=VERSION=${VERSION}--no-cache"
+
+release_pg_tileserv: build_pg_tileserv	## Release and tag the pg_tileserv image
+	$(MAKE) -f $(MAKEFILE) _tag_image \
+		-e BUILD_REPO=$(PG_TILESERV_REPO) \
+		-e BUILD_IMAGE=$(PG_TILESERV_IMAGE) \
+		-e BUILD_TAG=$(COMMIT_HASH)
+	$(MAKE) -f $(MAKEFILE) _tag_image \
+		-e BUILD_REPO=$(PG_TILESERV_REPO) \
+		-e BUILD_IMAGE=$(PG_TILESERV_IMAGE) \
+		-e BUILD_TAG=$(VERSION)
+
+.PHONY: lint
+lint: lint_dockerfiles	## Run all linters
+
+.PHONY: lint_dockerfiles	## Lint Dockerfiles
+lint_dockerfiles:
+	$(MAKE) -f $(MAKEFILE) _lint_dockerfile -e BUILD_DOCKERFILE="$(PG_TILESERV_DOCKERFILE)"
+
+# Private (hidden) build targets ...
+
+.PHONY: _repo_login
+repo_login:
+	echo "${GITHUB_TOKEN}" | docker login ${GITHUB_REGISTRY} -u ${GITHUB_USER} --password-stdin
+
+.PHONY: _init_builder
+_init_builder:
+	docker buildx inspect $(PG_TILESERV_BUILDER) > /dev/null 2>&1 || \
+		docker buildx create --name $(PG_TILESERV_BUILDER) --bootstrap --use
+
+.PHONY: _build_image
+_build_image: _repo_login _init_builder
+	docker buildx build --platform=$(PLATFORMS) \
+		--file ${BUILD_DOCKERFILE} \
+		--push \
+		--provenance=false \
+		--tag  ${BUILD_REPO}/${BUILD_IMAGE}:latest \
+		--ssh default $(BUILD_FLAGS) .
+
+.PHONY: _tag_image
+_tag_image: _repo_login
+	docker buildx imagetools create ${BUILD_REPO}/$(BUILD_IMAGE):latest \
+		--tag ${BUILD_REPO}/$(BUILD_IMAGE):$(BUILD_TAG)
+
+.PHONY: _lint_dockerfile
+_lint_dockerfile:
+	docker run --rm -i -e HADOLINT_IGNORE=DL3008,DL3018,DL3003,SC2174 ${HADOLINT_IMAGE} < ${BUILD_DOCKERFILE}
+
+# No .env file; fail the build
+else
+.DEFAULT:
+	$(error Cannot find a .env file; copy .env.sample and customise)
+endif
