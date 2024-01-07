@@ -23,8 +23,6 @@ VERSION := $(shell cat ./VERSION)
 COMMIT_HASH := $(shell git log -1 --pretty=format:"sha-%h")
 PLATFORMS := "linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64"
 
-ECR_REPO := refdata/pg_tileserv
-
 PG_TILESERV := pg_tileserv
 PG_TILESERV_REPO := ${GITHUB_REGISTRY}/${GITHUB_USER}
 PG_TILESERV_IMAGE := $(PG_TILESERV)
