@@ -96,7 +96,7 @@ docker: bin-for-docker Dockerfile set-local build-common ##             Generate
 
 multi-stage-docker: Dockerfile set-multi-stage build-common ## Generate a BASE_IMAGE container with APPVERSION tag, using a binary built in an alpine golang build container
 
-release: clean docs $(PROGRAM) local-docker  ##            Generate the docs, a local build, and then uses the local build to generate a BASE_IMAGE container
+release: clean docs docker  ##            Generate the docs, a local build, and then uses the local build to generate a BASE_IMAGE container
 
 test:  ##               Run the tests locally
 	go test -v
