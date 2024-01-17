@@ -149,3 +149,18 @@ func TestHealthCustomUrl(t *testing.T) {
 	// cleanup
 	viper.Set("HealthEndpoint", "/health")
 }
+
+func TestHealthCustomUrlWithBasePath(t *testing.T) {
+	viper.Set("BasePath", "/foo")
+	viper.Set("HealthEndpoint", "/bar")
+	r := tileRouter()
+	request, _ := http.NewRequest("GET", "/foo/bar", nil)
+	response := httptest.NewRecorder()
+	r.ServeHTTP(response, request)
+	assert.Equal(t, 200, response.Code, "OK response is expected")
+	assert.Equal(t, "200 OK", string(response.Result().Status), "Response status should say ok")
+
+	// cleanup
+	viper.Set("HealthEndpoint", "/health")
+	viper.Set("BasePath", "/")
+}

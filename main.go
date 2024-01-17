@@ -112,6 +112,7 @@ func main() {
 	flagHelpOn := getopt.BoolLong("help", 'h', "display help output")
 	flagVersionOn := getopt.BoolLong("version", 'v', "display version number")
 	flagHidePreview := getopt.BoolLong("no-preview", 'n', "hide web interface")
+	flagHealthEndpoint := getopt.StringLong("health", 'e', "", "desired path to health endpoint, e.g. \"/health\"")
 	getopt.Parse()
 
 	if *flagHelpOn {
@@ -145,6 +146,10 @@ func main() {
 
 	if *flagHidePreview {
 		viper.Set("ShowPreview", false)
+	}
+
+	if *flagHealthEndpoint != "" {
+		viper.Set("HealthEndpoint", *flagHealthEndpoint)
 	}
 
 	// Report our status
