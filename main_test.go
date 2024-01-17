@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -27,6 +28,7 @@ func TestMain(m *testing.M) {
 	sql := "CREATE EXTENSION IF NOT EXISTS postgis"
 	_, err = db.Exec(context.Background(), sql)
 	if err != nil {
+		fmt.Printf("Error creating extension: %s", err)
 		os.Exit(1)
 	}
 
