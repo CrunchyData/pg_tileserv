@@ -100,6 +100,8 @@ func init() {
 	viper.SetDefault("CoordinateSystem.Ymin", -20037508.3427892)
 	viper.SetDefault("CoordinateSystem.Xmax", 20037508.3427892)
 	viper.SetDefault("CoordinateSystem.Ymax", 20037508.3427892)
+
+	viper.SetDefault("HealthEndpoint", "/health")
 }
 
 func main() {
@@ -110,6 +112,7 @@ func main() {
 	flagHelpOn := getopt.BoolLong("help", 'h', "display help output")
 	flagVersionOn := getopt.BoolLong("version", 'v', "display version number")
 	flagHidePreview := getopt.BoolLong("no-preview", 'n', "hide web interface")
+	flagHealthEndpoint := getopt.StringLong("health", 'e', "", "desired path to health endpoint, e.g. \"/health\"")
 	getopt.Parse()
 
 	if *flagHelpOn {
@@ -143,6 +146,10 @@ func main() {
 
 	if *flagHidePreview {
 		viper.Set("ShowPreview", false)
+	}
+
+	if *flagHealthEndpoint != "" {
+		viper.Set("HealthEndpoint", *flagHealthEndpoint)
 	}
 
 	// Report our status
@@ -391,6 +398,13 @@ func requestTiles(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// A simple health check endpoint
+func healthCheck(w http.ResponseWriter, r *http.Request) error {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("200 OK"))
+	return nil
+}
+
 /******************************************************************************/
 
 // tileAppError is an optional error structure functions can return
@@ -488,6 +502,8 @@ func tileRouter() *mux.Router {
 	if viper.GetBool("EnableMetrics") {
 		r.Handle("/metrics", promhttp.Handler())
 	}
+
+	r.Handle(viper.GetString("HealthEndpoint"), tileAppHandler(healthCheck)).Methods(http.MethodGet)
 	return r
 }
 
