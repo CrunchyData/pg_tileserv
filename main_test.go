@@ -71,4 +71,8 @@ func TestBasePath(t *testing.T) {
 		assert.Equal(t, 200, response.Code, "OK response is expected")
 	}
 
+	// cleanup
+	viper.Set("BasePath", "/")
 }
+
+
