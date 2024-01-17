@@ -396,6 +396,7 @@ func requestTiles(w http.ResponseWriter, r *http.Request) error {
 // A simple health check endpoint
 func healthCheck(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("200 OK"))
 	return nil
 }
 
@@ -497,7 +498,7 @@ func tileRouter() *mux.Router {
 		r.Handle("/metrics", promhttp.Handler())
 	}
 
-	r.Handle(viper.GetString("HealthEndpoint"), tileAppHandler(healthCheck)).Methods("GET")
+	r.Handle(viper.GetString("HealthEndpoint"), tileAppHandler(healthCheck)).Methods(http.MethodGet)
 	return r
 }
 
