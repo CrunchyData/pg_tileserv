@@ -100,6 +100,8 @@ func init() {
 	viper.SetDefault("CoordinateSystem.Ymin", -20037508.3427892)
 	viper.SetDefault("CoordinateSystem.Xmax", 20037508.3427892)
 	viper.SetDefault("CoordinateSystem.Ymax", 20037508.3427892)
+
+	viper.SetDefault("HealthEndpoint", "/health")
 }
 
 func main() {
@@ -391,6 +393,12 @@ func requestTiles(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// A simple health check endpoint
+func healthCheck(w http.ResponseWriter, r *http.Request) error {
+	w.WriteHeader(http.StatusOK)
+	return nil
+}
+
 /******************************************************************************/
 
 // tileAppError is an optional error structure functions can return
@@ -488,6 +496,8 @@ func tileRouter() *mux.Router {
 	if viper.GetBool("EnableMetrics") {
 		r.Handle("/metrics", promhttp.Handler())
 	}
+
+	r.Handle(viper.GetString("HealthEndpoint"), tileAppHandler(healthCheck)).Methods("GET")
 	return r
 }
 
