@@ -75,4 +75,43 @@ func TestBasePath(t *testing.T) {
 	viper.Set("BasePath", "/")
 }
 
+// Test that the preview endpoints are hidden or shown according to the config
+func TestShowPreview(t *testing.T) {
+	viper.Set("ShowPreview", true)
+	r := tileRouter()
+	request, _ := http.NewRequest("GET", "/index.json", nil)
+	response := httptest.NewRecorder()
+	r.ServeHTTP(response, request)
+	assert.Equal(t, 200, response.Code, "OK response is expected")
+	request, _ = http.NewRequest("GET", "/index.html", nil)
+	response = httptest.NewRecorder()
+	r.ServeHTTP(response, request)
+	assert.Equal(t, 200, response.Code, "OK response is expected")
+}
+
+// the current default behavior is to show the preview
+func TestShowPreviewDefault(t *testing.T) {
+	r := tileRouter()
+	request, _ := http.NewRequest("GET", "/index.json", nil)
+	response := httptest.NewRecorder()
+	r.ServeHTTP(response, request)
+	assert.Equal(t, 200, response.Code, "OK response is expected")
+	request, _ = http.NewRequest("GET", "/index.html", nil)
+	response = httptest.NewRecorder()
+	r.ServeHTTP(response, request)
+	assert.Equal(t, 200, response.Code, "OK response is expected")
+}
+
+func TestHidePreview(t *testing.T) {
+	viper.Set("ShowPreview", false)
+	r := tileRouter()
+	request, _ := http.NewRequest("GET", "/index.json", nil)
+	response := httptest.NewRecorder()
+	r.ServeHTTP(response, request)
+	assert.Equal(t, 404, response.Code, "Not Found response is expected")
+	request, _ = http.NewRequest("GET", "/index.html", nil)
+	response = httptest.NewRecorder()
+	r.ServeHTTP(response, request)
+	assert.Equal(t, 404, response.Code, "Not Found response is expected")
+}
 
