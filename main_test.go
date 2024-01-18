@@ -18,8 +18,8 @@ var dbsetup = false
 
 func TestMain(m *testing.M) {
 
-	// viper.Set("DbConnection", os.Getenv("TEST_DATABASE_URL"))
-	viper.Set("DbConnection", os.Getenv("dbname=ts"))
+	viper.Set("DbConnection", os.Getenv("TEST_DATABASE_URL"))
+	// viper.Set("DbConnection", os.Getenv("dbname=ts"))
 	db, err := dbConnect()
 	if err != nil {
 		os.Exit(1)
@@ -27,7 +27,6 @@ func TestMain(m *testing.M) {
 	sql := "CREATE EXTENSION IF NOT EXISTS postgis"
 	_, err = db.Exec(context.Background(), sql)
 	if err != nil {
-
 		os.Exit(1)
 	}
 

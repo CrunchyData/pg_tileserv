@@ -212,6 +212,7 @@ type metricsResponseWriter struct {
 	StatusCode int
 }
 
+// NewMetricsResponseWriter instantiates and returns a metricsResponseWriter
 func NewMetricsResponseWriter(w http.ResponseWriter) *metricsResponseWriter {
 	return &metricsResponseWriter{w, http.StatusOK}
 }

@@ -61,7 +61,8 @@ func (s *BaseCQLParserListener) EnterBinaryComparisonPredicate(ctx *BinaryCompar
 }
 
 // ExitBinaryComparisonPredicate is called when production binaryComparisonPredicate is exited.
-func (s *BaseCQLParserListener) ExitBinaryComparisonPredicate(ctx *BinaryComparisonPredicateContext) {}
+func (s *BaseCQLParserListener) ExitBinaryComparisonPredicate(ctx *BinaryComparisonPredicateContext) {
+}
 
 // EnterLikePredicate is called when production likePredicate is entered.
 func (s *BaseCQLParserListener) EnterLikePredicate(ctx *LikePredicateContext) {}

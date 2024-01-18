@@ -41,6 +41,14 @@ SET DATABASE_URL=postgresql://username:password@host/dbname
 pg_tileserv.exe
 ```
 
+### PostgreSQL not on 5432
+
+If your PostgreSQL is not running on unix socket or 5432 port, you can specify the port as part of the URL
+
+```
+DATABASE_URL=postgresql://username:password@host:port/dbname
+```
+
 ### Docker
 
 Use [Dockerfile.alpine](Dockerfile.alpine) to build a lightweight (18MB expanded) Docker Image.
@@ -68,6 +76,9 @@ If you want to pass a path directly to the configuration file, use the `--config
 ```
 
 In general the defaults are fine, and the program autodetects things like the server name.
+If you are not running PostgreSQL on 5432 port, you may need to add the port to the DbConnection parameter
+
+`user=you host=localhost dbname=yourdb port=yourdbport`
 
 ```toml
 # Database connection
@@ -162,6 +173,8 @@ The purpose of `pg_tileserv` is to turn a set of spatial records into tiles, on 
 After start-up you can connect to the server and explore the published tables and functions in the database via a web interface at:
 
 * http://localhost:7800
+
+To disable the web interface, supply the run time flag `--no-preview`
 
 ## Layers List
 
@@ -338,6 +351,8 @@ For more complex applications, multi-layer tiles can be useful to cut down on th
 For example:
 
     http://localhost:7800/public.ne_50m_admin_0_countries,public.ne_50m_airports/{z}/{x}/{y}.pbf
+
+When you style those combined layers with Maplibre GL JS (["Layers" Docs](https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/)) or Mapbox GL JS, use the original layer `id` as `source-layer`.
 
 ## Function Layers
 
@@ -827,3 +842,9 @@ REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM public;
 -- Just to be sure, also revoke execute from the user
 REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM tileserver;
 ```
+
+
+# Running Go tests locally
+
+* Create a database and store its connection string as the `TEST_DATABASE_URL` environment variable
+* `go test`

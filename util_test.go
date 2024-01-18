@@ -48,7 +48,7 @@ func TestMetrics(t *testing.T) {
 	viper.Set("EnableMetrics", true)
 
 	r := tileRouter()
-	request, _ := http.NewRequest("GET", "/metrics", nil)
+	request, _ := http.NewRequest("GET", "/test/metrics", nil)
 	response := httptest.NewRecorder()
 	r.ServeHTTP(response, request)
 	assert.Equal(t, 200, response.Code, "OK response is expected")

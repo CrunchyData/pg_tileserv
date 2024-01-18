@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// LayerTable provides metadata about the table layer
 type LayerTable struct {
 	ID             string
 	Schema         string
@@ -33,6 +34,8 @@ type LayerTable struct {
 	Srid           int
 }
 
+// TableProperty provides metadata about a single property field,
+// features in a table layer may have multiple such fields
 type TableProperty struct {
 	Name        string `json:"name"`
 	Type        string `json:"type"`
@@ -40,6 +43,7 @@ type TableProperty struct {
 	order       int
 }
 
+// TableDetailJSON gives the output structure for the table layer.
 type TableDetailJSON struct {
 	ID           string          `json:"id"`
 	Schema       string          `json:"schema"`
@@ -58,26 +62,33 @@ type TableDetailJSON struct {
  * Layer Interface
  */
 
+// GetType disambiguates between function and table layers
 func (lyr LayerTable) GetType() LayerType {
 	return LayerTypeTable
 }
 
+// GetID returns the complete ID (schema.name) by which to reference a given layer
 func (lyr LayerTable) GetID() string {
 	return lyr.ID
 }
 
+// GetDescription returns the text description for a layer
+// or an empty string if no description is set
 func (lyr LayerTable) GetDescription() string {
 	return lyr.Description
 }
 
+// GetName returns just the name of a given layer
 func (lyr LayerTable) GetName() string {
 	return lyr.Table
 }
 
+// GetSchema returns just the schema for a given layer
 func (lyr LayerTable) GetSchema() string {
 	return lyr.Schema
 }
 
+// WriteLayerJSON outputs parameters and optional arguments for the table layer
 func (lyr LayerTable) WriteLayerJSON(w http.ResponseWriter, req *http.Request) error {
 	jsonTableDetail, err := lyr.getTableDetailJSON(req)
 	if err != nil {
@@ -89,6 +100,8 @@ func (lyr LayerTable) WriteLayerJSON(w http.ResponseWriter, req *http.Request) e
 	return nil
 }
 
+// GetTileRequest takes tile and request parameters as input and returns a TileRequest
+// specifying the SQL to fetch appropriate data
 func (lyr LayerTable) GetTileRequest(tile Tile, r *http.Request) TileRequest {
 	rp := lyr.getQueryParameters(r.URL.Query())
 	sql, _ := lyr.requestSQL(&tile, &rp)
@@ -262,6 +275,8 @@ func (lyr *LayerTable) getTableDetailJSON(req *http.Request) (TableDetailJSON, e
 	return td, nil
 }
 
+// GetBoundsExact returns the data coverage extent for a table layer
+// in EPSG:4326, clipped to (+/-180, +/-90)
 func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 	bounds := Bounds{}
 	extentSQL := fmt.Sprintf(`
@@ -308,6 +323,7 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 	return bounds, nil
 }
 
+// GetBounds returns the estimated extent for a table layer, transformed to EPSG:4326
 func (lyr *LayerTable) GetBounds() (Bounds, error) {
 	bounds := Bounds{}
 	extentSQL := fmt.Sprintf(`
@@ -507,7 +523,7 @@ func getTableLayers() ([]LayerTable, error) {
 	LEFT JOIN pg_index i ON (c.oid = i.indrelid AND i.indisprimary AND i.indnatts = 1)
 	LEFT JOIN pg_attribute ia ON (ia.attrelid = i.indexrelid)
 	LEFT JOIN pg_type it ON (ia.atttypid = it.oid AND it.typname in ('int2', 'int4', 'int8'))
-	WHERE c.relkind IN ('r', 'v', 'm', 'p')
+	WHERE c.relkind IN ('r', 'v', 'm', 'p', 'f')
 		AND t.typname = 'geometry'
 		AND has_table_privilege(c.oid, 'select')
 		AND has_schema_privilege(n.oid, 'usage')

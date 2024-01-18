@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -40,21 +41,21 @@ import (
 const programName string = "pg_tileserv"
 
 // programVersion is the version string we use
-//const programVersion string = "0.1"
+// const programVersion string = "0.1"
 var programVersion string
 
 // globalDb is a global database connection pointer
-var globalDb *pgxpool.Pool = nil
+var globalDb *pgxpool.Pool
 
 // globalVersions holds the parsed output of postgis_full_version()
-var globalVersions map[string]string = nil
+var globalVersions map[string]string
 
 // globalPostGISVersion is numeric, sortable postgis version (3.2.1 => 3002001)
-var globalPostGISVersion int = 0
+var globalPostGISVersion int
 
 // serverBounds are the coordinate reference system and extent from
 // which tiles are constructed
-var globalServerBounds *Bounds = nil
+var globalServerBounds *Bounds
 
 // timeToLive is the Cache-Control timeout value that will be advertised
 // in the response headers
@@ -82,6 +83,7 @@ func init() {
 	viper.SetDefault("DefaultMinZoom", 0)
 	viper.SetDefault("DefaultMaxZoom", 22)
 	viper.SetDefault("Debug", false)
+	viper.SetDefault("ShowPreview", true)
 	viper.SetDefault("AssetsPath", "./assets")
 	// 1d, 1h, 1m, 1s, see https://golang.org/pkg/time/#ParseDuration
 	viper.SetDefault("DbPoolMaxConnLifeTime", "1h")
@@ -107,6 +109,7 @@ func main() {
 	flagConfigFile := getopt.StringLong("config", 'c', "", "full path to config file", "config.toml")
 	flagHelpOn := getopt.BoolLong("help", 'h', "display help output")
 	flagVersionOn := getopt.BoolLong("version", 'v', "display version number")
+	flagHidePreview := getopt.BoolLong("no-preview", 'n', "hide web interface")
 	getopt.Parse()
 
 	if *flagHelpOn {
@@ -136,6 +139,10 @@ func main() {
 		viper.AddConfigPath("./config")
 		viper.AddConfigPath("/config")
 		viper.AddConfigPath("/etc")
+	}
+
+	if *flagHidePreview {
+		viper.Set("ShowPreview", false)
 	}
 
 	// Report our status
@@ -361,12 +368,18 @@ func requestTiles(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 
 	sources := strings.Split(vars["name"], ",")
+	var extant []string
 	for _, source := range sources {
-		layer, err := requestTile(r, source)
-		if err != nil {
-			return err
+		if !slices.Contains(extant, source) {
+			layer, err := requestTile(r, source)
+			if err != nil {
+				return err
+			}
+			layers = append(layers, layer...)
+			extant = append(extant, source)
+		} else {
+			log.Debugf("Skipping duplicate layer %s in request %s", source, sources)
 		}
-		layers = append(layers, layer...)
 	}
 
 	w.Header().Add("Content-Type", "application/vnd.mapbox-vector-tile")
@@ -461,12 +474,14 @@ func tileRouter() *mux.Router {
 		Subrouter()
 
 	// Front page and layer list
-	r.Handle("/", tileAppHandler(requestListHTML))
-	r.Handle("/index.html", tileAppHandler(requestListHTML))
-	r.Handle("/index.json", tileAppHandler(requestListJSON))
-	// Layer detail and demo pages
-	r.Handle("/{name}.html", tileAppHandler(requestPreview))
-	r.Handle("/{name}.json", tileAppHandler(requestDetailJSON))
+	if viper.GetBool("ShowPreview") {
+		r.Handle("/", tileAppHandler(requestListHTML))
+		r.Handle("/index.html", tileAppHandler(requestListHTML))
+		r.Handle("/index.json", tileAppHandler(requestListJSON))
+		// Layer detail and demo pages
+		r.Handle("/{name}.html", tileAppHandler(requestPreview))
+		r.Handle("/{name}.json", tileAppHandler(requestDetailJSON))
+	}
 	// Tile requests
 	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileMetrics(tileAppHandler(requestTiles)))
 
