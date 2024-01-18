@@ -176,6 +176,10 @@ After start-up you can connect to the server and explore the published tables an
 
 To disable the web interface, supply the run time flag `--no-preview`
 
+## Health Check Endpoint
+
+In order to run the server in an orchestrated environment, like Docker, it can be useful to have a health check endpoint. This is `/health` by default, and returns a `200 OK` if the server is responding to requests. To use a custom URL for the health check endpoint, supply the run time flag `-e` and your path. This setting will respect the base path setting, so if you choose a base path of `/example` and a health check endpoint of `/foo`, your health check URL becomes `/example/foo`.
+
 ## Layers List
 
 A list of layers is available in JSON at:
