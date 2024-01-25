@@ -8,7 +8,7 @@
 ##      BASE_REGISTRY - This is the registry to pull the base image from
 ##      BASE_IMAGE - The base image to use for the final container
 ##      TARGETARCH - The architecture the resulting image is based on and the binary is compiled for
-##      IMAGE_TAG - The container and tag to be applied to the container
+##      IMAGE_TAG - The tag to be applied to the container
 
 APPVERSION ?= latest
 GOVERSION ?= 1.21.6
@@ -28,7 +28,8 @@ TARGETARCH ?= arm64
 PLATFORM=arm64
 endif
 
-IMAGE_TAG ?= $(CONTAINER):$(APPVERSION)-$(TARGETARCH)
+IMAGE_TAG ?= $(APPVERSION)-$(TARGETARCH)
+DATE_TAG ?= $(DATE)-$(TARGETARCH)
 
 RM = /bin/rm
 CP = /bin/cp
@@ -49,7 +50,7 @@ clean:  ##              This will clean all local build artifacts
 	$(info Cleaning project...)
 	@rm -f $(PROGRAM)
 	@rm -rf docs/*
-	@docker image inspect $(CONTAINER):$(APPVERSION) >/dev/null 2>&1 && docker rmi -f $(CONTAINER):$(APPVERSION) $(CONTAINER):$(DATE) || echo -n ""
+	@docker image inspect $(CONTAINER):$(IMAGE_TAG) >/dev/null 2>&1 && docker rmi -f $(shell docker images --filter label=release=latest --filter=reference="*featureserv:*" -q) || echo -n ""
 
 docs:   ##               Generate docs
 	@rm -rf docs/* && cd hugo && hugo && cd ..
@@ -77,10 +78,10 @@ build-common: Dockerfile
 		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
 		--label vendor="Crunchy Data" \
 		--label url="https://crunchydata.com" \
-		--label release="${APPVERSION}" \
+		--label release="$(APPVERSION)" \
 		--label org.opencontainers.image.vendor="Crunchy Data" \
 		--label os.version="7.7" \
-		-t $(IMAGE_TAG) -t $(CONTAINER):$(DATE) .
+		-t $(CONTAINER):$(IMAGE_TAG) -t $(CONTAINER):$(DATE_TAG) .
 	docker image prune --filter label=stage=tileservbuilder -f
 
 set-local:
