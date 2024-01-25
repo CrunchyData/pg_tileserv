@@ -10,16 +10,14 @@ jobs:
     if: github.repository == 'CrunchyData/pg_tileserv'
     steps:
 
-    - name: Install Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: 1.21.x
-
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Build
-      run: make build && make build-docker
+    - name: Build ARM64
+      run: make TARGETARCH=arm64 multi-stage-docker
+
+    - name: Build x86_64
+      run: make TARGETARCH=amd64 multi-stage-docker
 
     - name: Docker Upload
       env:
