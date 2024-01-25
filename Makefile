@@ -50,7 +50,7 @@ clean:  ##              This will clean all local build artifacts
 	$(info Cleaning project...)
 	@rm -f $(PROGRAM)
 	@rm -rf docs/*
-	@docker image inspect $(CONTAINER):$(IMAGE_TAG) >/dev/null 2>&1 && docker rmi -f $(shell docker images --filter label=release=latest --filter=reference="*featureserv:*" -q) || echo -n ""
+	@docker image inspect $(CONTAINER):$(IMAGE_TAG) >/dev/null 2>&1 && docker rmi -f $(shell docker images --filter label=release=latest --filter=reference="*tileserv:*" -q) || echo -n ""
 
 docs:   ##               Generate docs
 	@rm -rf docs/* && cd hugo && hugo && cd ..
@@ -65,7 +65,7 @@ bin-docker:  ##         Build a local binary based off of a golang base docker i
 
 bin-for-docker: $(GOFILES)  ##     Build a local binary using APPVERSION parameter or CI as default (to be used in docker image)
 # to be used in docker the built binary needs the CGO_ENABLED=0 option
-	CGO_ENABLED=0 go build -v -ldflags "-s -w -X github.com/CrunchyData/pg_featureserv/conf.setVersion=$(APPVERSION)"
+	CGO_ENABLED=0 go build -v -ldflags "-s -w -X main.programVersion=$(APPVERSION)"
 
 build-common: Dockerfile
 	docker build -f Dockerfile \
