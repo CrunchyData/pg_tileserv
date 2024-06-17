@@ -42,3 +42,15 @@ REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM public;
 -- Just to be sure, also revoke execute from the user
 REVOKE EXECUTE ON FUNCTION myschema.myfunction FROM tileserver;
 ```
+## Using JWT tokens for authentication
+
+[Like PostgREST](https://postgrest.org/en/v12/references/auth.html), `pg_tileserv` supports JWT-based user impersonation. This allows access to specific tables, views, or function to be restricted to authorized users.
+
+This is enabled by setting the `JwtSecret` key in the config file (or, equivalently, the `TS_JWTSECRET` environment variable).
+If this key is set, then `pg_tileserv` will initially connect to PostgreSQL as the "authenticator" user using the credentials in the `DbConnection` key of the config file.
+However, it will switch roles before executing queries.
+If a request includes a JWT token in an `Authorization` header, and it is signed with the correct secret, then `pg_tileserv` will attempt to switch to the role specified in the token (if the authenticator user lacks the permissions to do this, an error code will be returned).
+If the `Authorization` header is not present, then it switches to the role role defined by the `AnonRole` key (which has a default of "anonymous_user").
+
+The `JwtRoleClaimKey` configuration key specifies which claim on the JWT token should be interpreted as the name of the role to switch to; this defaults to `role`.
+

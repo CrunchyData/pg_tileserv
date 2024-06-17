@@ -50,35 +50,42 @@ type TileRequest struct {
 	Args    []interface{}
 }
 
-func getLayer(lyrID string) (Layer, error) {
-	lyr, ok := globalLayers[lyrID]
+func getLayer(lyrID string, databaseRole string) (Layer, error) {
+
+	// check if layers have already been listed for this databaseRole
+	_, ok := globalLayers[databaseRole]
+	if !ok {
+		loadLayers(databaseRole)
+	}
+
+	lyr, ok := globalLayers[databaseRole][lyrID]
 	if ok {
 		return lyr, nil
 	}
 	return lyr, fmt.Errorf("Unable to get layer '%s'", lyrID)
 }
 
-func loadLayers() error {
+func loadLayers(databaseRole string) error {
 	_, errBnd := getServerBounds()
 	if errBnd != nil {
 		return errBnd
 	}
-	tableLayers, errTl := getTableLayers()
+	tableLayers, errTl := getTableLayers(databaseRole)
 	if errTl != nil {
 		return errTl
 	}
-	functionLayers, errFl := getFunctionLayers()
+	functionLayers, errFl := getFunctionLayers(databaseRole)
 	if errFl != nil {
 		return errFl
 	}
-	// Empty the global layer map
+	// Empty the global layer map for this databaseRole only
 	globalLayersMutex.Lock()
-	globalLayers = make(map[string]Layer)
+	globalLayers[databaseRole] = make(map[string]Layer)
 	for _, lyr := range tableLayers {
-		globalLayers[lyr.GetID()] = lyr
+		globalLayers[databaseRole][lyr.GetID()] = lyr
 	}
 	for _, lyr := range functionLayers {
-		globalLayers[lyr.GetID()] = lyr
+		globalLayers[databaseRole][lyr.GetID()] = lyr
 	}
 	globalLayersMutex.Unlock()
 
@@ -94,11 +101,17 @@ type layerJSON struct {
 	DetailURL   string `json:"detailurl"`
 }
 
-func getJSONLayers(r *http.Request) map[string]layerJSON {
+func getJSONLayers(r *http.Request, databaseRole string) map[string]layerJSON {
+	// check if layers have already been listed for this databaseRole
+	_, ok := globalLayers[databaseRole]
+	if !ok {
+		loadLayers(databaseRole)
+	}
+
 	json := make(map[string]layerJSON)
 	urlBase := serverURLBase(r)
 	globalLayersMutex.Lock()
-	for k, v := range globalLayers {
+	for k, v := range globalLayers[databaseRole] {
 		json[k] = layerJSON{
 			Type:        v.GetType().String(),
 			ID:          v.GetID(),
