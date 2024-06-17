@@ -1,17 +1,39 @@
-# copy build result to a centos base image to match other
-# crunchy containers
-FROM centos:7
+ARG GOLANG_VERSION
+ARG TARGETARCH
+ARG VERSION
+ARG BASE_REGISTRY
+ARG BASE_IMAGE
+ARG PLATFORM
+FROM --platform=${PLATFORM} docker.io/library/golang:${GOLANG_VERSION}-alpine AS builder
+LABEL stage=tileservbuilder
+
+ARG TARGETARCH
+ARG VERSION
+
+WORKDIR /app
+COPY . ./
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -v -ldflags "-s -w -X main.programVersion=${VERSION}"
+
+FROM --platform=${TARGETARCH} ${BASE_REGISTRY}/${BASE_IMAGE} AS multi-stage
+
+COPY --from=builder /app/pg_tileserv /app/
+COPY --from=builder /app/assets /app/assets
+
+VOLUME ["/config"]
+
+USER 1001
+EXPOSE 7800
+
+WORKDIR /app
+ENTRYPOINT ["/app/pg_tileserv"]
+CMD []
+
+FROM --platform=${PLATFORM} ${BASE_REGISTRY}/${BASE_IMAGE} AS local
+
 RUN mkdir /app
 ADD ./pg_tileserv /app/
 ADD ./assets /app/assets
-
-ARG VERSION
-
-LABEL vendor="Crunchy Data" \
-	url="https://crunchydata.com" \
-	release="${VERSION}" \
-	org.opencontainers.image.vendor="Crunchy Data" \
-	os.version="7.7"
 
 VOLUME ["/config"]
 
@@ -23,10 +45,10 @@ ENTRYPOINT ["/app/pg_tileserv"]
 CMD []
 
 # To build
-# make APPVERSION=1.0.2 clean build build-docker
+# make APPVERSION=1.0.2 clean docker
 
 # To build using binaries from golang docker image
-# make APPVERSION=1.0.2 clean bin-docker build-docker
+# make APPVERSION=1.0.2 clean multi-stage-docker
 
 # To run
 # docker run -dt -e DATABASE_URL=postgres://user:pass@host/dbname -p 7800:7800 pramsey/pg_tileserv:1.0.2
