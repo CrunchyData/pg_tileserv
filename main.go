@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -55,7 +56,8 @@ var globalPostGISVersion int
 
 // serverBounds are the coordinate reference system and extent from
 // which tiles are constructed
-var globalServerBounds *Bounds
+var globalServerBounds = make(map[int]*Bounds)
+var globalDefaultCoordinateSystem int
 
 // timeToLive is the Cache-Control timeout value that will be advertised
 // in the response headers
@@ -94,12 +96,12 @@ func init() {
 	viper.SetDefault("CacheTTL", 0)          // cache timeout in seconds
 	viper.SetDefault("EnableMetrics", false) // Prometheus metrics
 
-	viper.SetDefault("CoordinateSystem.SRID", 3857)
+	viper.SetDefault("DefaultCoordinateSystem", 3857)
 	// XMin, YMin, XMax, YMax, must be square
-	viper.SetDefault("CoordinateSystem.Xmin", -20037508.3427892)
-	viper.SetDefault("CoordinateSystem.Ymin", -20037508.3427892)
-	viper.SetDefault("CoordinateSystem.Xmax", 20037508.3427892)
-	viper.SetDefault("CoordinateSystem.Ymax", 20037508.3427892)
+	viper.SetDefault("CoordinateSystem.3857.Xmin", -20037508.3427892)
+	viper.SetDefault("CoordinateSystem.3857.Ymin", -20037508.3427892)
+	viper.SetDefault("CoordinateSystem.3857.Xmax", 20037508.3427892)
+	viper.SetDefault("CoordinateSystem.3857.Ymax", 20037508.3427892)
 
 	viper.SetDefault("HealthEndpoint", "/health")
 }
@@ -192,6 +194,9 @@ func main() {
 		viper.GetString("HttpHost"), viper.GetInt("HttpPort")), basePath))
 	log.Infof("Serving HTTPS at %s/", formatBaseURL(fmt.Sprintf("http://%s:%d",
 		viper.GetString("HttpHost"), viper.GetInt("HttpsPort")), basePath))
+
+	globalDefaultCoordinateSystem = viper.GetInt("DefaultCoordinateSystem")
+	log.Infof("Default CoordinateSystem: %d", globalDefaultCoordinateSystem)
 
 	// Load the global layer list right away
 	// Also connects to database
@@ -339,7 +344,7 @@ func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
 }
 
 // requestTile handles a tile request for a given layer
-func requestTile(r *http.Request, source string) ([]byte, error) {
+func requestTile(r *http.Request, source string, srid *int) ([]byte, error) {
 	vars := mux.Vars(r)
 
 	lyr, err := getLayer(source)
@@ -351,7 +356,7 @@ func requestTile(r *http.Request, source string) ([]byte, error) {
 		return nil, errLyr
 	}
 
-	tile, errTile := makeTile(vars)
+	tile, errTile := makeTile(vars, srid)
 	if errTile != nil {
 		return nil, errTile
 	}
@@ -379,11 +384,18 @@ func requestTiles(w http.ResponseWriter, r *http.Request) error {
 	var layers []byte
 	vars := mux.Vars(r)
 
+	var srid *int
+	sridParam := r.URL.Query().Get("srid")
+	sridInt, err := strconv.Atoi(sridParam)
+	if err == nil {
+		srid = &sridInt
+	}
+
 	sources := strings.Split(vars["name"], ",")
 	var extant []string
 	for _, source := range sources {
 		if !slices.Contains(extant, source) {
-			layer, err := requestTile(r, source)
+			layer, err := requestTile(r, source, srid)
 			if err != nil {
 				return err
 			}

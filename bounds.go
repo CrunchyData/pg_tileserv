@@ -29,7 +29,7 @@ func (b *Bounds) SQL() string {
 // Expand increases the size of this bounds in all directions, respecting
 // the limits of the Web Mercator plane
 func (b *Bounds) Expand(size float64) {
-	serverBounds, _ := getServerBounds()
+	serverBounds, _ := getServerBounds(nil)
 	b.Xmin = math.Max(b.Xmin-size, serverBounds.Xmin)
 	b.Ymin = math.Max(b.Ymin-size, serverBounds.Ymin)
 	b.Xmax = math.Min(b.Xmax+size, serverBounds.Xmax)

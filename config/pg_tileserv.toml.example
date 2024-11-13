@@ -72,16 +72,15 @@
 # EnableMetrics = false
 
 # Default CS is Web Mercator (EPSG:3857)
-# [CoordinateSystem]
-# SRID = 3857
+# DefaultCoordinateSystem = 3857
+# [CoordinateSystem.3857]
 # Xmin = -20037508.3427892
 # Ymin = -20037508.3427892
 # Xmax = 20037508.3427892
 # Ymax = 20037508.3427892
 
 # "True" Mercator (EPSG:3395) is only a little different
-# [CoordinateSystem]
-# SRID = 3395
+# [CoordinateSystem.3395]
 # Xmin = -20037508.342789244
 # Ymin = -20037508.342789244
 # Xmax = 20037508.342789244

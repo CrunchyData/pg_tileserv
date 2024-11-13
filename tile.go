@@ -20,7 +20,7 @@ type Tile struct {
 // makeTile uses the map populated by the mux.Router
 // containing x, y and z keys, and extracts integers
 // from them
-func makeTile(vars map[string]string) (Tile, error) {
+func makeTile(vars map[string]string, srid *int) (Tile, error) {
 	// Router path restriction ensures
 	// these are always numbers
 	x, _ := strconv.Atoi(vars["x"])
@@ -37,7 +37,7 @@ func makeTile(vars map[string]string) (Tile, error) {
 		}
 		return tile, invalidTileError
 	}
-	e := tile.CalculateBounds()
+	e := tile.CalculateBounds(srid)
 	return tile, e
 }
 
@@ -63,8 +63,8 @@ func (tile *Tile) IsValid() bool {
 
 // CalculateBounds calculates the cartesian bounds that
 // correspond to this tile
-func (tile *Tile) CalculateBounds() (e error) {
-	serverBounds, e := getServerBounds()
+func (tile *Tile) CalculateBounds(srid *int) (e error) {
+	serverBounds, e := getServerBounds(srid)
 	if e != nil {
 		return e
 	}

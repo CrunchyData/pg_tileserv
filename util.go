@@ -136,17 +136,23 @@ func renderSQLTemplate(name string, tmpl string, data interface{}) (string, erro
 
 /******************************************************************************/
 
-func getServerBounds() (b *Bounds, e error) {
-
-	if globalServerBounds != nil {
-		return globalServerBounds, nil
+func getServerBounds(sridPtr *int) (b *Bounds, e error) {
+	var srid int
+	if sridPtr == nil {
+		srid = globalDefaultCoordinateSystem
+	} else {
+		srid = *sridPtr
 	}
 
-	srid := viper.GetInt("CoordinateSystem.SRID")
-	xmin := viper.GetFloat64("CoordinateSystem.Xmin")
-	ymin := viper.GetFloat64("CoordinateSystem.Ymin")
-	xmax := viper.GetFloat64("CoordinateSystem.Xmax")
-	ymax := viper.GetFloat64("CoordinateSystem.Ymax")
+	bounds, ok := globalServerBounds[srid]
+	if ok {
+		return bounds, nil
+	}
+
+	xmin := viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Xmin", srid))
+	ymin := viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Ymin", srid))
+	xmax := viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Xmax", srid))
+	ymax := viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Ymax", srid))
 
 	log.Infof("Using CoordinateSystem.SRID %d with bounds [%g, %g, %g, %g]",
 		srid, xmin, ymin, xmax, ymax)
@@ -169,8 +175,9 @@ func getServerBounds() (b *Bounds, e error) {
 	xmax = cx + size/2
 	ymax = cy + size/2
 
-	globalServerBounds = &Bounds{srid, xmin, ymin, xmax, ymax}
-	return globalServerBounds, nil
+	bounds = &Bounds{srid, xmin, ymin, xmax, ymax}
+	globalServerBounds[srid] = bounds
+	return bounds, nil
 }
 
 func getTTL() (ttl int) {

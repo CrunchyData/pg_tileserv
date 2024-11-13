@@ -8,7 +8,7 @@ import (
 func Test_makeTile(t *testing.T) {
 	// func makeTile(vars map[string]string) (Tile, error) {
 
-	serverBounds, _ := getServerBounds()
+	serverBounds, _ := getServerBounds(nil)
 
 	var tests = []struct {
 		input   map[string]string
@@ -23,7 +23,7 @@ func Test_makeTile(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if output, err := makeTile(test.input); test.outtile != output || test.outerr != err {
+		if output, err := makeTile(test.input, nil); test.outtile != output || test.outerr != err {
 			t.Error("Test Failed: {} inputted, {} expected, recieved: {}, {}", test.input, test.outtile, output, err)
 		}
 	}

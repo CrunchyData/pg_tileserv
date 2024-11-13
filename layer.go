@@ -59,7 +59,7 @@ func getLayer(lyrID string) (Layer, error) {
 }
 
 func loadLayers() error {
-	_, errBnd := getServerBounds()
+	_, errBnd := getServerBounds(nil)
 	if errBnd != nil {
 		return errBnd
 	}
