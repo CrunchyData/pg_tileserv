@@ -176,7 +176,7 @@ func (lyr *LayerFunction) getFunctionDetailJSON(req *http.Request) (FunctionDeta
 	return td, nil
 }
 
-func getFunctionLayers() ([]LayerFunction, error) {
+func getFunctionLayers(databaseRole string) ([]LayerFunction, error) {
 
 	// Valid functions **must** have signature of
 	// function(z integer, x integer, y integer) returns bytea
@@ -200,7 +200,7 @@ func getFunctionLayers() ([]LayerFunction, error) {
 		ORDER BY 1
 		`
 
-	db, connerr := dbConnect()
+	db, connerr := dbConnectWithAuth(databaseRole)
 	if connerr != nil {
 		return nil, connerr
 	}

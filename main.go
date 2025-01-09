@@ -64,7 +64,7 @@ var globalTimeToLive = -1
 // A global array of Layer where the state is held for performance
 // Refreshed when LoadLayerTableList is called
 // Key is of the form: schemaname.tablename
-var globalLayers map[string]Layer
+var globalLayers map[string]map[string]Layer = make(map[string]map[string]Layer)
 var globalLayersMutex = &sync.Mutex{}
 
 /******************************************************************************/
@@ -102,6 +102,11 @@ func init() {
 	viper.SetDefault("CoordinateSystem.Ymax", 20037508.3427892)
 
 	viper.SetDefault("HealthEndpoint", "/health")
+
+	viper.SetDefault("JwtSecret", "")
+	viper.SetDefault("AnonRole", "anonymous_user")
+	viper.SetDefault("JwtRoleClaimKey", "role")
+
 }
 
 func main() {
@@ -195,7 +200,7 @@ func main() {
 
 	// Load the global layer list right away
 	// Also connects to database
-	if err := loadLayers(); err != nil {
+	if err := loadLayers(""); err != nil {
 		log.Fatal(err)
 	}
 
@@ -233,11 +238,16 @@ func requestPreview(w http.ResponseWriter, r *http.Request) error {
 	// reqBuffer := r.FormValue("buffer")
 
 	// Refresh the layers list
-	if err := loadLayers(); err != nil {
+	databaseRole, err := getDatabaseRoleFromRequest(r)
+	if err != nil {
+		return err
+	}
+
+	if err := loadLayers(databaseRole); err != nil {
 		return err
 	}
 	// Get the requested layer
-	lyr, err := getLayer(lyrID)
+	lyr, err := getLayer(lyrID, databaseRole)
 	if err != nil {
 		errLyr := tileAppError{
 			HTTPCode: 404,
@@ -274,10 +284,15 @@ func requestListHTML(w http.ResponseWriter, r *http.Request) error {
 	}).Trace("requestListHtml")
 	// Update the global in-memory list from
 	// the database
-	if err := loadLayers(); err != nil {
+	databaseRole, err := getDatabaseRoleFromRequest(r)
+	if err != nil {
 		return err
 	}
-	jsonLayers := getJSONLayers(r)
+
+	if err := loadLayers(databaseRole); err != nil {
+		return err
+	}
+	jsonLayers := getJSONLayers(r, databaseRole)
 
 	content, err := ioutil.ReadFile(fmt.Sprintf("%s/index.html", viper.GetString("AssetsPath")))
 
@@ -299,13 +314,19 @@ func requestListJSON(w http.ResponseWriter, r *http.Request) error {
 		"event": "request",
 		"topic": "layerlist",
 	}).Trace("requestListJSON")
+
 	// Update the global in-memory list from
 	// the database
-	if err := loadLayers(); err != nil {
+	databaseRole, err := getDatabaseRoleFromRequest(r)
+	if err != nil {
+		return err
+	}
+
+	if err := loadLayers(databaseRole); err != nil {
 		return err
 	}
 	w.Header().Add("Content-Type", "application/json")
-	jsonLayers := getJSONLayers(r)
+	jsonLayers := getJSONLayers(r, databaseRole)
 	json.NewEncoder(w).Encode(jsonLayers)
 	return nil
 }
@@ -318,11 +339,15 @@ func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
 	}).Tracef("requestDetailJSON(%s)", lyrID)
 
 	// Refresh the layers list
-	if err := loadLayers(); err != nil {
+	databaseRole, err := getDatabaseRoleFromRequest(r)
+	if err != nil {
+		return err
+	}
+	if err := loadLayers(databaseRole); err != nil {
 		return err
 	}
 
-	lyr, err := getLayer(lyrID)
+	lyr, err := getLayer(lyrID, databaseRole)
 	if err != nil {
 		errLyr := tileAppError{
 			HTTPCode: 404,
@@ -339,10 +364,16 @@ func requestDetailJSON(w http.ResponseWriter, r *http.Request) error {
 }
 
 // requestTile handles a tile request for a given layer
-func requestTile(r *http.Request, source string) ([]byte, error) {
+func requestTile(r *http.Request, source string, databaseRole string) ([]byte, error) {
+
 	vars := mux.Vars(r)
 
-	lyr, err := getLayer(source)
+	databaseRole, err := getDatabaseRoleFromRequest(r)
+	if err != nil {
+		return nil, err
+	}
+
+	lyr, err := getLayer(source, databaseRole)
 	if err != nil {
 		errLyr := tileAppError{
 			HTTPCode: 404,
@@ -366,7 +397,7 @@ func requestTile(r *http.Request, source string) ([]byte, error) {
 	defer cancel()
 
 	tilerequest := lyr.GetTileRequest(tile, r)
-	mvt, errMvt := dBTileRequest(ctx, &tilerequest)
+	mvt, errMvt := dBTileRequest(ctx, &tilerequest, databaseRole)
 	if errMvt != nil {
 		return nil, errMvt
 	}
@@ -376,6 +407,18 @@ func requestTile(r *http.Request, source string) ([]byte, error) {
 
 // requestTiles handles a tile request for a given layer, including multi layer tile requests
 func requestTiles(w http.ResponseWriter, r *http.Request) error {
+
+	// Handle CORS preflight requests
+	// we don't need to return any content in the response body - just the correct headers
+	if r.Method == http.MethodOptions {
+		return nil
+	}
+
+	databaseRole, err := getDatabaseRoleFromRequest(r)
+	if err != nil {
+		return err
+	}
+
 	var layers []byte
 	vars := mux.Vars(r)
 
@@ -383,7 +426,7 @@ func requestTiles(w http.ResponseWriter, r *http.Request) error {
 	var extant []string
 	for _, source := range sources {
 		if !slices.Contains(extant, source) {
-			layer, err := requestTile(r, source)
+			layer, err := requestTile(r, source, databaseRole)
 			if err != nil {
 				return err
 			}
@@ -503,7 +546,6 @@ func tileRouter() *mux.Router {
 	}
 	// Tile requests
 	r.Handle("/{name}/{z:[0-9]+}/{x:[0-9]+}/{y:[0-9]+}.{ext}", tileMetrics(tileAppHandler(requestTiles)))
-
 	if viper.GetBool("EnableMetrics") {
 		r.Handle("/metrics", promhttp.Handler())
 	}
@@ -520,6 +562,7 @@ func handleRequests() {
 	// Allow CORS from anywhere
 	corsOrigins := viper.GetStringSlice("CORSOrigins")
 	corsOpt := handlers.AllowedOrigins(corsOrigins)
+	corsHeadersOpt := handlers.AllowedHeaders([]string{"Authorization"})
 
 	// Set a writeTimeout for the http server.
 	// This value is the application's DbTimeout config setting plus a
@@ -535,7 +578,7 @@ func handleRequests() {
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: writeTimeout,
 		Addr:         fmt.Sprintf("%s:%d", viper.GetString("HttpHost"), viper.GetInt("HttpPort")),
-		Handler:      setCacheControl(handlers.CompressHandler(handlers.CORS(corsOpt)(r))),
+		Handler:      setCacheControl(handlers.CompressHandler(handlers.CORS(corsOpt, corsHeadersOpt)(r))),
 	}
 
 	// start http service

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -67,6 +68,35 @@ func dbConnect() (*pgxpool.Pool, error) {
 	return globalDb, nil
 }
 
+func dbConnectWithAuth(databaseRole string) (*pgxpool.Pool, error) {
+	if globalDb == nil {
+		_, err := dbConnect()
+		if err != nil {
+			return globalDb, err
+		}
+	}
+
+	// if JWT auth not configured, just return the connection we have - queries should be run as the configured user
+	if databaseRole == "" {
+		return globalDb, nil
+	}
+
+	// otherwise, try to switch to the role
+	// _, err = globalDb.Exec(context.Background(), "SET ROLE $1;", newRole)
+	// see https://dba.stackexchange.com/a/78399 for context: can only bind placement for plannable statements - not "SET ROLE"
+	_, err := globalDb.Exec(context.Background(), fmt.Sprintf("SET ROLE %s;", databaseRole))
+
+	if err != nil {
+		return globalDb, tileAppError{
+			SrcErr:   err,
+			Message:  fmt.Sprintf("Failed to set role to %s", databaseRole),
+			HTTPCode: http.StatusUnauthorized,
+		}
+	}
+
+	return globalDb, nil
+}
+
 func loadVersions() error {
 	db, err := dbConnect()
 	if err != nil {
@@ -105,8 +135,8 @@ func loadVersions() error {
 	return nil
 }
 
-func dBTileRequest(ctx context.Context, tr *TileRequest) ([]byte, error) {
-	db, err := dbConnect()
+func dBTileRequest(ctx context.Context, tr *TileRequest, databaseRole string) ([]byte, error) {
+	db, err := dbConnectWithAuth(databaseRole)
 	if err != nil {
 		log.Error(err)
 		return nil, err

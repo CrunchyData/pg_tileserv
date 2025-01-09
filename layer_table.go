@@ -262,7 +262,12 @@ func (lyr *LayerTable) getTableDetailJSON(req *http.Request) (TableDetailJSON, e
 
 	// Read table bounds and convert to Json
 	// which prefers an array form
-	bnds, err := lyr.GetBounds()
+	databaseRole, err := getDatabaseRoleFromRequest(req)
+	if err != nil {
+		return td, err
+	}
+
+	bnds, err := lyr.GetBounds(databaseRole)
 	if err != nil {
 		return td, err
 	}
@@ -277,7 +282,7 @@ func (lyr *LayerTable) getTableDetailJSON(req *http.Request) (TableDetailJSON, e
 
 // GetBoundsExact returns the data coverage extent for a table layer
 // in EPSG:4326, clipped to (+/-180, +/-90)
-func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
+func (lyr *LayerTable) GetBoundsExact(authHeader string) (Bounds, error) {
 	bounds := Bounds{}
 	extentSQL := fmt.Sprintf(`
 	WITH ext AS (
@@ -296,7 +301,7 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 	FROM ext
 	`, lyr.GeometryColumn, lyr.Srid, lyr.Schema, lyr.Table)
 
-	db, err := dbConnect()
+	db, err := dbConnectWithAuth(authHeader)
 	if err != nil {
 		return bounds, err
 	}
@@ -324,7 +329,7 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 }
 
 // GetBounds returns the estimated extent for a table layer, transformed to EPSG:4326
-func (lyr *LayerTable) GetBounds() (Bounds, error) {
+func (lyr *LayerTable) GetBounds(authHeader string) (Bounds, error) {
 	bounds := Bounds{}
 	extentSQL := fmt.Sprintf(`
 		WITH ext AS (
@@ -338,7 +343,7 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 		FROM ext
 		`, lyr.Schema, lyr.Table, lyr.GeometryColumn, lyr.Srid)
 
-	db, err := dbConnect()
+	db, err := dbConnectWithAuth(authHeader)
 	if err != nil {
 		return bounds, err
 	}
@@ -365,7 +370,7 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 			"topic": "detail",
 			"key":   warning,
 		}).Warn(warning)
-		return lyr.GetBoundsExact()
+		return lyr.GetBoundsExact(authHeader)
 	}
 
 	bounds.SRID = 4326
@@ -493,7 +498,7 @@ func (lyr *LayerTable) filterSQL(qp *queryParameters) (string, error) {
 	return sql, nil
 }
 
-func getTableLayers() ([]LayerTable, error) {
+func getTableLayers(databaseRole string) ([]LayerTable, error) {
 
 	layerSQL := `
 	SELECT
@@ -531,7 +536,7 @@ func getTableLayers() ([]LayerTable, error) {
 	ORDER BY 1
 	`
 
-	db, connerr := dbConnect()
+	db, connerr := dbConnectWithAuth(databaseRole)
 	if connerr != nil {
 		return nil, connerr
 	}
