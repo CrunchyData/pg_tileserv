@@ -128,7 +128,7 @@ func main() {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("ts")
 
-	// Commandline over-rides config file for debugging
+	// Enable debug mode if specified by commandline argument, regardless of what is in config file
 	if *flagDebugOn {
 		viper.Set("Debug", true)
 		log.SetLevel(log.TraceLevel)
@@ -180,6 +180,11 @@ func main() {
 		} else {
 			log.Info("Config file: none found, using defaults")
 		}
+	}
+
+	// enable debug mode if specified in config file, even if not specified by commandline argument
+	if viper.GetBool("Debug") == true {
+		log.SetLevel(log.TraceLevel)
 	}
 
 	basePath := viper.GetString("BasePath")
