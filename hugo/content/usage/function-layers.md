@@ -129,7 +129,7 @@ AS $$
     args AS (
       SELECT
         ST_TileEnvelope(z, x, y) AS bounds,
-        ST_Transform(ST_SetSRID(ST_MakePoint(click_lon, click_lat), 4326), 26910) AS click
+        ST_Transform(ST_Point(click_lon, click_lat, 4326), 26910) AS click
     ),
     mvtgeom AS (
       SELECT
@@ -157,5 +157,5 @@ COMMENT ON FUNCTION public.parcels_in_radius IS 'Given the click point (click_lo
 Notes:
 
 * The parcels are stored in a table with spatial reference system [3005](https://epsg.io/3005), a planar projection.
-* The click parameters are longitude/latitude, so in building a click geometry (`ST_MakePoint()`) to use for querying, we transform the geometry to the table spatial reference.
+* The click parameters are longitude/latitude, so in building a click geometry (`ST_Point()`) to use for querying, we transform the geometry to the table spatial reference.
 * To get the parcel boundaries clipped to the radius, we build a circle in the native spatial reference (26910) using the `ST_Buffer()` function on the click point, then intersect that circle with the parcels.

@@ -17,7 +17,7 @@ AS $$
   WITH hydrants_near AS (
     SELECT *
     FROM hydrants
-    ORDER BY geom <-> ST_Transform(ST_SetSRID(ST_MakePoint(lon, lat),4326),26910)
+    ORDER BY geom <-> ST_Transform(ST_Point(lon, lat, 4326),26910)
     LIMIT count
   ),
   -- Convert the tile coordinates to an actual box

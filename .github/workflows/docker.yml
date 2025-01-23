@@ -27,3 +27,9 @@ jobs:
       run: |
         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
         docker push --all-tags $DOCKER_REPO
+        docker manifest create $DOCKER_REPO:latest $DOCKER_REPO:latest-amd64 $DOCKER_REPO:latest-arm64
+        docker manifest push $DOCKER_REPO:latest
+        date_tag=$(docker images | grep tileserv | grep -v latest | grep -v arm64 | awk '{print $2}')
+        date_tag=${date_tag/-amd64/}
+        docker manifest create $DOCKER_REPO:${date_tag} $DOCKER_REPO:${date_tag}-amd64 $DOCKER_REPO:${date_tag}-arm64
+        docker manifest push $DOCKER_REPO:${date_tag}
