@@ -18,7 +18,12 @@ CONTAINER ?= pramsey/$(PROGRAM)
 DATE ?= $(shell date +%Y%m%d)
 BASE_REGISTRY ?= registry.access.redhat.com
 BASE_IMAGE ?= ubi8-micro
+
+ifeq ($(shell uname), Linux)
 SYSTEMARCH = $(shell uname -i)
+else
+SYSTEMARCH = $(shell uname -m)
+endif
 
 ifeq ($(SYSTEMARCH), x86_64)
 TARGETARCH ?= amd64
