@@ -1,0 +1,39 @@
+ARG GOLANG_VERSION=1.21.5
+ARG ALPINE_VERSION=3.19.0
+
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:${GOLANG_VERSION} AS builder
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+ARG VERSION
+
+WORKDIR /app
+COPY . ./
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -v -ldflags "-s -w -X main.programVersion=${VERSION}"
+
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:${ALPINE_VERSION}
+
+ARG OWNER
+ARG VERSION
+
+LABEL org.opencontainers.image.url=https://github.com/CrunchyData/pg_tileserv
+LABEL org.opencontainers.image.documentation=https://access.crunchydata.com/documentation/pg_tileserv/latest/
+LABEL org.opencontainers.image.source=https://github.com/${OWNER}/pg_tileserv
+LABEL org.opencontainers.image.license=Apache-2.0
+LABEL org.opencontainers.image.version=${VERSION}
+
+RUN apk --no-cache add ca-certificates file
+WORKDIR /app
+COPY --from=builder /app/pg_tileserv /app/
+COPY --from=builder /app/assets/ /app/assets/
+
+VOLUME ["/config"]
+
+USER 1001
+EXPOSE 7800
+
+ENTRYPOINT ["/app/pg_tileserv"]
+CMD []
