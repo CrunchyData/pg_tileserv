@@ -11,7 +11,7 @@
 ##      IMAGE_TAG - The tag to be applied to the container
 
 APPVERSION ?= latest
-GOVERSION ?= 1.21.6
+GOVERSION ?= 1.22.0
 PROGRAM ?= pg_tileserv
 CONFIG ?= config/$(PROGRAM).toml
 CONTAINER ?= pramsey/$(PROGRAM)
