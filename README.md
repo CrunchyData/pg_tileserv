@@ -268,6 +268,15 @@ For example, to set the geometry as a `Point` type:
 ```SQL
 ALTER TABLE mytable ALTER COLUMN geom TYPE geometry (Point, 4326);
 ```
+Views can also be used provided it exposes the geometry type and srid.
+
+For example:
+
+```SQL
+CREATE VIEW myview AS
+SELECT ST_Buffer(geom)::Geometry(Polygon, 4326) AS geom, pk
+FROM mytable;
+```
 
 ### Table Layer Detail JSON
 
