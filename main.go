@@ -58,6 +58,7 @@ var globalPostGISVersion int
 // which tiles are constructed
 var globalServerBounds = make(map[int]*Bounds)
 var globalDefaultCoordinateSystem int
+var globalProjectionBoundsTableName string
 
 // timeToLive is the Cache-Control timeout value that will be advertised
 // in the response headers
@@ -197,6 +198,8 @@ func main() {
 
 	globalDefaultCoordinateSystem = viper.GetInt("DefaultCoordinateSystem")
 	log.Infof("Default CoordinateSystem: %d", globalDefaultCoordinateSystem)
+
+	globalProjectionBoundsTableName = viper.GetString("ProjectionBoundsTableName")
 
 	// Load the global layer list right away
 	// Also connects to database

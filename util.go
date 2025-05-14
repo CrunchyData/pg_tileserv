@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -149,13 +150,37 @@ func getServerBounds(sridPtr *int) (b *Bounds, e error) {
 		return bounds, nil
 	}
 
-	xmin := viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Xmin", srid))
-	ymin := viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Ymin", srid))
-	xmax := viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Xmax", srid))
-	ymax := viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Ymax", srid))
+	var (
+		xmin, ymin, xmax, ymax float64
+	)
 
-	log.Infof("Using CoordinateSystem.SRID %d with bounds [%g, %g, %g, %g]",
-		srid, xmin, ymin, xmax, ymax)
+	if globalProjectionBoundsTableName != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("DbTimeout")*time.Second)
+		defer cancel()
+		var err error
+		xmin, ymin, xmax, ymax, err = dBProjectionBoundsRequest(ctx, srid)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get projection bounds: %w", err)
+		}
+
+		log.Infof(
+			"Using CoordinateSystem %d with bounds from %s [%g, %g, %g, %g]",
+			srid,
+			globalProjectionBoundsTableName,
+			xmin, ymin, xmax, ymax,
+		)
+	} else {
+		xmin = viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Xmin", srid))
+		ymin = viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Ymin", srid))
+		xmax = viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Xmax", srid))
+		ymax = viper.GetFloat64(fmt.Sprintf("CoordinateSystem.%d.Ymax", srid))
+
+		log.Infof(
+			"Using CoordinateSystem.SRID %d with bounds [%g, %g, %g, %g]",
+			srid,
+			xmin, ymin, xmax, ymax,
+		)
+	}
 
 	width := xmax - xmin
 	height := ymax - ymin

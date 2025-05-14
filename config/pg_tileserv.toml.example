@@ -71,6 +71,9 @@
 # Metrics will be exported at `/metrics`.
 # EnableMetrics = false
 
+# Table in the database that contains projections with bounds (must have columns: srid, x_min, y_min, x_max, y_max)
+# ProjectionBoundsTableName = "common.projection"
+
 # Default CS is Web Mercator (EPSG:3857)
 # DefaultCoordinateSystem = 3857
 # [CoordinateSystem.3857]
