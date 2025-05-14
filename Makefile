@@ -14,19 +14,21 @@ APPVERSION ?= latest
 GOVERSION ?= 1.21.6
 PROGRAM ?= pg_tileserv
 CONFIG ?= config/$(PROGRAM).toml
-CONTAINER ?= pramsey/$(PROGRAM)
+CONTAINER ?= harbor.internal.millcrest.dev/library/$(PROGRAM)
 DATE ?= $(shell date +%Y%m%d)
 BASE_REGISTRY ?= registry.access.redhat.com
 BASE_IMAGE ?= ubi8-micro
 SYSTEMARCH = $(shell uname -i)
 
-ifeq ($(SYSTEMARCH), x86_64)
+# ifeq ($(SYSTEMARCH), x86_64)
+# TARGETARCH ?= amd64
+# PLATFORM=amd64
+# else
+# TARGETARCH ?= arm64
+# PLATFORM=arm64
+# endif
 TARGETARCH ?= amd64
-PLATFORM=amd64
-else
-TARGETARCH ?= arm64
-PLATFORM=arm64
-endif
+PLATFORM ?= amd64
 
 IMAGE_TAG ?= $(APPVERSION)-$(TARGETARCH)
 DATE_TAG ?= $(DATE)-$(TARGETARCH)
@@ -83,6 +85,9 @@ build-common: Dockerfile
 		--label os.version="7.7" \
 		-t $(CONTAINER):$(IMAGE_TAG) -t $(CONTAINER):$(DATE_TAG) .
 	docker image prune --filter label=stage=tileservbuilder -f
+
+push-docker:
+	docker push ${CONTAINER}:${IMAGE_TAG}
 
 set-local:
 	$(eval BUILDTYPE = local)
