@@ -45,17 +45,30 @@ type TableProperty struct {
 
 // TableDetailJSON gives the output structure for the table layer.
 type TableDetailJSON struct {
-	ID           string          `json:"id"`
-	Schema       string          `json:"schema"`
-	Name         string          `json:"name"`
-	Description  string          `json:"description,omitempty"`
-	Properties   []TableProperty `json:"properties,omitempty"`
-	GeometryType string          `json:"geometrytype,omitempty"`
-	Center       [2]float64      `json:"center"`
-	Bounds       [4]float64      `json:"bounds"`
-	MinZoom      int             `json:"minzoom"`
-	MaxZoom      int             `json:"maxzoom"`
-	TileURL      string          `json:"tileurl"`
+	ID           string                 `json:"id"`
+	Schema       string                 `json:"schema"`
+	Name         string                 `json:"name"`
+	Description  string                 `json:"description,omitempty"`
+	Properties   []TableProperty        `json:"properties,omitempty"`
+	GeometryType string                 `json:"geometrytype,omitempty"`
+	Center       [2]float64             `json:"center"`
+	Bounds       [4]float64             `json:"bounds"`
+	MinZoom      int                    `json:"minzoom"`
+	MaxZoom      int                    `json:"maxzoom"`
+	TileURL      string                 `json:"tileurl"`
+	ExtraFields  map[string]interface{} `json:"-"`
+}
+
+func (tdj TableDetailJSON) MarshalJSON() ([]byte, error) {
+	type Alias TableDetailJSON
+	base := Alias(tdj)
+	b, _ := json.Marshal(base)
+	var m map[string]interface{}
+	_ = json.Unmarshal(b, &m)
+	for k, v := range tdj.ExtraFields {
+		m[k] = v
+	}
+	return json.Marshal(m)
 }
 
 /********************************************************************************
@@ -258,6 +271,15 @@ func (lyr *LayerTable) getTableDetailJSON(req *http.Request) (TableDetailJSON, e
 	sort.Ints(tmpKeys)
 	for _, v := range tmpKeys {
 		td.Properties = append(td.Properties, tmpMap[v])
+	}
+
+	//Change to expand the description
+	var descFields map[string]interface{}
+	errdf := json.Unmarshal([]byte(lyr.Description), &descFields)
+	if errdf != nil {
+		td.Description = lyr.Description
+	} else {
+		td.ExtraFields = descFields
 	}
 
 	// Read table bounds and convert to Json

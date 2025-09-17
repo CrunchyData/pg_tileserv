@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-
 	"net/http"
 	"net/url"
 )
@@ -86,28 +86,49 @@ func loadLayers() error {
 }
 
 type layerJSON struct {
-	Type        string `json:"type"`
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Schema      string `json:"schema"`
-	Description string `json:"description"`
-	DetailURL   string `json:"detailurl"`
+	Type        string                 `json:"type"`
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Schema      string                 `json:"schema"`
+	Description string                 `json:"description,omitempty"`
+	DetailURL   string                 `json:"detailurl"`
+	ExtraFields map[string]interface{} `json:"-"`
 }
 
+func (lj layerJSON) MarshalJSON() ([]byte, error) {
+	type Alias layerJSON
+	base := Alias(lj)
+	b, _ := json.Marshal(base)
+	var m map[string]interface{}
+	_ = json.Unmarshal(b, &m)
+	for k, v := range lj.ExtraFields {
+		m[k] = v
+	}
+	return json.Marshal(m)
+}
+
+// Main function that reads JSON from Description and create the additional fields
 func getJSONLayers(r *http.Request) map[string]layerJSON {
-	json := make(map[string]layerJSON)
+	jsonLayers := make(map[string]layerJSON)
 	urlBase := serverURLBase(r)
 	globalLayersMutex.Lock()
+	defer globalLayersMutex.Unlock()
 	for k, v := range globalLayers {
-		json[k] = layerJSON{
-			Type:        v.GetType().String(),
-			ID:          v.GetID(),
-			Name:        v.GetName(),
-			Schema:      v.GetSchema(),
-			Description: v.GetDescription(),
-			DetailURL:   fmt.Sprintf("%s/%s.json", urlBase, url.PathEscape(v.GetID())),
+		lj := layerJSON{
+			Type:      v.GetType().String(),
+			ID:        v.GetID(),
+			Name:      v.GetName(),
+			Schema:    v.GetSchema(),
+			DetailURL: fmt.Sprintf("%s/%s.json", urlBase, url.PathEscape(v.GetID())),
 		}
+		var descFields map[string]interface{}
+		err := json.Unmarshal([]byte(v.GetDescription()), &descFields)
+		if err != nil {
+			lj.Description = v.GetDescription()
+		} else {
+			lj.ExtraFields = descFields
+		}
+		jsonLayers[k] = lj
 	}
-	globalLayersMutex.Unlock()
-	return json
+	return jsonLayers
 }

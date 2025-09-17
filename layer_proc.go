@@ -40,14 +40,27 @@ type FunctionArgument struct {
 // FunctionDetailJSON gives the output structure for
 // the function.
 type FunctionDetailJSON struct {
-	ID          string             `json:"id"`
-	Schema      string             `json:"schema"`
-	Name        string             `json:"name"`
-	Description string             `json:"description,omitempty"`
-	Arguments   []FunctionArgument `json:"arguments"`
-	MinZoom     int                `json:"minzoom"`
-	MaxZoom     int                `json:"maxzoom"`
-	TileURL     string             `json:"tileurl"`
+	ID          string                 `json:"id"`
+	Schema      string                 `json:"schema"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description,omitempty"`
+	Arguments   []FunctionArgument     `json:"arguments"`
+	MinZoom     int                    `json:"minzoom"`
+	MaxZoom     int                    `json:"maxzoom"`
+	TileURL     string                 `json:"tileurl"`
+	ExtraFields map[string]interface{} `json:"-"`
+}
+
+func (fdj FunctionDetailJSON) MarshalJSON() ([]byte, error) {
+	type Alias FunctionDetailJSON
+	base := Alias(fdj)
+	b, _ := json.Marshal(base)
+	var m map[string]interface{}
+	_ = json.Unmarshal(b, &m)
+	for k, v := range fdj.ExtraFields {
+		m[k] = v
+	}
+	return json.Marshal(m)
 }
 
 /********************************************************************************
@@ -172,6 +185,15 @@ func (lyr *LayerFunction) getFunctionDetailJSON(req *http.Request) (FunctionDeta
 	sort.Ints(tmpKeys)
 	for _, v := range tmpKeys {
 		td.Arguments = append(td.Arguments, tmpMap[v])
+	}
+
+	//Change to expand the description
+	var descFields map[string]interface{}
+	errdf := json.Unmarshal([]byte(lyr.Description), &descFields)
+	if errdf != nil {
+		td.Description = lyr.Description
+	} else {
+		td.ExtraFields = descFields
 	}
 	return td, nil
 }

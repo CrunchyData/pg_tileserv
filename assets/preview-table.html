@@ -21,7 +21,29 @@
     {{ if .Description }}
     <p>{{ .Description }}</p>
     {{ end }}
-    {{ if .Properties }}
+    
+  <script>
+  // Substitute and Insert the fields at the end of the meta div p 
+    var metaDiv = $("#meta");
+    var metaDivp = metaDiv.find("p").first()
+    //need to clear the existing text
+    metaDivp.text("");
+    // 'description' string containing the JSON
+    var descStr = "{{.Description }}" || "";
+    var descObj = {};
+    try {
+      // Parsing description as a JSON
+      descObj = JSON.parse(descStr);
+      for (const x in descObj) {
+        metaDivp.append('<div><strong>'+ x + ':</strong> ' + descObj[x]+ ' </div>');
+      }
+    } catch(e) {
+      //Not a JSON description
+      metaDivp.text("{{.Description }}");
+    }
+    
+  </script>
+  {{ if .Properties }}
     <hr/><p class="properties">{{ range $k, $v := .Properties }}{{ $v.Name }} {{ end }}</p>
     {{ end }}
   </div>
