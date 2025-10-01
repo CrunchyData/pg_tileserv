@@ -176,6 +176,13 @@ After start-up you can connect to the server and explore the published tables an
 
 To disable the web interface, supply the run time flag `--no-preview`
 
+This interface contains a summary of the Service Metadata, Table Layers and Function Layers.
+
+Each element layer contains the `id` and the `description`. In case , the table or function have a comment in json format, it would take the value of the `description` key.
+
+
+![webinterface](images/webinterface.png)
+
 ## Health Check Endpoint
 
 In order to run the server in an orchestrated environment, like Docker, it can be useful to have a health check endpoint. This is `/health` by default, and returns a `200 OK` if the server is responding to requests. To use a custom URL for the health check endpoint, supply the run time flag `-e` and your path. This setting will respect the base path setting, so if you choose a base path of `/example` and a health check endpoint of `/foo`, your health check URL becomes `/example/foo`.
@@ -204,6 +211,33 @@ The `detailurl` provides more detailed metadata for table and function layers.
 The `description` field is read from the `comment` value of the table. To set a comment on a table, use the `COMMENT` command.
 ```sql
 COMMENT ON TABLE ne_50m_admin_0_countries IS 'This is my comment';
+```
+
+This comment can also be read in a json format:
+
+```sql
+COMMENT ON TABLE ne_50m_admin_0_countries IS '{
+  "copyright":"Natural Earth",
+  "attributation":"Made with Natural Earth. Free vector and raster map data",
+  "description":"Natural Earth country data"
+}';
+```
+
+that will return all the different fields declared in the JSON in substitution of the description field.
+
+```json
+{
+    "public.ne_50m_admin_0_countries" : {
+        "name" : "ne_50m_admin_0_countries",
+        "schema" : "public",
+        "type" : "table",
+        "id" : "public.ne_50m_admin_0_countries",
+        "description" : "Natural Earth country data",
+        "detailurl" : "http://localhost:7800/public.ne_50m_admin_0_countries.json",
+        "attributation":"Natural Earth",
+        "copyright":"Made with Natural Earth. Free vector and raster map data"
+    }
+}
 ```
 
 ## Table Layers
@@ -268,6 +302,16 @@ For example, to set the geometry as a `Point` type:
 ```SQL
 ALTER TABLE mytable ALTER COLUMN geom TYPE geometry (Point, 4326);
 ```
+
+### Table Layer Detail Preview
+
+In the detail preview, the layer displays the information on a map with the `id`, the optional `description` and `name` of `properties`.
+
+![tpreview1](./images/tablelayerpreview1.png)
+
+In case the `description` is a JSON it would display the different keys and values from the description
+
+![tpreview2](./images/tablelayerpreview2.png)
 
 ### Table Layer Detail JSON
 
@@ -370,6 +414,16 @@ In addition, hopefully obviously, for the function to actually be **useful** it 
 
 Functions can also have additional parameters to control the generation of tiles: in fact, the whole reason for function layers is to allow **novel dynamic behaviour**.
 
+### Function Layer Detail preview
+
+In the detail preview, it displays the preview map with the `id`, the `description` and the `arguments`.
+
+![fpreview1](./images/functionlayerpreview1.png)
+
+In case the `description` is a JSON it would display the different keys and values from the `description`.
+
+![fpreview2](./images/functionlayerpreview2.png)
+
 ### Function Layer Detail JSON
 
 In the detail JSON, each function declares information relevant to setting up a map interface for the layer. Because functions generate tiles dynamically, the system cannot auto-discover things like extent or center, unfortunately. However, the custom parameters and defaults can be read from the function definition and exposed in the detail JSON.
@@ -405,6 +459,49 @@ In the detail JSON, each function declares information relevant to setting up a 
 * `id`, `schema` and `name` are the fully qualified name, schema and function name, respectively.
 * `minzoom` and `maxzoom` are just the defaults, as set in the configuration file.
 * `arguments` is a list of argument names, with the data type and default value.
+
+This comment can also be read in a json format:
+
+```sql
+COMMENT ON FUNCTION parcels_in_radius IS '{
+  "copyright":"Natural Earth",
+  "attributation":"Made with Natural Earth. Free vector and raster map data",
+  "description":"Given the click point (click_lon, click_lat) and radius, returns all the parcels in the radius, clipped to the radius circle."
+}';
+```
+
+that will return all the fields declared in substitution of the description field.
+
+```json
+{
+   "name" : "parcels_in_radius",
+   "id" : "public.parcels_in_radius",
+   "schema" : "public",
+   "copyright":"Natural Earth",
+   "attributation":"Made with Natural Earth. Free vector and raster map data",
+   "description" : "Given the click point (click_lon, click_lat) and radius, returns all the parcels in the radius, clipped to the radius circle.",
+   "minzoom" : 0,
+   "arguments" : [
+      {
+         "default" : "-123.13",
+         "name" : "click_lon",
+         "type" : "double precision"
+      },
+      {
+         "default" : "49.25",
+         "name" : "click_lat",
+         "type" : "double precision"
+      },
+      {
+         "default" : "500.0",
+         "type" : "double precision",
+         "name" : "radius"
+      }
+   ],
+   "maxzoom" : 22,
+   "tileurl" : "http://localhost:7800/public.parcels_in_radius/{z}/{x}/{y}.pbf"
+}
+```
 
 ### Function Layer Examples
 
