@@ -180,8 +180,11 @@ This interface contains a summary of the Service Metadata, Table Layers and Func
 
 Each element layer contains the `id` and the `description`. In case , the table or function have a comment in json format, it would take the value of the `description` key.
 
+![webinterface1](images/webinterface1.png)
 
-![webinterface](images/webinterface.png)
+In case the JSON is not correct, the full content will be returned as `description`. 
+
+![webinterface2](images/webinterface2.png)
 
 ## Health Check Endpoint
 
@@ -236,6 +239,21 @@ that will return all the different fields declared in the JSON in substitution o
         "detailurl" : "http://localhost:7800/public.ne_50m_admin_0_countries.json",
         "attributation":"Natural Earth",
         "copyright":"Made with Natural Earth. Free vector and raster map data"
+    }
+}
+```
+
+In case the JSON is not correct, the full content will be returned as `description`. 
+
+```json
+{
+    "public.ne_50m_admin_0_countries" : {
+        "name" : "ne_50m_admin_0_countries",
+        "schema" : "public",
+        "type" : "table",
+        "id" : "public.ne_50m_admin_0_countries",
+        "description" : "{{ \"copyright\" : \"Natural Earth\", \"attributation\":\"Made with Natural Earth. Free vector and raster map data\", \"description\":\"Natural Earth country data\" }",
+        "detailurl":"http://localhost:7800/public.ne_50m_admin_0_countries.json"
     }
 }
 ```
@@ -312,6 +330,10 @@ In the detail preview, the layer displays the information on a map with the `id`
 In case the `description` is a JSON it would display the different keys and values from the description
 
 ![tpreview2](./images/tablelayerpreview2.png)
+
+In case the JSON is not correct, the full content will be returned as `description`. 
+
+![tpreview3](./images/tablelayerpreview3.png)
 
 ### Table Layer Detail JSON
 
@@ -424,6 +446,10 @@ In case the `description` is a JSON it would display the different keys and valu
 
 ![fpreview2](./images/functionlayerpreview2.png)
 
+In case the JSON is not correct, the full content will be returned as `description`. 
+
+![fpreview3](./images/functionlayerpreview3.png)
+
 ### Function Layer Detail JSON
 
 In the detail JSON, each function declares information relevant to setting up a map interface for the layer. Because functions generate tiles dynamically, the system cannot auto-discover things like extent or center, unfortunately. However, the custom parameters and defaults can be read from the function definition and exposed in the detail JSON.
@@ -480,6 +506,37 @@ that will return all the fields declared in substitution of the description fiel
    "copyright":"Natural Earth",
    "attributation":"Made with Natural Earth. Free vector and raster map data",
    "description" : "Given the click point (click_lon, click_lat) and radius, returns all the parcels in the radius, clipped to the radius circle.",
+   "minzoom" : 0,
+   "arguments" : [
+      {
+         "default" : "-123.13",
+         "name" : "click_lon",
+         "type" : "double precision"
+      },
+      {
+         "default" : "49.25",
+         "name" : "click_lat",
+         "type" : "double precision"
+      },
+      {
+         "default" : "500.0",
+         "type" : "double precision",
+         "name" : "radius"
+      }
+   ],
+   "maxzoom" : 22,
+   "tileurl" : "http://localhost:7800/public.parcels_in_radius/{z}/{x}/{y}.pbf"
+}
+```
+
+In case the JSON is not correct, the full content will be returned as `description`. 
+
+```json
+{
+   "name" : "parcels_in_radius",
+   "id" : "public.parcels_in_radius",
+   "schema" : "public",
+   "description" : "{{ \"copyright\" : \"Natural Earth\", \"attributation\" : \"Made with Natural Earth. Free vector and raster map data\", \"description\" : \"Given the click point (click_lon, click_lat) and radius, returns all the parcels in the radius, clipped to the radius circle.\" }",
    "minzoom" : 0,
    "arguments" : [
       {
