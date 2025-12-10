@@ -62,7 +62,7 @@ var globalServerBounds *Bounds
 var globalTimeToLive = -1
 
 // A global array of Layer where the state is held for performance
-// Refreshed when LoadLayerTableList is called
+// Refreshed when loadLayers is called
 // Key is of the form: schemaname.tablename
 var globalLayers map[string]Layer
 var globalLayersMutex = &sync.Mutex{}
