@@ -24,7 +24,8 @@
   {{ if eq $value.Type "table" }}
   <li>
     <strong class="layer-name">{{ $value.ID }}</strong> (<a href='{{ $value.DetailURL | replace ".json" ".html"}}'>preview</a> | <a href="{{ $value.DetailURL }}">json</a>)
-    {{ if $value.Description }}<br/><span class="layer-description">{{ $value.Description }}</span> {{ end }}
+    {{ if $value.Description }}<br/><span class="layer-description">{{ $value.Description }}</span>
+    {{ else if $value.ExtraFields.description }} <br/><span class="layer-description">{{ $value.ExtraFields.description }}</span> {{ end }}
   </li>
   {{ end }}
   {{ end }}
@@ -36,7 +37,8 @@
   {{ if eq $value.Type "function" }}
   <li>
     <strong class="layer-name">{{ $value.ID }}</strong> (<a href='{{$value.DetailURL | replace ".json" ".html"}}'>preview</a> | <a href="{{ $value.DetailURL }}">json</a>)
-    {{ if $value.Description }}<br/><span class="layer-description">{{ $value.Description }}</span> {{ end }}
+    {{ if $value.Description }}<br/><span class="layer-description">{{ $value.Description }}</span>
+    {{ else if $value.ExtraFields.description }} <br/><span class="layer-description">{{ $value.ExtraFields.description }}</span> {{ end }}
   </li>
   {{ end }}
   {{ end }}
