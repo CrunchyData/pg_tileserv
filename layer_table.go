@@ -12,7 +12,7 @@ import (
 
 	// Database
 	"github.com/CrunchyData/pg_tileserv/cql"
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	// Logging
 	log "github.com/sirupsen/logrus"
@@ -315,10 +315,10 @@ func (lyr *LayerTable) GetBoundsExact() (Bounds, error) {
 	}
 
 	bounds.SRID = 4326
-	bounds.Xmin = xmin.Float
-	bounds.Ymin = ymin.Float
-	bounds.Xmax = xmax.Float
-	bounds.Ymax = ymax.Float
+	bounds.Xmin = xmin.Float64
+	bounds.Ymin = ymin.Float64
+	bounds.Xmax = xmax.Float64
+	bounds.Ymax = ymax.Float64
 	bounds.sanitize()
 	return bounds, nil
 }
@@ -358,7 +358,7 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 	}
 
 	// Failed to get estimate? Get the exact bounds.
-	if xmin.Status == pgtype.Null {
+	if !xmin.Valid {
 		warning := fmt.Sprintf("Estimated extent query failed, run 'ANALYZE %s.%s'", lyr.Schema, lyr.Table)
 		log.WithFields(log.Fields{
 			"event": "request",
@@ -369,10 +369,10 @@ func (lyr *LayerTable) GetBounds() (Bounds, error) {
 	}
 
 	bounds.SRID = 4326
-	bounds.Xmin = xmin.Float
-	bounds.Ymin = ymin.Float
-	bounds.Xmax = xmax.Float
-	bounds.Ymax = ymax.Float
+	bounds.Xmin = xmin.Float64
+	bounds.Ymin = ymin.Float64
+	bounds.Xmax = xmax.Float64
+	bounds.Ymax = ymax.Float64
 	bounds.sanitize()
 	return bounds, nil
 }
@@ -549,7 +549,7 @@ func getTableLayers() ([]LayerTable, error) {
 			id, schema, table, description, geometryColumn string
 			srid                                           int
 			geometryType, idColumn                         string
-			atts                                           pgtype.TextArray
+			atts                                           [][]pgtype.Text
 		)
 
 		err := rows.Scan(&id, &schema, &table, &description, &geometryColumn,
@@ -566,19 +566,17 @@ func getTableLayers() ([]LayerTable, error) {
 		// really, no fault of pgx
 		properties := make(map[string]TableProperty)
 
-		if atts.Status == pgtype.Present {
-			arrLen := atts.Dimensions[0].Length
-			arrStart := atts.Dimensions[0].LowerBound - 1
-			elmLen := atts.Dimensions[1].Length
+		if len(atts) > 0 {
+			arrLen := len(atts)
+			arrStart := 0
 			for i := arrStart; i < arrLen; i++ {
-				pos := i * elmLen
-				elmID := atts.Elements[pos].String
+				elmID := atts[i][0].String
 				elm := TableProperty{
 					Name:        elmID,
-					Type:        atts.Elements[pos+1].String,
-					Description: atts.Elements[pos+2].String,
+					Type:        atts[i][1].String,
+					Description: atts[i][2].String,
 				}
-				elm.order, _ = strconv.Atoi(atts.Elements[pos+3].String)
+				elm.order, _ = strconv.Atoi(atts[i][3].String)
 				properties[elmID] = elm
 			}
 		}

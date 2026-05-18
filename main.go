@@ -21,7 +21,7 @@ import (
 	"github.com/gorilla/mux"
 
 	// Database connectivity
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	// Logging
 	log "github.com/sirupsen/logrus"

@@ -212,8 +212,8 @@ type metricsResponseWriter struct {
 	StatusCode int
 }
 
-// NewMetricsResponseWriter instantiates and returns a metricsResponseWriter
-func NewMetricsResponseWriter(w http.ResponseWriter) *metricsResponseWriter {
+// newMetricsResponseWriter instantiates and returns a metricsResponseWriter
+func newMetricsResponseWriter(w http.ResponseWriter) *metricsResponseWriter {
 	return &metricsResponseWriter{w, http.StatusOK}
 }
 
@@ -244,7 +244,7 @@ func tileMetrics(h http.Handler) http.Handler {
 			// start a timer for the duration histogram.
 			start := time.Now()
 
-			mrw := NewMetricsResponseWriter(w)
+			mrw := newMetricsResponseWriter(w)
 
 			// get path variables from the router to determine the layer name
 			vars := mux.Vars(r)

@@ -10,10 +10,8 @@ import (
 	"time"
 
 	// Database
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/log/logrusadapter"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	// Config
 	"github.com/spf13/viper"
@@ -45,15 +43,8 @@ func dbConnect() (*pgxpool.Pool, error) {
 			config.MaxConns = dbPoolMaxConns
 		}
 
-		// Read current log level and use one less-fine level
-		// below that
-		config.ConnConfig.Logger = logrusadapter.NewLogger(log.New())
-		levelString, _ := (log.GetLevel() - 1).MarshalText()
-		pgxLevel, _ := pgx.LogLevelFromString(string(levelString))
-		config.ConnConfig.LogLevel = pgxLevel
-
 		// Connect!
-		globalDb, err = pgxpool.ConnectConfig(context.Background(), config)
+		globalDb, err = pgxpool.NewWithConfig(context.Background(), config)
 		if err != nil {
 			log.Fatal(err)
 		}
